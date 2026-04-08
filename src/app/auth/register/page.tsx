@@ -27,8 +27,8 @@ export default function RegisterPage() {
           
           <div className="space-y-6">
             <InfoItem icon={<ShieldCheck className="text-primary" />} text="KVKK Uyumlu Güvenli Altyapı" />
-            <InfoItem icon={<UserPlus className="text-primary" />} text="Partner ID ile Anında Eşleşme" />
-            <InfoItem icon={<Globe className="text-primary" />} text="7 Dilde Global Büyüme Desteği" />
+            <InfoItem icon={<Globe className="text-primary" />} text="Greenleaf Global Entegrasyonu" />
+            <InfoItem icon={<ShieldCheck className="text-primary" />} text="Doğrulanmış Profesyonel Üyelik" />
           </div>
         </div>
         

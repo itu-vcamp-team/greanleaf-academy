@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { GlassCard } from "@/components/ui/GlassCard";
-import { ShieldCheck, UserPlus, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { ShieldCheck, UserPlus, CheckCircle2, AlertCircle, Loader2, Globe, Key, User } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useUserRole } from "@/context/UserRoleContext";
 import { useRouter } from "next/navigation";
@@ -12,41 +12,68 @@ import { useRouter } from "next/navigation";
 export function RegistrationFlow() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [partnerId, setPartnerId] = useState("");
-  const [inviteCode, setInviteCode] = useState("");
   const [error, setError] = useState("");
+  
+  // Step 1: Global Account
+  const [globalLogin, setGlobalLogin] = useState("");
+  const [globalPassword, setGlobalPassword] = useState("");
+  
+  // Step 2: Academy Profile
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [mockId, setMockId] = useState("");
+  
+  // Step 3: Local Password
+  const [academyPassword, setAcademyPassword] = useState("");
+  
   const { setRole } = useUserRole();
   const router = useRouter();
 
-  const handlePartnerVerify = (e: React.FormEvent) => {
+  // Generate Mock ID on component mount or at step transition
+  useEffect(() => {
+    if (step === 2 && !mockId) {
+      const randomId = "GL-" + Math.random().toString(36).substring(2, 7).toUpperCase();
+      setMockId(randomId);
+    }
+  }, [step, mockId]);
+
+  const handleGlobalVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
     
-    // Simulating the "1-second verification" requirement
-    setTimeout(() => {
-      if (partnerId.startsWith("TR-")) {
+    try {
+      const response = await fetch('/api/auth/verify-global', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ login: globalLogin, password: globalPassword }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
         setStep(2);
       } else {
-        setError("Geçersiz veya yetkisiz Partner ID. Lütfen davet eden ortağınızdan doğrulayın.");
+        setError(data.message || "Geçersiz Greenleaf Global hesabı.");
       }
+    } catch (err) {
+      setError("Doğrulama servisine ulaşılamıyor. Lütfen tekrar deneyin.");
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
+  };
+
+  const handleProfileSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setStep(3);
   };
 
   const handleFinalSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     
-    // Simulate encryption and consent logging
-    const consentLog = {
-      timestamp: new Date().toISOString(),
-      version: "KVKK-2024-V2",
-      ip: "127.0.0.1 (Mocked)"
-    };
-    
+    // Simulate encryption and account creation
     setTimeout(() => {
-      console.log("Consent Recorded:", consentLog);
       setRole("PARTNER");
       router.push("/academy");
       setLoading(false);
@@ -54,84 +81,157 @@ export function RegistrationFlow() {
   };
 
   return (
-    <AnimatePresence mode="wait">
-      {step === 1 ? (
-        <motion.div
-          key="step1"
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -20 }}
-        >
-          <GlassCard className="w-full max-w-md p-8 border-white/5" animate>
-            <div className="text-center mb-8">
-              <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                <ShieldCheck className="w-6 h-6 text-primary" />
-              </div>
-              <h1 className="text-2xl font-bold mb-2">Partner Doğrulaması</h1>
-              <p className="text-white/40 text-sm">Sisteme girmek için geçerli bir Partner ID gereklidir.</p>
+    <div className="w-full max-w-md">
+      {/* Progress Indicator */}
+      <div className="flex justify-between mb-8 px-2">
+        {[1, 2, 3].map((s) => (
+          <div key={s} className="flex items-center gap-2">
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+              step >= s ? "bg-primary text-white shadow-lg shadow-primary/20" : "bg-white/5 text-white/20 border border-white/5"
+            }`}>
+              {step > s ? <CheckCircle2 className="w-4 h-4" /> : s}
             </div>
+          </div>
+        ))}
+      </div>
 
-            <form onSubmit={handlePartnerVerify} className="space-y-4">
-              <Input 
-                label="Referans Partner ID" 
-                placeholder="Örn: TR-2024-X" 
-                value={partnerId}
-                onChange={(e) => setPartnerId(e.target.value)}
-                error={error}
-                required 
-              />
-              <Button type="submit" className="w-full" size="lg" loading={loading}>
-                Doğrula ve Devam Et
-              </Button>
-            </form>
-          </GlassCard>
-        </motion.div>
-      ) : (
-        <motion.div
-          key="step2"
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -20 }}
-        >
-          <GlassCard className="w-full max-w-md p-8 border-white/5" animate>
-            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-[10px] font-bold uppercase tracking-widest mb-6 w-fit mx-auto">
-              Partner ID Doğrulandı
-            </div>
-            
-            <div className="text-center mb-8">
-              <h1 className="text-2xl font-bold mb-2">Profilini Tamamla</h1>
-              <p className="text-white/40 text-sm">Dijital cephaneliğine erişmek için son adımlar.</p>
-            </div>
-
-            <form onSubmit={handleFinalSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <Input label="Ad" placeholder="Ahmet" required />
-                <Input label="Soyad" placeholder="Yılmaz" required />
-              </div>
-              <Input label="Şifre" type="password" required />
-              <Input 
-                label="Davetiye Kodu (Opsiyonel)" 
-                placeholder="Örn: G-PRO-XXXX" 
-                value={inviteCode}
-                onChange={(e) => setInviteCode(e.target.value)}
-              />
-              
-              <div className="p-4 bg-white/5 rounded-xl border border-white/10 space-y-3 mt-4">
-                <label className="flex items-start gap-3 cursor-pointer group">
-                  <input type="checkbox" required className="mt-1 accent-primary" />
-                  <span className="text-[11px] text-white/50 leading-relaxed group-hover:text-white/80 transition-colors">
-                    <span className="text-primary underline">KVKK Aydınlatma Metni</span> ve <span className="text-primary underline">Kullanım Şartları</span>'nı okudum, kabul ediyorum.
-                  </span>
-                </label>
+      <AnimatePresence mode="wait">
+        {step === 1 && (
+          <motion.div
+            key="step1"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+          >
+            <GlassCard className="p-8 border-white/5" animate>
+              <div className="text-center mb-8">
+                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4 border border-primary/20">
+                  <Globe className="w-6 h-6 text-primary" />
+                </div>
+                <h1 className="text-2xl font-bold mb-2">Global Doğrulama</h1>
+                <p className="text-white/40 text-sm italic">Greenleaf Global (Office) hesabınızı doğrulayarak başlayın.</p>
               </div>
 
-              <Button type="submit" className="w-full mt-2" size="lg" loading={loading}>
-                Akademiye Giriş Yap
-              </Button>
-            </form>
-          </GlassCard>
-        </motion.div>
-      )}
-    </AnimatePresence>
+              <form onSubmit={handleGlobalVerify} className="space-y-4">
+                <Input 
+                  label="Office Kullanıcı Adı" 
+                  placeholder="Kullanıcı adınız" 
+                  value={globalLogin}
+                  onChange={(e) => setGlobalLogin(e.target.value)}
+                  required 
+                />
+                <Input 
+                  label="Office Şifresi" 
+                  type="password"
+                  placeholder="••••••••" 
+                  value={globalPassword}
+                  onChange={(e) => setGlobalPassword(e.target.value)}
+                  error={error}
+                  required 
+                />
+                <Button type="submit" className="w-full h-14 rounded-xl font-black text-xs uppercase tracking-widest" size="lg" loading={loading}>
+                  Doğrula ve Devam Et
+                </Button>
+                <p className="text-[10px] text-white/20 text-center leading-relaxed">
+                  Şifreniz sadece doğrulama için kullanılır ve asla kaydedilmez.
+                </p>
+              </form>
+            </GlassCard>
+          </motion.div>
+        )}
+
+        {step === 2 && (
+          <motion.div
+            key="step2"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+          >
+            <GlassCard className="p-8 border-white/5" animate>
+              <div className="text-center mb-8">
+                <div className="w-12 h-12 rounded-2xl bg-green-500/10 flex items-center justify-center mx-auto mb-4 border border-green-500/20">
+                  <UserPlus className="w-6 h-6 text-green-400" />
+                </div>
+                <h1 className="text-2xl font-bold mb-2">Profilini Oluştur</h1>
+                <p className="text-white/40 text-sm">Akademi kimliğinizi tanımlayın.</p>
+              </div>
+
+              <form onSubmit={handleProfileSubmit} className="space-y-4">
+                <div className="p-4 bg-primary/5 rounded-2xl border border-primary/10 mb-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">Partner ID (Atandı)</p>
+                    <p className="text-lg font-black text-white">{mockId}</p>
+                  </div>
+                  <ShieldCheck className="w-8 h-8 text-primary opacity-40" />
+                </div>
+
+                <Input 
+                  label="E-Posta" 
+                  type="email"
+                  placeholder="ahmet@example.com" 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required 
+                />
+                <Input 
+                  label="Akademi Kullanıcı Adı" 
+                  placeholder="ahmet_yılmaz" 
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required 
+                />
+                
+                <Button type="submit" className="w-full h-14 rounded-xl font-black text-xs uppercase tracking-widest" size="lg">
+                  Son Adıma Geç
+                </Button>
+              </form>
+            </GlassCard>
+          </motion.div>
+        )}
+
+        {step === 3 && (
+          <motion.div
+            key="step3"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+          >
+            <GlassCard className="p-8 border-white/5" animate>
+              <div className="text-center mb-8">
+                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4 border border-primary/20">
+                  <Key className="w-6 h-6 text-primary" />
+                </div>
+                <h1 className="text-2xl font-bold mb-2">Şifre Belirle</h1>
+                <p className="text-white/40 text-sm">Akademi platformu için giriş şifrenizi oluşturun.</p>
+              </div>
+
+              <form onSubmit={handleFinalSubmit} className="space-y-6">
+                <Input 
+                  label="Yeni Şifre" 
+                  type="password"
+                  placeholder="••••••••" 
+                  value={academyPassword}
+                  onChange={(e) => setAcademyPassword(e.target.value)}
+                  required 
+                />
+                
+                <div className="p-4 bg-white/5 rounded-xl border border-white/10 space-y-3">
+                  <label className="flex items-start gap-3 cursor-pointer group">
+                    <input type="checkbox" required className="mt-1 accent-primary" />
+                    <span className="text-[11px] text-white/50 leading-relaxed group-hover:text-white/80 transition-colors">
+                      <span className="text-primary underline">KVKK Aydınlatma Metni</span> ve Kullanım Şartları'nı okudum, kabul ediyorum.
+                    </span>
+                  </label>
+                </div>
+
+                <Button type="submit" className="w-full h-14 rounded-xl font-black text-xs uppercase tracking-widest" size="lg" loading={loading}>
+                  Kaydı Tamamla ve Giriş Yap
+                </Button>
+              </form>
+            </GlassCard>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
