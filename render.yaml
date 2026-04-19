@@ -9,7 +9,7 @@ services:
     rootDir: backend
     buildCommand: pip install -r requirements.txt && alembic upgrade head
     startCommand: uvicorn src.app:app --host 0.0.0.0 --port 10000
-    plan: professional
+    plan: free
     envVars:
       - key: APP_ENV
         value: production
@@ -42,20 +42,20 @@ services:
     rootDir: frontend
     buildCommand: npm ci && npm run build
     startCommand: npm start
-    plan: professional
+    plan: free
     envVars:
       - key: NEXT_PUBLIC_BACKEND_URL
         value: https://greenleaf-backend.onrender.com
 
-  # --- DATABASE ---
-  - type: postgres
-    name: greenleaf-postgres
-    databaseName: greenleaf_db
-    databaseUser: greenleaf
-    plan: professional
-
   # --- REDIS ---
   - type: redis
     name: greenleaf-redis
-    plan: starter
+    plan: free
     maxmemoryPolicy: allkeys-lru
+
+databases:
+  # --- DATABASE ---
+  - name: greenleaf-postgres
+    databaseName: greenleaf_db
+    user: greenleaf
+    plan: free
