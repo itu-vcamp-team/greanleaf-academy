@@ -1,8 +1,11 @@
+from typing import Union
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
 from src.config import get_settings
 
 settings = get_settings()
+
+PrimaryKeyType = Union[int, str]
 
 engine = create_async_engine(
     settings.DATABASE_URL,

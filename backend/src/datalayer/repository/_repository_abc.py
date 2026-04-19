@@ -1,11 +1,11 @@
 from abc import ABC, abstractmethod
-from typing import Generic, TypeVar, List, Optional, Union
+from typing import Generic, TypeVar, List, Optional
+from src.datalayer.database import PrimaryKeyType
 
 T = TypeVar('T')
-PrimaryKeyType = Union[int, str]
 
 
-class RepositoryABC(ABC, Generic[T]):
+class ISyncRepository(ABC, Generic[T]):
     """Abstract base repository defining the synchronous interface"""
     
     @abstractmethod
@@ -59,8 +59,8 @@ class RepositoryABC(ABC, Generic[T]):
         pass
 
 
-class AsyncRepositoryABC(ABC, Generic[T]):
-    """Abstract base repository defining the asynchronous interface"""
+class IRepository(ABC, Generic[T]):
+    """Abstract base repository defining the asynchronous interface (Primary)"""
     
     @abstractmethod
     async def get_by_id(self, id: PrimaryKeyType) -> Optional[T]:
@@ -111,4 +111,3 @@ class AsyncRepositoryABC(ABC, Generic[T]):
     async def count(self, **filters) -> int:
         """Count entities with optional filters"""
         pass
-

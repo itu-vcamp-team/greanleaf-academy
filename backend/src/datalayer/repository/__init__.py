@@ -1,4 +1,4 @@
-from ._repository_abc import IRepository
+from ._repository_abc import IRepository, ISyncRepository
 from ._base_repository import AsyncBaseRepository
 from ._tenant_base_repository import AsyncTenantBaseRepository
 from .tenant_repository import TenantRepository
@@ -15,6 +15,7 @@ from .waitlist_repository import WaitlistRepository
 
 __all__ = [
     "IRepository",
+    "ISyncRepository",
     "AsyncBaseRepository",
     "AsyncTenantBaseRepository",
     "TenantRepository",
