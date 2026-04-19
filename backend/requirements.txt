@@ -112,7 +112,7 @@ packaging==26.1
     #   wheel
 passlib[bcrypt]==1.7.4
     # via -r requirements.in
-pillow==10.2.0
+pillow==12.2.0
     # via -r requirements.in
 pip-tools==7.5.3
     # via -r requirements.in
@@ -161,6 +161,8 @@ redis==5.0.8
 requests==2.33.1
     # via resend
 resend==2.3.0
+    # via -r requirements.in
+ruff==0.15.11
     # via -r requirements.in
 six==1.17.0
     # via python-dateutil

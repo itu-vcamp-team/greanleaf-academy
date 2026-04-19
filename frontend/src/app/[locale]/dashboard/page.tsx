@@ -11,6 +11,7 @@ import {
 import { Navbar } from "@/components/ui/Navbar";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
+import Link from "next/link";
 import MyProgressStats from "@/components/academy/MyProgressStats";
 import ReferenceCodeGenerator from "@/components/academy/ReferenceCodeGenerator";
 import ChildDetailModal from "@/components/academy/ChildDetailModal";
@@ -112,11 +113,11 @@ export default function DashboardPage({ params }: PageProps) {
 
           {isGuest && (
             <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
-              <Button asChild className="rounded-2xl px-8 py-6 gap-3 shadow-xl shadow-primary/20 bg-primary hover:bg-primary/90 text-white font-black group transition-all">
-                <a href="/auth/register">
+              <Link href="/auth/register">
+                <Button className="rounded-2xl px-8 py-6 gap-3 shadow-xl shadow-primary/20 bg-primary hover:bg-primary/90 text-white font-black group transition-all">
                     Partnerliğe Geçiş Yap <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </a>
-              </Button>
+                </Button>
+              </Link>
             </motion.div>
           )}
         </header>
@@ -236,9 +237,11 @@ export default function DashboardPage({ params }: PageProps) {
                     <p className="text-white/80 text-xs leading-relaxed">
                       Partnerliğe geçerek ekibini kurmaya başla, adaylarının gelişimini takip et ve tüm kaynaklara eriş.
                     </p>
-                    <Button variant="secondary" asChild className="w-full font-black text-primary">
-                      <a href="/auth/register">PARTNER OL</a>
-                    </Button>
+                    <Link href="/auth/register">
+                      <Button variant="secondary" className="w-full font-black text-primary">
+                        PARTNER OL
+                      </Button>
+                    </Link>
                   </div>
                   <div className="absolute -bottom-12 -right-12 w-32 h-32 bg-white/10 rounded-full blur-2xl" />
                </GlassCard>

@@ -14,9 +14,11 @@ export function GlassCard({ children, className, animate = false }: GlassCardPro
   
   return (
     <Component
-      initial={animate ? { opacity: 0, y: 20 } : undefined}
-      whileInView={animate ? { opacity: 1, y: 0 } : undefined}
-      viewport={{ once: true }}
+      {...(animate ? {
+        initial: { opacity: 0, y: 20 },
+        whileInView: { opacity: 1, y: 0 },
+        viewport: { once: true }
+      } : {})}
       className={cn(
         "glass p-6 rounded-2xl transition-all duration-300 hover:border-foreground/10",
         className

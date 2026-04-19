@@ -29,7 +29,7 @@ redis
 resend
 
 # Image processing
-Pillow
+Pillow>=10.4.0
 
 # HTTP Client
 aiohttp

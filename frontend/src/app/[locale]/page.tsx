@@ -19,7 +19,7 @@ export default function Home({ params }: PageProps) {
   const { locale } = React.use(params);
   const t = useTranslations();
   const { role } = useUserRole();
-  const { tenant } = useTenant();
+  const { activeTenant } = useTenant();
   const [timeLeft, setTimeLeft] = useState({ hours: 14, minutes: 24, seconds: 45 });
 
   useEffect(() => {
