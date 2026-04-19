@@ -96,3 +96,10 @@ Masterclass 1 → Kilitsiz (herkes girebilir)
 
 ## 📝 Implementation Summary (2026-04-19)
 Kullanıcının sağladığı gerçek YouTube linkleri (Shorts1 ve Masterclass1) dökümana işlendi. Shorts 2 ve 3 için görsel linkler yer tutucu olarak kullanıldı. Metadata başlıkları ve açıklamaları onaylandığı şekilde dolduruldu. Bu veriler Akademi API geliştirmesinde test verisi olarak kullanılacaktır.
+
+
+shorts1 i ekledim "https://youtube.com/shorts/hJTW3WMxAhc" 
+
+Masterclass ekledim "https://youtu.be/A8sze3bezaM" 
+
+shorts2 ve shorts3 ün açıklamaları kullan ama shorts1 in url olsun sıkıntı yok.

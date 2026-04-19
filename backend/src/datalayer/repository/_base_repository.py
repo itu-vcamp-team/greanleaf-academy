@@ -1,7 +1,9 @@
+from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Generic, TypeVar, List, Optional, Union, Any, Dict
 from contextlib import asynccontextmanager, contextmanager
 import asyncio
+import uuid
 from datetime import datetime
 
 # SQLAlchemy imports
@@ -256,6 +258,8 @@ class RepositoryFactory:
         return BaseRepository(self.session, model_class)
 
 
+# Circular import handle: 
+# Moved inside the class/method or using future annotations.
 from ._tenant_base_repository import AsyncTenantBaseRepository
 
 class AsyncRepositoryFactory:

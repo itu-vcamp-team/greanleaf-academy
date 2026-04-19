@@ -52,7 +52,7 @@ Referans: [`roadmap/overview.md`](../roadmap/overview.md)
 
 | # | Görev | Durum | Detay |
 |---|-------|-------|-------|
-| 6 | Akademi API: node/kilit sistemi, ILIKE search, guest preview | ⬜ Bekliyor | [`task6_academy_api.md`](tasks_claude/task6_academy_api.md) |
+| 6 | Akademi API: node/kilit sistemi, ILIKE search, guest preview | ✅ Tamamlandı | [Ayrıntılar](tasks_claude/task6_academy_api.md) - Kilit sistemi, Rol bazlı erişim ve Admin CRUD tamamlandı. |
 | 7 | İlerleme takibi: YouTube IFrame, manuel tamamlama, favoriler | ⬜ Bekliyor | [`task7_progress_tracking.md`](tasks_claude/task7_progress_tracking.md) |
 | 8 | Takvim API: etkinlik CRUD, .ics, WebP görsel, toplu bildirim | ⬜ Bekliyor | [`task8_calendar_api.md`](tasks_claude/task8_calendar_api.md) |
 | 10 | Akademi UI: Shorts 9:16 player, Masterclass, breadcrumb, arama | ⬜ Bekliyor | [`task10_reels_player_ui.md`](tasks_claude/task10_reels_player_ui.md) |
