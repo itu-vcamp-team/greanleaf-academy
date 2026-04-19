@@ -5,6 +5,9 @@ from .otp_service import OTPService
 from .greenleaf_global_service import GreenleafGlobalService
 from .session_service import SessionService
 from .mailing_service import MailingService
+from .progress_service import ProgressService
+from .event_service import EventService
+from .image_service import ImageService
 
 __all__ = [
     "PasswordService",
@@ -13,5 +16,8 @@ __all__ = [
     "OTPService",
     "GreenleafGlobalService",
     "SessionService",
-    "MailingService"
+    "MailingService",
+    "ProgressService",
+    "EventService",
+    "ImageService"
 ]

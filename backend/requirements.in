@@ -41,3 +41,5 @@ celery
 pytest
 pytest-asyncio
 httpx
+aiosqlite
+python-multipart

@@ -14,6 +14,7 @@ from src.routes.admin_maintenance import router as admin_maintenance_router
 from src.routes.academy import router as academy_router
 from src.routes.progress import router as progress_router
 from src.routes.favorites import router as favorites_router
+from src.routes.events import router as events_router
 
 settings = get_settings()
 
@@ -55,6 +56,7 @@ app.include_router(auth_router, prefix="/api")
 app.include_router(academy_router, prefix="/api")
 app.include_router(progress_router, prefix="/api")
 app.include_router(favorites_router, prefix="/api")
+app.include_router(events_router, prefix="/api")
 
 # Admin & Maintenance Routes
 app.include_router(admin_maintenance_router, prefix="/api")

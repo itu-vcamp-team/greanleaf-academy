@@ -521,4 +521,12 @@ def _sanitize_event(event: Event, current_user: User) -> dict:
 >
 > **`notify_partners` neden query param?** Admin bazen sadece etkinliği yayınlamak, bazen yayınlayıp bildirmek isteyebilir. Bu parametre seçim sunar.
 >
-> **Toplu mail background task neden?** 100+ partnere mail göndermek saniyeler alabilir. `BackgroundTasks` ile bu işlem response'u bekletmeden arka planda çalışır.
+---
+
+## Implementation Summary (2026-04-19)
+
+- **Görsel Optimizasyonu:** `ImageService` hayata geçirildi. Pillow entegrasyonu ile tüm yüklenen görseller WebP formatına dönüştürülüp `/var/data/uploads` (Render Persistent Disk) altında saklanmaya başlandı.
+- **Takvim Entegrasyonu:** `ICalGenerator` ile RFC 5545 uyumlu etkinlik dosyaları üretilerek "Takvime Ekle" desteği sağlandı.
+- **Mailing Upgrades:** `MailingService` üzerindeki etkinlik duyurusu ve takvim davetiyesi mail şablonları marka kimliğine uygun premium HTML tasarımlarla güncellendi.
+- **Backend Katmanı:** `EventRepository` ve `EventService` ile tenant bazlı izolasyon ve rol bazlı (Admin/Partner/Guest) veri sanitizasyonu hayata geçirildi.
+- **API Rotaları:** `/api/events` uçları üzerinden CRUD, takvim görünümü ve toplu bildirim (broadcast) özellikleri entegre edildi.
