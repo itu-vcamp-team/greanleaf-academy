@@ -13,9 +13,9 @@
 6. **Aktivasyon**: Kullanıcı maildeki kodla giriş yapar.
 
 ## 2. Akademi İlerleme Akışı
-1. **Video Oynatma**: YouTube embed üzerinden izlenen videoların ilerlemesi (mümkünse API ile, değilse manuel status değişikliği ile) takip edilir.
-2. **İlerleme Güncellemesi**: Backend `UserProgress` tablosunu günceller. "Kaldığın yerden devam et" özelliği için son izleme noktası kaydedilir.
-3. **Kilit Açma Mantığı**: Bir videonun tamamlanması, bir sonraki `Reels` veya ilgili `Masterclass` içeriğinin kilidini açar.
+1. **Video Oynatma**: YouTube embed üzerinden izlenen videoların ilerlemesi her 15 saniyede bir backend'e gönderilir.
+2. **İlerleme Güncellemesi**: Backend `UserProgress` tablosunu günceller. İzleme yüzdesi **%85** eşiğine ulaştığında içerik otomatik olarak "completed" olarak işaretlenir.
+3. **Kilit Açma Mantığı**: İçeriğin otomatik tamamlanması, bir sonraki `Reels` veya ilgili `Masterclass` içeriğinin kilidini anında açar.
 
 ## 3. Aday Yönetimi ve Referans Sistemi
 1. **Referans Kodu Oluşturma**: Adminler, yeni partner adayları için tek seferlik kullanılabilir referans kodları oluşturur.

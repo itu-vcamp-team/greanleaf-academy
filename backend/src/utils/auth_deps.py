@@ -85,3 +85,13 @@ async def get_current_superadmin(current_user: User = Depends(get_current_user))
             detail="Bu işlem için üst düzey yönetici yetkisi gereklidir."
         )
     return current_user
+
+
+async def get_current_partner(current_user: User = Depends(get_current_user)) -> User:
+    """Shortcut to require PARTNER role or higher (not GUEST)."""
+    if current_user.role == UserRole.GUEST:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="İçerik ilerlemesini kaydetmek için partner girişi yapmalısınız."
+        )
+    return current_user

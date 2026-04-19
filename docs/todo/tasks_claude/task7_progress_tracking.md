@@ -12,20 +12,18 @@ Kullanıcının akademi içeriklerindeki ilerlemesini takip eden backend endpoin
 ## 🧠 İlerleme Mantığı
 
 ```
-İlerleme iki kaynaktan güncellenir:
+İlerleme tek bir ana kaynaktan (YouTube IFrame API) beslenir:
 
-1. YouTube IFrame API (otomatik):
+1. YouTube IFrame API (Otomatik):
    → Video oynatılırken her 15 saniyede bir frontend backend'e
      "completion_percentage" ve "last_position_seconds" gönderir.
-   → Bu BİTİRME SAYILMAZ, sadece "kaldığın yerden devam et" için.
-
-2. Manuel Tamamlama (partner tarafından):
-   → Partner "Tamamlandı Olarak İşaretle" butonuna basar.
-   → status = "completed", completed_at = şimdiki zaman
+   → İlerleme yüzdesi %85 barajını geçtiği anda:
+     - status = "completed"
+     - completed_at = şimdiki zaman
    → Bu aksiyonla prerequisite sistemi tetiklenir (bir sonraki içerik açılır).
 
-Dikkat: Kullanıcı videoyu ileri sarabilir, bu engellenmez.
-Tamamlanma butonu kullanıcının beyanına dayanır.
+Dikkat: Kullanıcı videoyu ileri sarabilir, bu engellenmez. 
+İzleme yüzdesi kullanıcının o anki pozisyonuna (currentTime / duration) dayanır.
 ```
 
 ---
@@ -83,16 +81,22 @@ class ProgressRepository:
             progress = UserProgress(
                 user_id=self.user_id,
                 content_id=content_id,
-                status="in_progress",
+                status="completed" if completion_percentage >= 85.0 else "in_progress",
                 completion_percentage=completion_percentage,
                 last_position_seconds=last_position_seconds,
                 last_watched_at=datetime.now(timezone.utc),
+                completed_at=datetime.now(timezone.utc) if completion_percentage >= 85.0 else None
             )
             self.session.add(progress)
         else:
-            # Mevcut yüzdeden daha yüksekse güncelle (ileri sarma durumunu engelle)
+            # Mevcut yüzdeden daha yüksekse güncelle
             if completion_percentage > progress.completion_percentage:
                 progress.completion_percentage = completion_percentage
+                # Otomatik Tamamlama Kontrolü (%85)
+                if completion_percentage >= 85.0 and progress.status != "completed":
+                    progress.status = "completed"
+                    progress.completed_at = datetime.now(timezone.utc)
+            
             progress.last_position_seconds = last_position_seconds
             progress.last_watched_at = datetime.now(timezone.utc)
             if progress.status == "not_started":
@@ -101,41 +105,8 @@ class ProgressRepository:
         await self.session.flush()
         return progress
 
-    async def mark_as_completed(self, content_id: uuid.UUID) -> UserProgress:
-        """
-        Partner "Tamamlandı" butonuna bastığında çağrılır.
-        Status'ü "completed" yapar ve completed_at'i set eder.
-        """
-        progress = await self.get_progress(content_id)
-
-        if not progress:
-            progress = UserProgress(
-                user_id=self.user_id,
-                content_id=content_id,
-                status="completed",
-                completion_percentage=100.0,
-                completed_at=datetime.now(timezone.utc),
-                last_watched_at=datetime.now(timezone.utc),
-            )
-            self.session.add(progress)
-        else:
-            progress.status = "completed"
-            progress.completion_percentage = 100.0
-            progress.completed_at = datetime.now(timezone.utc)
-
-        await self.session.flush()
-        return progress
-
-    async def mark_as_uncompleted(self, content_id: uuid.UUID) -> Optional[UserProgress]:
-        """
-        Partner yanlışlıkla tamamlandı işaretlediyse geri alabilir.
-        """
-        progress = await self.get_progress(content_id)
-        if progress:
-            progress.status = "in_progress"
-            progress.completion_percentage = min(progress.completion_percentage, 90.0)
-            progress.completed_at = None
-        return progress
+    # mark_as_completed ve mark_as_uncompleted fonksiyonları
+    # otomatik mantığa geçildiği için kaldırıldı veya nadir durumlar için tutulabilir.
 
     async def get_overall_completion_percentage(
         self,
@@ -227,33 +198,10 @@ async def update_watch_progress(
     return {"status": progress.status, "percentage": progress.completion_percentage}
 
 
-@router.post("/complete")
-async def mark_complete(
-    data: MarkCompleteSchema,
-    db: AsyncSession = Depends(get_db_session),
-    current_user: User = Depends(get_current_partner),
-):
-    """
-    Partner "Tamamlandı Olarak İşaretle" butonuna bastığında çağrılır.
-    status = "completed" olur; sonraki içeriğin kilidi açılır.
-    """
-    repo = ProgressRepository(db, current_user.id)
-    progress = await repo.mark_as_completed(data.content_id)
-    return {"status": progress.status, "completed_at": progress.completed_at}
+    return {"status": progress.status, "percentage": progress.completion_percentage}
 
 
-@router.post("/uncomplete")
-async def mark_uncomplete(
-    data: MarkCompleteSchema,
-    db: AsyncSession = Depends(get_db_session),
-    current_user: User = Depends(get_current_partner),
-):
-    """Partner yanlışlıkla tamamlandı işaretlediyse geri alabilir."""
-    repo = ProgressRepository(db, current_user.id)
-    progress = await repo.mark_as_uncompleted(data.content_id)
-    if not progress:
-        raise HTTPException(status_code=404, detail="İlerleme kaydı bulunamadı.")
-    return {"status": progress.status}
+# /complete ve /uncomplete endpoint'leri otomatik mantık sebebiyle kaldırıldı.
 
 
 @router.get("/my-stats")
@@ -486,9 +434,8 @@ export default function YouTubePlayer({
 
 ## ✅ Kabul Kriterleri
 
-- [ ] `POST /progress/watch` video oynarken her 15 sn çağrılıyor ve `completion_percentage` güncelleniyor
-- [ ] `POST /progress/complete` ile `status = "completed"` oluyor
-- [ ] Tamamlanan içeriğin prerequisite'i olan bir sonraki içeriğin kilidi açılıyor
+- [ ] `POST /progress/watch` gönderilen yüzde %85'i geçtiği anda `status = "completed"` oluyor
+- [ ] %85 barajı geçildikten sonra bir sonraki (prerequisite) içeriğin kilidi açılıyor
 - [ ] `GET /progress/my-stats` Shorts ve Masterclass için ayrı ayrı tamamlama yüzdesi döndürüyor
 - [ ] Akademi sayfasına geri dönüldüğünde video `initialPosition` saniyesinden devam ediyor
 - [ ] `POST /favorites` ve `DELETE /favorites/{id}` çalışıyor
@@ -500,8 +447,18 @@ export default function YouTubePlayer({
 
 > **Neden sürekli backend'e gönderiyoruz?** "Kaldığın yerden devam et" özelliği için son izleme pozisyonunu (`last_position_seconds`) kaydetmemiz gerekiyor. Her 15 saniyede bir göndererek bu bilgiyi güncel tutuyoruz.
 >
-> **Neden YouTube API'yı kullanıyoruz ama tamamlama için değil?** YouTube API videoyu gerçekten izleyip izlemediğini kesin söyleyemez; kullanıcı ileri sarabilir. Bu yüzden "tamamlandı" butonu koyduk – kullanıcı kendi sorumluluğundadır.
+> **Bitirme kontrolü nasıl yapılıyor?** YouTube IFrame API'dan gelen `currentTime / duration` oranı %85'i geçtiği anda backend otomatik olarak içeriği bitirir. Bu, kullanıcı beyanı yerine gerçek izleme verisine dayanır.
 >
 > **`window.YT` guard neden?** `useEffect` birden fazla component mount/unmount döngüsünde çalışabilir. `window.YT` zaten yüklüyse tekrar `<script>` ekleme.
 >
 > **Favori endpoint'lerinde tenant kontrolü neden yok?** Favoriler `user_id` bazlı; kullanıcı sadece kendi favorilerini görebilir. Tenant izolasyonu içerik seviyesinde sağlanıyor (Task 6).
+
+---
+
+## Implementation Summary (2026-04-19)
+
+- **Otomatik Tamamlama (%85 Barajı):** Manuel tamamlama mantığı tamamen kaldırıldı. YouTube IFrame API üzerinden gelen izleme verisi %85 eşiğine ulaştığında backend tarafından otomatik olarak `completed` statüsü atanması ve prerequisite kilitlerinin açılması sağlandı.
+- **Backend Katmanı:** `ProgressRepository` (veritabanı işlemleri), `FavoriteRepository` (favori yönetimi) ve `ProgressService` (iş mantığı ve baraj kontrolü) sınıfları asenkron ve OO prensipleriyle implemente edildi.
+- **API Rotaları:** `/api/progress/watch`, `/api/progress/my-stats` ve `/api/favorites` (GET/POST/DELETE) uçları multi-tenant uyumlu olarak eklendi.
+- **Frontend Bileşeni:** `YouTubePlayer.tsx` bileşeni YouTube IFrame API entegrasyonu, 15sn periyodik progres senkronizasyonu ve `initialPosition` (kaldığın yerden devam et) desteğiyle oluşturuldu.
+- **Dökümantasyon Senkronizasyonu:** Task 7, Task 10, Task 5 (Human) ve tüm mimari dökümanlar (%85 barajı kararına göre) tutarlı hale getirildi.

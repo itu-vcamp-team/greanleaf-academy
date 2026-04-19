@@ -108,7 +108,7 @@ Test için ihtiyaç duyulacaklar:
 - [ ] **4.2** Kilitli içerik testi
   - İlk içerik (kilitsiz) → Video oynatılıyor ✅
   - İkinci içerik (kilitli) → "Kilitli" overlay görünüyor, video yok ✅
-  - İlk içerigi "Tamamlandı Olarak İşaretle" → ✅ Yeşil "Tamamlandı" görünüyor
+  - İlk içeriği izle (%85'e kadar) → ✅ Otomatik olarak "Tamamlandı" işaretleniyor mu?
   - Akademi listesine geri dön → 2. içeriğin kilidi açıldı mı? ✅
 
 - [ ] **4.3** Video izleme sürekliliği (Kaldığın yerden devam)
@@ -154,7 +154,7 @@ Test için ihtiyaç duyulacaklar:
 
 - [ ] **6.2** Shorts player mobil testi
   - Dikey (9:16) video doğru oranda görünüyor mu? ✅
-  - Tüm butonlar (Tamamlandı, Kaynak Linki) düzgün sıralı mı? ✅
+  - Tüm öğeler (Tamamlandı Durumu, Kaynak Linki) düzgün sıralı mı? ✅
 
 ---
 
@@ -179,9 +179,9 @@ Test sırasında bir sorunla karşılaşırsan şu formatta not al ve geliştiri
 ```
 HATA:
   Sayfa/Ekran  : /academy/shorts/[id]
-  Yapılan İşlem: Tamamlandı butonuna basıldı
-  Beklenen     : Düğme yeşile döndü ve "Tamamlandı" yazısı çıktı
-  Gerçekleşen  : Düğme beyaz kaldı, sayfa yenilendi
+  Yapılan İşlem: Video %85 barajına kadar izlendi
+  Beklenen     : Sayfadaki durum göstergesi otomatik olarak "Tamamlandı ✓"ye döndü
+  Gerçekleşen  : Gösterge "İzleniyor..." olarak kaldı
   Cihaz/Tarayıcı: iPhone 14 / Safari 17
   Ekran Görüntüsü: (varsa ekle)
 ```
@@ -211,7 +211,7 @@ Tüm senaryolar tamamlandıktan sonra:
 
 > **Test e-postaları için:** Gmail, Outlook veya geçici mail servisleri kullanabilirsin. Spam klasörünü de kontrol et.
 >
-> **"Kaldığın yerden devam" testi:** Video izleme progress'i her 15 saniyede bir backend'e kaydedilir. Test için en az 30 saniye izle, sayfayı kapat, tekrar aç.
+> **"Kaldığın yerden devam" ve Otomatik Tamamlama testi:** Video izleme progress'i her 15 saniyede bir backend'e kaydedilir. Test için en az %85'e gelene kadar izle, kilit açılma mekanizmasını gözlemle.
 >
 > **Rate limit testi:** 6 yanlış giriş denemesinin bloke oluşturduğunu test et. Gerçek kullanıcıları test sırasında etkilememek için test hesabı kullan.
 >

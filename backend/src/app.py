@@ -12,6 +12,8 @@ from src.middleware.security_headers_middleware import SecurityHeadersMiddleware
 from src.routes.auth import router as auth_router
 from src.routes.admin_maintenance import router as admin_maintenance_router
 from src.routes.academy import router as academy_router
+from src.routes.progress import router as progress_router
+from src.routes.favorites import router as favorites_router
 
 settings = get_settings()
 
@@ -49,8 +51,10 @@ app.add_middleware(TenantMiddleware)
 # Public & Auth Routes
 app.include_router(auth_router, prefix="/api")
 
-# Academy Routes
+# Academy & Interaction Routes
 app.include_router(academy_router, prefix="/api")
+app.include_router(progress_router, prefix="/api")
+app.include_router(favorites_router, prefix="/api")
 
 # Admin & Maintenance Routes
 app.include_router(admin_maintenance_router, prefix="/api")

@@ -171,9 +171,9 @@ export default function ContentCard({
           </span>
         )}
 
-        {/* Tamamlandı rozeti */}
+        {/* Tamamlandı rozeti (Otomatik) */}
         {progress?.status === "completed" && (
-          <div className="absolute top-2 right-2 bg-green-500 rounded-full p-1">
+          <div className="absolute top-2 right-2 bg-green-500 rounded-full p-1 shadow-sm">
             <CheckCircle size={16} className="text-white" />
           </div>
         )}
@@ -258,10 +258,7 @@ export default function ShortsPlayerPage() {
       .catch(() => setLoading(false));
   }, [id]);
 
-  const handleMarkComplete = async () => {
-    await apiClient.post("/progress/complete", { content_id: id });
-    setIsCompleted(true);
-  };
+  // Manuel tamamlama butonu kaldırıldı (Otomatik %85 mantığına geçildi)
 
   const handleAddFavorite = async () => {
     await apiClient.post("/favorites", { content_id: id });
@@ -319,20 +316,18 @@ export default function ShortsPlayerPage() {
           </a>
         )}
 
-        {/* Tamamlandı butonu */}
-        <button
-          onClick={handleMarkComplete}
-          disabled={isCompleted}
+        {/* Tamamlandı Durumu (Otomatik %85 ile tetiklenir) */}
+        <div
           className={`flex items-center justify-center gap-2 w-full py-3 px-4
                      rounded-xl font-medium transition-colors ${
             isCompleted
-              ? "bg-green-100 text-green-700 cursor-default"
-              : "bg-primary text-white hover:bg-primary/90"
+              ? "bg-green-100 text-green-700 shadow-inner"
+              : "bg-gray-100 text-gray-400"
           }`}
         >
           <CheckCircle size={16} />
-          {isCompleted ? "Tamamlandı ✓" : "Tamamlandı Olarak İşaretle"}
-        </button>
+          {isCompleted ? "Tamamlandı ✓" : "İzleniyor..."}
+        </div>
 
         {/* Favori butonu */}
         <button
@@ -571,7 +566,7 @@ function StatCard({ label, completed, total, percentage, color }: any) {
 - [ ] Masterclass player 16:9 geniş ekran formatta görünüyor
 - [ ] Breadcrumb `Akademi / Shorts / [Başlık]` şeklinde görünüyor
 - [ ] Google Drive kaynak linki varsa "Kaynak Dosyasını Görüntüle" butonu görünüyor
-- [ ] "Tamamlandı Olarak İşaretle" butonu basılınca yeşile dönüyor
+- [ ] İzleme %85'i geçtiğinde "İzleniyor..." yazısı otomatik olarak "Tamamlandı ✓"ye dönüyor
 - [ ] Arama barı 2+ karakter sonrası sonuçları dropdown'da listeli gösteriyor
 - [ ] İlerleme yüzdesi barı `MyProgressStats` bileşeninde doğru gösteriliyor
 - [ ] Skeleton iskelet yüklenirken gösteriliyor
