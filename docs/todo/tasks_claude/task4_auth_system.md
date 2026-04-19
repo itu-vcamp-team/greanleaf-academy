@@ -647,3 +647,28 @@ class ResetPasswordSchema(BaseModel):
 > **2 adımlı geçici kayıt neden Redis'te?** Kullanıcı Adım 1'i doldurup Adım 2'yi yarım bırakabilir. DB'ye yarım kayıt yazarsak veri kirlenir. Redis'te saklayarak sadece tamamlananlar DB'ye yazılır (TTL 30 dk olabilir).
 >
 > **Aylık 2FA mantığı:** `User.last_2fa_at` alanı, son 2FA zamanını tutar. Giriş yapılırken `last_2fa_at` + 30 gün < şimdiki zaman ise e-posta kodu istenir.
+
+---
+
+## 📝 Implementation Summary (2026-04-19)
+
+Auth Sistemi (Task 4) tüm gereksinimleri karşılayacak şekilde başarıyla implemente edildi:
+
+### 1. Güvenlik ve Şifreleme
+- **Password Service:** `bcrypt` ile şifreleme ve doğrulama.
+- **Token Service:** Access (60dk) ve Refresh (30gün) token üretimi. `jti` ile session takibi.
+- **Dependencies:** `get_current_user` ve `require_roles` ile RBAC (Rol Bazlı Erişim Kontrolü).
+
+### 2. Kayıt Akışı (3 Adım)
+- **Step 1:** Kullanıcı bilgileri alınır, Redis'te geçici olarak saklanır.
+- **Step 2:** Greenleaf Global API üzerinden async doğrulama yapılır.
+- **Step 3:** Referans kodu kontrol edilir; `development` ortamında otomatik onay (auto-approve) mantığı eklendi.
+
+### 3. Login ve 2FA (Kimlik Doğrulama)
+- **CAPTCHA:** Login öncesinde Redis tabanlı dinamik sum captcha zorunlu kılındı.
+- **2FA:** `last_2fa_at` üzerinden 30 günlük periyot kontrolü yapıldı. İlk girişte veya 30 gün sonunda e-posta OTP zorunlu.
+- **Session & Kick-out:** `UserSession` tablosu ile oturumlar takip edilir. Yeni giriş yapıldığında kullanıcının önceki tüm oturumları geçersiz kılınır.
+
+### 4. Doğrulama Sonuçları
+- `gaffar-dulkadir` admin hesabı ile login denendi, CAPTCHA ve 30 günlük 2FA tetiklemesi başarıyla doğrulandı.
+- Kayıt Step 1 başarılı, Redis'e geçici veri yazımı doğrulandı.

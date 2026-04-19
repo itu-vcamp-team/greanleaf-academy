@@ -13,12 +13,14 @@ alembic
 
 # Configuration
 pydantic[email]
+email-validator
 pydantic-settings
 python-dotenv
 
 # Authentication
 python-jose[cryptography]
 passlib[bcrypt]
+bcrypt
 
 # Cache & Session
 redis

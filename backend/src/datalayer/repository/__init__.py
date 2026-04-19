@@ -3,6 +3,7 @@ from ._base_repository import BaseRepository, AsyncBaseRepository, AsyncReposito
 from ._tenant_base_repository import AsyncTenantBaseRepository
 from .tenant_repository import TenantRepository
 from .user_repository import UserRepository
+from .user_session_repository import UserSessionRepository
 from .academy_repository import AcademyRepository
 
 __all__ = [
@@ -14,5 +15,6 @@ __all__ = [
     "AsyncTenantBaseRepository",
     "TenantRepository",
     "UserRepository",
+    "UserSessionRepository",
     "AcademyRepository",
 ]

@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.app_lifespan import lifespan
 from src.config import get_settings
 from src.middleware.tenant_middleware import TenantMiddleware
+from src.routes.auth import router as auth_router
 
 settings = get_settings()
 
@@ -24,6 +25,8 @@ app.add_middleware(
 )
 
 app.add_middleware(TenantMiddleware)
+
+app.include_router(auth_router, prefix="/api")
 
 # Health check endpoint
 @app.get("/health", tags=["System"])

@@ -26,7 +26,9 @@ asyncpg==0.29.0
 attrs==26.1.0
     # via aiohttp
 bcrypt==5.0.0
-    # via passlib
+    # via
+    #   -r requirements.in
+    #   passlib
 billiard==4.2.4
     # via celery
 build==1.4.3
@@ -63,7 +65,9 @@ dnspython==2.8.0
 ecdsa==0.19.2
     # via python-jose
 email-validator==2.3.0
-    # via pydantic
+    # via
+    #   -r requirements.in
+    #   pydantic
 fastapi==0.115.0
     # via -r requirements.in
 frozenlist==1.8.0

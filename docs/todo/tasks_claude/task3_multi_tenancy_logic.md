@@ -308,31 +308,6 @@ app.add_middleware(TenantMiddleware)     # sonra
 
 ---
 
-## 📄 Adım 6: Örnek Route'da Kullanım
-
-Middleware kurulduktan sonra herhangi bir route'da tenant bilgisine şöyle erişilir:
-
-```python
-from fastapi import APIRouter, Depends
-from src.utils.tenant_deps import get_current_tenant, get_tenant_id
-from src.datalayer.database import get_db_session
-
-router = APIRouter()
-
-@router.get("/test-tenant")
-async def test_tenant(
-    tenant: dict = Depends(get_current_tenant),
-    db = Depends(get_db_session),
-):
-    return {
-        "tenant_slug": tenant["slug"],
-        "tenant_name": tenant["name"],
-        "config": tenant["config"],
-    }
-```
-
----
-
 ## ✅ Kabul Kriterleri
 
 - [ ] `tr.localhost:8000/health` isteği `tenant: "tr"` bilgisini döndürüyor
@@ -344,12 +319,10 @@ async def test_tenant(
 
 ---
 
-## 📝 Junior Developer Notları
+## 📝 Implementation Summary (2026-04-19)
 
-> **Neden Redis?** Tenant bilgisi her request'te DB'den çekilirse yüksek trafikte veritabanı gereğinden fazla sorgu atar. Redis cache ile bu sorgu kaldırılır.
->
-> **`request.state` nedir?** FastAPI/Starlette'de `request.state` her request'e özgü veri taşımak için kullanılır. Middleware'de yazdığın veri, aynı request'teki tüm route handler'larda okunabilir.
->
-> **Yerel geliştirmede subdomain nasıl test edilir?** Tarayıcı `tr.localhost` adresini otomatik çözümler (çoğu OS'ta). Yoksa `/etc/hosts` dosyasına `127.0.0.1 tr.localhost` satırı ekle.
->
-> **`LIFO` middleware sırası neden önemli?** `app.add_middleware()` çağrıları ters sırada çalışır. En son eklenen middleware önce çalışır. CORS middleware'i her zaman en başta çalışmalı, TenantMiddleware ondan sonra.
+Multi-tenancy altyapısı aşağıdaki modern mimari kararlarıyla tamamlandı:
+- **Middleware:** `TenantMiddleware` ile subdomain tabanlı çözümleme ve Redis cache entegrasyonu yapıldı.
+- **Data Isolation:** `AsyncTenantBaseRepository` ile veritabanı seviyesinde otomatik `tenant_id` filtrelemesi sağlandı.
+- **Defaulting:** Geliştirme kolaylığı için subdomain olmayan isteklerde varsayılan olarak `tr` tenant'ı atandı.
+- **Verification:** `tr.localhost` ve `localhost` senaryoları doğrulandı.
