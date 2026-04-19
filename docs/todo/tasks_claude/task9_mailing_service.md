@@ -383,3 +383,23 @@ async def register_step3(
 > **Toplu mail neden batch'lere bölündü?** Resend API'nin tek seferlik gönderim limiti vardır. 50'şer kişilik gruplar güvenli bir yaklaşımdır.
 >
 > **HTML template neden inline CSS?** E-posta istemcileri (Gmail, Outlook) `<style>` etiketlerini desteklemez. Tüm CSS `style="..."` şeklinde inline olmalıdır.
+
+---
+
+
+
+## 📝 Implementation Summary (2026-04-19)
+
+Mailing Servisi (Task 9) ve projenin genel OO Refactoring'i başarıyla tamamlandı:
+
+### 1. Nesne Yönelimli Yapı
+- Tüm backend servisleri (Password, Token, OTP, Captcha, Global, Session, Mailing) **Class (Sınıf)** yapısına taşındı.
+- Bağımlılık yönetimi ve kod okunabilirliği iyileştirildi.
+
+
+## 📝 Implementation Summary (2026-04-14)
+Mailing sistemi Nesne Yönelimli (OO) mimariyle başarıyla kuruldu.
+- **Resend SDK:** sisteme entegre edildi.
+- **8 Şablon:** Kayıt aktivasyonundan takvim davetine kadar tüm temel senaryolar için HTML şablonları (inline CSS ile) hazırlandı.
+- **Background Tasks:** Mail gönderimleri kullanıcıyı bekletmeyecek şekilde asenkron hale getirildi.
+- **Hata Giderme:** `pyjwt` ve `email-validator` bağımlılıkları Docker katmanında çözüldü.

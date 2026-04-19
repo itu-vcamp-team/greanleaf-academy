@@ -549,3 +549,22 @@ Production'a almadan önce aşağıdakileri kontrol et:
 > **Render deploy hook nedir?** Render her servis için bir deploy trigger URL'si verir. Bu URL'e POST atınca manual deploy başlar. GitHub Actions bunu kullanarak Render'ın auto-detect'ini beklemeden anında deploy tetikler.
 >
 > **`allkeys-lru` Redis politikası neden?** Redis memory dolarsa en az kullanılan key'leri otomatik siler. Rate limit gibi geçici veriler için idealdir.
+
+---
+
+## 📝 Implementation Summary (2026-04-19)
+
+Task 12 kapsamında projenin güvenlik ve deployment altyapısı kurumsal standartlarda tamamlanmıştır:
+
+### 1. Güvenlik Katmanı (Middleware)
+- **RateLimitMiddleware:** Redis tabanlı, IP bazlı kısıtlama sistemi kuruldu. Auth endpoint'leri için özel kısıtlamalar uygulandı.
+- **SecurityHeadersMiddleware:** CSP, HSTS, XSS, Clickjacking korumaları aktif edildi.
+
+
+## 📝 Implementation Summary (2026-04-19)
+Güvenlik ve Deployment altyapısı Nesne Yönelimli (OO) ve modern standartlarda kuruldu.
+- **Rate Limiting:** Redis tabanlı IP kısıtlaması (Login, Register vb. için) eklendi.
+- **Security Headers:** CSP, HSTS, X-Frame-Options gibi modern başlıklar uygulandı.
+- **CleanupService (OO):** KVKK uyumlu pasif hesap ve session temizliği implemente edildi.
+- **DevOps:** GitHub Actions ve Render.yaml ile CI/CD altyapısı hazırlandı.
+- **Doğrulama:** Brute-force koruması ve güvenlik başlıklarının varlığı test edildi.

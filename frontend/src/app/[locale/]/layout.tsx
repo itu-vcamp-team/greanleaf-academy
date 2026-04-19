@@ -1,0 +1,40 @@
+import { NextIntlClientProvider } from "next-intl";
+import { getMessages } from "next-intl/server";
+import { Inter } from "next/font/google";
+import { TenantProvider } from "@/context/TenantContext";
+import { UserRoleProvider } from "@/context/UserRoleContext";
+import { notFound } from "next/navigation";
+import { routing } from "@/i18n/routing";
+
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+
+export default async function LocaleLayout({
+  children,
+  params: { locale },
+}: {
+  children: React.ReactNode;
+  params: { locale: string };
+}) {
+  // Ensure that the incoming `locale` is valid
+  if (!routing.locales.includes(locale as any)) {
+    notFound();
+  }
+
+  // Providing all messages to the client
+  // side is the easiest way to get started
+  const messages = await getMessages();
+
+  return (
+    <html lang={locale} className="dark">
+      <body className={`${inter.variable} antialiased selection:bg-primary/30`}>
+        <NextIntlClientProvider messages={messages}>
+          <TenantProvider>
+            <UserRoleProvider>
+              <main className="min-h-screen bg-background">{children}</main>
+            </UserRoleProvider>
+          </TenantProvider>
+        </NextIntlClientProvider>
+      </body>
+    </html>
+  );
+}

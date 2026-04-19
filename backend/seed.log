@@ -1,0 +1,144 @@
+2026-04-19 05:39:44,394 INFO sqlalchemy.engine.Engine select pg_catalog.version()
+2026-04-19 05:39:44,394 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-04-19 05:39:44,396 INFO sqlalchemy.engine.Engine select current_schema()
+2026-04-19 05:39:44,396 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-04-19 05:39:44,398 INFO sqlalchemy.engine.Engine show standard_conforming_strings
+2026-04-19 05:39:44,398 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-04-19 05:39:44,399 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-04-19 05:39:44,404 INFO sqlalchemy.engine.Engine SELECT tenants.slug, tenants.name, tenants.is_active, tenants.config, tenants.id, tenants.created_at, tenants.updated_at 
+FROM tenants 
+WHERE tenants.slug = $1::VARCHAR
+2026-04-19 05:39:44,404 INFO sqlalchemy.engine.Engine [generated in 0.00007s] ('tr',)
+2026-04-19 05:39:44,407 INFO sqlalchemy.engine.Engine SELECT users.tenant_id, users.role, users.username, users.email, users.password_hash, users.full_name, users.phone, users.partner_id, users.inviter_id, users.is_verified, users.is_active, users.profile_image_path, users.last_2fa_at, users.supervisor_note, users.consent_given_at, users.consent_ip, users.last_login_at, users.last_active_at, users.id, users.created_at, users.updated_at 
+FROM users 
+WHERE users.username = $1::VARCHAR
+2026-04-19 05:39:44,407 INFO sqlalchemy.engine.Engine [generated in 0.00007s] ('gaffar-dulkadir',)
+2026-04-19 05:39:44,643 INFO sqlalchemy.engine.Engine UPDATE users SET password_hash=$1::VARCHAR, updated_at=$2::TIMESTAMP WITH TIME ZONE WHERE users.id = $3::UUID
+2026-04-19 05:39:44,643 INFO sqlalchemy.engine.Engine [generated in 0.00015s] ('$2b$12$SM.uia1KrME2.yok9KM3ru9hmejGfJFklkrRFPlJ7kbLUKUsBadGa', datetime.datetime(2026, 4, 19, 2, 39, 44, 643852, tzinfo=datetime.timezone.utc), UUID('96bb1567-467a-4d7f-b62e-b4477b0a4f63'))
+2026-04-19 05:39:44,649 INFO sqlalchemy.engine.Engine SELECT academy_contents.tenant_id, academy_contents.type, academy_contents.locale, academy_contents.title, academy_contents.description, academy_contents.video_url, academy_contents.resource_link, academy_contents.resource_link_label, academy_contents."order", academy_contents.status, academy_contents.prerequisite_id, academy_contents.is_new, academy_contents.thumbnail_url, academy_contents.id, academy_contents.created_at, academy_contents.updated_at 
+FROM academy_contents 
+WHERE academy_contents.tenant_id = $1::UUID
+2026-04-19 05:39:44,649 INFO sqlalchemy.engine.Engine [generated in 0.00006s] (UUID('e37123f7-c972-4cc9-9985-9b13abe35af4'),)
+Seeding Academy Contents...
+2026-04-19 05:39:44,662 INFO sqlalchemy.engine.Engine INSERT INTO academy_contents (tenant_id, type, locale, title, description, video_url, resource_link, resource_link_label, "order", status, prerequisite_id, is_new, thumbnail_url, id, created_at, updated_at) VALUES ($1::UUID, $2::contenttype, $3::VARCHAR, $4::VARCHAR, $5::VARCHAR, $6::VARCHAR, $7::VARCHAR, $8::VARCHAR, $9::INTEGER, $10::contentstatus, $11::UUID, $12::BOOLEAN, $13::VARCHAR, $14::UUID, $15::TIMESTAMP WITH TIME ZONE, $16::TIMESTAMP WITH TIME ZONE)
+2026-04-19 05:39:44,662 INFO sqlalchemy.engine.Engine [generated in 0.00013s] (UUID('e37123f7-c972-4cc9-9985-9b13abe35af4'), 'SHORT', None, 'Greenleaf Vizyonu: Neden Buradayız?', "3 dakikada Greenleaf Akademi'nin kuruluş felsefesi.", 'https://youtube.com/shorts/hJTW3WMxAhc', None, None, 1, 'PUBLISHED', None, True, 'https://img.youtube.com/vi/hJTW3WMxAhc/hqdefault.jpg', UUID('ccc1ce11-c755-473f-b457-2915acd0930d'), datetime.datetime(2026, 4, 19, 2, 39, 44, 662066, tzinfo=datetime.timezone.utc), datetime.datetime(2026, 4, 19, 2, 39, 44, 662068, tzinfo=datetime.timezone.utc))
+2026-04-19 05:39:44,664 INFO sqlalchemy.engine.Engine ROLLBACK
+Traceback (most recent call last):
+  File "/Users/gaffar.dulkadir/Desktop/Personel Things/greenleaf-website/greenleaf-academy/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 538, in _prepare_and_execute
+    self._rows = deque(await prepared_stmt.fetch(*parameters))
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/gaffar.dulkadir/Desktop/Personel Things/greenleaf-website/greenleaf-academy/backend/venv/lib/python3.12/site-packages/asyncpg/prepared_stmt.py", line 176, in fetch
+    data = await self.__bind_execute(args, 0, timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/gaffar.dulkadir/Desktop/Personel Things/greenleaf-website/greenleaf-academy/backend/venv/lib/python3.12/site-packages/asyncpg/prepared_stmt.py", line 241, in __bind_execute
+    data, status, _ = await self.__do_execute(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/gaffar.dulkadir/Desktop/Personel Things/greenleaf-website/greenleaf-academy/backend/venv/lib/python3.12/site-packages/asyncpg/prepared_stmt.py", line 230, in __do_execute
+    return await executor(protocol)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "asyncpg/protocol/protocol.pyx", line 207, in bind_execute
+asyncpg.exceptions.NotNullViolationError: null value in column "locale" of relation "academy_contents" violates not-null constraint
+DETAIL:  Failing row contains (e37123f7-c972-4cc9-9985-9b13abe35af4, SHORT, null, Greenleaf Vizyonu: Neden Buradayız?, 3 dakikada Greenleaf Akademi'nin kuruluş felsefesi., https://youtube.com/shorts/hJTW3WMxAhc, null, null, 1, PUBLISHED, null, t, https://img.youtube.com/vi/hJTW3WMxAhc/hqdefault.jpg, ccc1ce11-c755-473f-b457-2915acd0930d, 2026-04-19 02:39:44.662066+00, 2026-04-19 02:39:44.662068+00).
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/gaffar.dulkadir/Desktop/Personel Things/greenleaf-website/greenleaf-academy/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/Users/gaffar.dulkadir/Desktop/Personel Things/greenleaf-website/greenleaf-academy/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 941, in do_execute
+    cursor.execute(statement, parameters)
+  File "/Users/gaffar.dulkadir/Desktop/Personel Things/greenleaf-website/greenleaf-academy/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 572, in execute
+    self._adapt_connection.await_(
+  File "/Users/gaffar.dulkadir/Desktop/Personel Things/greenleaf-website/greenleaf-academy/backend/venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/gaffar.dulkadir/Desktop/Personel Things/greenleaf-website/greenleaf-academy/backend/venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/Users/gaffar.dulkadir/Desktop/Personel Things/greenleaf-website/greenleaf-academy/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 550, in _prepare_and_execute
+    self._handle_exception(error)
+  File "/Users/gaffar.dulkadir/Desktop/Personel Things/greenleaf-website/greenleaf-academy/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 501, in _handle_exception
+    self._adapt_connection._handle_exception(error)
+  File "/Users/gaffar.dulkadir/Desktop/Personel Things/greenleaf-website/greenleaf-academy/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 784, in _handle_exception
+    raise translated_error from error
+sqlalchemy.dialects.postgresql.asyncpg.AsyncAdapt_asyncpg_dbapi.IntegrityError: <class 'asyncpg.exceptions.NotNullViolationError'>: null value in column "locale" of relation "academy_contents" violates not-null constraint
+DETAIL:  Failing row contains (e37123f7-c972-4cc9-9985-9b13abe35af4, SHORT, null, Greenleaf Vizyonu: Neden Buradayız?, 3 dakikada Greenleaf Akademi'nin kuruluş felsefesi., https://youtube.com/shorts/hJTW3WMxAhc, null, null, 1, PUBLISHED, null, t, https://img.youtube.com/vi/hJTW3WMxAhc/hqdefault.jpg, ccc1ce11-c755-473f-b457-2915acd0930d, 2026-04-19 02:39:44.662066+00, 2026-04-19 02:39:44.662068+00).
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/gaffar.dulkadir/Desktop/Personel Things/greenleaf-website/greenleaf-academy/backend/seed_initial_data.py", line 164, in <module>
+    asyncio.run(seed_initial_data())
+  File "/Users/gaffar.dulkadir/.pyenv/versions/3.12.11/lib/python3.12/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Users/gaffar.dulkadir/.pyenv/versions/3.12.11/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/gaffar.dulkadir/.pyenv/versions/3.12.11/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/Users/gaffar.dulkadir/Desktop/Personel Things/greenleaf-website/greenleaf-academy/backend/seed_initial_data.py", line 127, in seed_initial_data
+    await session.flush()
+  File "/Users/gaffar.dulkadir/Desktop/Personel Things/greenleaf-website/greenleaf-academy/backend/venv/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/session.py", line 800, in flush
+    await greenlet_spawn(self.sync_session.flush, objects=objects)
+  File "/Users/gaffar.dulkadir/Desktop/Personel Things/greenleaf-website/greenleaf-academy/backend/venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 203, in greenlet_spawn
+    result = context.switch(value)
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/gaffar.dulkadir/Desktop/Personel Things/greenleaf-website/greenleaf-academy/backend/venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 4352, in flush
+    self._flush(objects)
+  File "/Users/gaffar.dulkadir/Desktop/Personel Things/greenleaf-website/greenleaf-academy/backend/venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 4487, in _flush
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+  File "/Users/gaffar.dulkadir/Desktop/Personel Things/greenleaf-website/greenleaf-academy/backend/venv/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 146, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/Users/gaffar.dulkadir/Desktop/Personel Things/greenleaf-website/greenleaf-academy/backend/venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 4448, in _flush
+    flush_context.execute()
+  File "/Users/gaffar.dulkadir/Desktop/Personel Things/greenleaf-website/greenleaf-academy/backend/venv/lib/python3.12/site-packages/sqlalchemy/orm/unitofwork.py", line 466, in execute
+    rec.execute(self)
+  File "/Users/gaffar.dulkadir/Desktop/Personel Things/greenleaf-website/greenleaf-academy/backend/venv/lib/python3.12/site-packages/sqlalchemy/orm/unitofwork.py", line 642, in execute
+    util.preloaded.orm_persistence.save_obj(
+  File "/Users/gaffar.dulkadir/Desktop/Personel Things/greenleaf-website/greenleaf-academy/backend/venv/lib/python3.12/site-packages/sqlalchemy/orm/persistence.py", line 93, in save_obj
+    _emit_insert_statements(
+  File "/Users/gaffar.dulkadir/Desktop/Personel Things/greenleaf-website/greenleaf-academy/backend/venv/lib/python3.12/site-packages/sqlalchemy/orm/persistence.py", line 1233, in _emit_insert_statements
+    result = connection.execute(
+             ^^^^^^^^^^^^^^^^^^^
+  File "/Users/gaffar.dulkadir/Desktop/Personel Things/greenleaf-website/greenleaf-academy/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1418, in execute
+    return meth(
+           ^^^^^
+  File "/Users/gaffar.dulkadir/Desktop/Personel Things/greenleaf-website/greenleaf-academy/backend/venv/lib/python3.12/site-packages/sqlalchemy/sql/elements.py", line 515, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/gaffar.dulkadir/Desktop/Personel Things/greenleaf-website/greenleaf-academy/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1640, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/gaffar.dulkadir/Desktop/Personel Things/greenleaf-website/greenleaf-academy/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/gaffar.dulkadir/Desktop/Personel Things/greenleaf-website/greenleaf-academy/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/Users/gaffar.dulkadir/Desktop/Personel Things/greenleaf-website/greenleaf-academy/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2355, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/Users/gaffar.dulkadir/Desktop/Personel Things/greenleaf-website/greenleaf-academy/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/Users/gaffar.dulkadir/Desktop/Personel Things/greenleaf-website/greenleaf-academy/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 941, in do_execute
+    cursor.execute(statement, parameters)
+  File "/Users/gaffar.dulkadir/Desktop/Personel Things/greenleaf-website/greenleaf-academy/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 572, in execute
+    self._adapt_connection.await_(
+  File "/Users/gaffar.dulkadir/Desktop/Personel Things/greenleaf-website/greenleaf-academy/backend/venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/gaffar.dulkadir/Desktop/Personel Things/greenleaf-website/greenleaf-academy/backend/venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/Users/gaffar.dulkadir/Desktop/Personel Things/greenleaf-website/greenleaf-academy/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 550, in _prepare_and_execute
+    self._handle_exception(error)
+  File "/Users/gaffar.dulkadir/Desktop/Personel Things/greenleaf-website/greenleaf-academy/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 501, in _handle_exception
+    self._adapt_connection._handle_exception(error)
+  File "/Users/gaffar.dulkadir/Desktop/Personel Things/greenleaf-website/greenleaf-academy/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 784, in _handle_exception
+    raise translated_error from error
+sqlalchemy.exc.IntegrityError: (sqlalchemy.dialects.postgresql.asyncpg.IntegrityError) <class 'asyncpg.exceptions.NotNullViolationError'>: null value in column "locale" of relation "academy_contents" violates not-null constraint
+DETAIL:  Failing row contains (e37123f7-c972-4cc9-9985-9b13abe35af4, SHORT, null, Greenleaf Vizyonu: Neden Buradayız?, 3 dakikada Greenleaf Akademi'nin kuruluş felsefesi., https://youtube.com/shorts/hJTW3WMxAhc, null, null, 1, PUBLISHED, null, t, https://img.youtube.com/vi/hJTW3WMxAhc/hqdefault.jpg, ccc1ce11-c755-473f-b457-2915acd0930d, 2026-04-19 02:39:44.662066+00, 2026-04-19 02:39:44.662068+00).
+[SQL: INSERT INTO academy_contents (tenant_id, type, locale, title, description, video_url, resource_link, resource_link_label, "order", status, prerequisite_id, is_new, thumbnail_url, id, created_at, updated_at) VALUES ($1::UUID, $2::contenttype, $3::VARCHAR, $4::VARCHAR, $5::VARCHAR, $6::VARCHAR, $7::VARCHAR, $8::VARCHAR, $9::INTEGER, $10::contentstatus, $11::UUID, $12::BOOLEAN, $13::VARCHAR, $14::UUID, $15::TIMESTAMP WITH TIME ZONE, $16::TIMESTAMP WITH TIME ZONE)]
+[parameters: (UUID('e37123f7-c972-4cc9-9985-9b13abe35af4'), 'SHORT', None, 'Greenleaf Vizyonu: Neden Buradayız?', "3 dakikada Greenleaf Akademi'nin kuruluş felsefesi.", 'https://youtube.com/shorts/hJTW3WMxAhc', None, None, 1, 'PUBLISHED', None, True, 'https://img.youtube.com/vi/hJTW3WMxAhc/hqdefault.jpg', UUID('ccc1ce11-c755-473f-b457-2915acd0930d'), datetime.datetime(2026, 4, 19, 2, 39, 44, 662066, tzinfo=datetime.timezone.utc), datetime.datetime(2026, 4, 19, 2, 39, 44, 662068, tzinfo=datetime.timezone.utc))]
+(Background on this error at: https://sqlalche.me/e/20/gkpj)

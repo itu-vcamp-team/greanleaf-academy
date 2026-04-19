@@ -11,7 +11,7 @@
 ## 2. Akademi ve Etkileşim Tetikleyicileri
 | Olay | Eylem | Kanal |
 | --- | --- | --- |
-| `VIDEO_COMPLETED` | Sonraki İçeriğin Kilidini Aç + İlerleme Kaydet | UI / DB |
+| `VIDEO_COMPLETED` | İzleme %85'i Geçtiğinde -> Kilidi Aç + İlerleme Kaydet | UI / DB |
 | `EVENT_15MIN_START` | Takvim Bildirimi (Kullanıcı Takvimi Üzerinden) | Apple/Google Cal |
 
 ## 3. Aday Yönetimi

@@ -5,14 +5,16 @@ import { Button } from "@/components/ui/Button";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { ChevronRight, Play, BookOpen, Clock, Shield, Target, Plus, Calendar, Globe, Zap, Users } from "lucide-react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useUserRole } from "@/context/UserRoleContext";
 import { useTenant } from "@/context/TenantContext";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 
 export default function Home() {
+  const t = useTranslations();
   const { role } = useUserRole();
-  const { activeTenant } = useTenant();
+  const { tenant } = useTenant();
   const [timeLeft, setTimeLeft] = useState({ hours: 14, minutes: 24, seconds: 45 });
 
   useEffect(() => {
@@ -27,7 +29,8 @@ export default function Home() {
     return () => clearInterval(timer);
   }, []);
 
-  const isTR = activeTenant.slug === "tr";
+  const locale = t("nav.academy") === "Akademi" ? "tr" : "en"; // Simple detection for now
+  const isTR = locale === "tr";
 
   return (
     <div className="relative min-h-screen pb-20 overflow-x-hidden">
@@ -218,7 +221,7 @@ export default function Home() {
                   {isTR ? <>Eğitim <span className="text-primary italic">Kataloğu</span></> : <>Schulungs <span className="text-primary italic">Katalog</span></>}
                 </h2>
                 <p className="text-foreground/40 max-w-md italic">
-                  {isTR ? "Adayları profesyonelleştiren, partnerleri lidere dönüştüren mühimmat arşivi." : "Ein Arsenal an Munition, das Interessenten profesjonalisiert und Partner in Leader verwandelt."}
+                  {t("academy.continue_watching")}
                 </p>
               </div>
               {role !== "GUEST" && (
