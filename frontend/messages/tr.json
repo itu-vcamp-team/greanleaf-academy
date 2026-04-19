@@ -1,0 +1,27 @@
+{
+  "nav": {
+    "academy": "Akademi",
+    "shorts": "Shorts",
+    "masterclass": "Masterclass",
+    "calendar": "Takvim",
+    "resources": "Kaynaklar",
+    "dashboard": "Panosu",
+    "settings": "Ayarlar",
+    "logout": "Çıkış"
+  },
+  "auth": {
+    "login": "Giriş Yap",
+    "register": "Kayıt Ol",
+    "email": "E-posta",
+    "password": "Şifre",
+    "username": "Kullanıcı Adı",
+    "captcha_hint": "Ekrandaki sayıların toplamını girin"
+  },
+  "academy": {
+    "continue_watching": "Kaldığın yerden devam et",
+    "locked": "Bu içerik kilitli",
+    "completed": "Tamamlandı",
+    "mark_complete": "Tamamlandı Olarak İşaretle",
+    "search_placeholder": "İçerik ara..."
+  }
+}

@@ -26,11 +26,11 @@ Referans: [`roadmap/overview.md`](../roadmap/overview.md)
 
 | # | Görev | Durum | Detay |
 |---|-------|-------|-------|
-| 1 | Backend proje kurulumu (FastAPI, Docker, config, health check) | ⬜ Bekliyor | [`task1_backend_setup.md`](tasks_claude/task1_backend_setup.md) |
+| 1 | Backend proje kurulumu (FastAPI, Docker, config, health check) | ✅ Tamamlandı | [Ayrıntılar](tasks_claude/task1_backend_setup.md) - FastAPI + Docker + SQLModel altyapısı kuruldu. |
 | 2 | Veritabanı modelleri ve Alembic migration (13 model) | ⬜ Bekliyor | [`task2_database_models.md`](tasks_claude/task2_database_models.md) |
 | 3 | Multi-tenancy middleware, subdomain çözümleme, Redis cache | ⬜ Bekliyor | [`task3_multi_tenancy_logic.md`](tasks_claude/task3_multi_tenancy_logic.md) |
 | 4 | Auth sistemi: 3 adımlı kayıt, GL Global doğrulama, 2FA, kick-out | ⬜ Bekliyor | [`task4_auth_system.md`](tasks_claude/task4_auth_system.md) |
-| 5 | Frontend kurulumu: Next.js 15, i18n, tenant tema, mobil nav | ⬜ Bekliyor | [`task5_frontend_setup.md`](tasks_claude/task5_frontend_setup.md) |
+| 5 | Frontend kurulumu: Next.js 15, i18n, tenant tema, mobil nav | ✅ Tamamlandı | [Ayrıntılar](tasks_claude/task5_frontend_setup.md) - Next.js 15 + i18n + Tenant Theme + Zustand kuruldu. |
 | 9 | Mailing servisi: Resend, 8 mail şablonu, broadcast | ⬜ Bekliyor | [`task9_mailing_service.md`](tasks_claude/task9_mailing_service.md) |
 | 12 | Güvenlik: Rate limit middleware, CSP/HSTS header'ları, GitHub Actions, Render deploy | ⬜ Bekliyor | [`task12_security_deployment.md`](tasks_claude/task12_security_deployment.md) |
 
@@ -38,7 +38,7 @@ Referans: [`roadmap/overview.md`](../roadmap/overview.md)
 
 | # | Görev | Durum | Detay |
 |---|-------|-------|-------|
-| 1 | Hesapları aç: Render, Resend DNS, YouTube, Google Drive | ⬜ Bekliyor | [`task1_accounts_setup.md`](tasks_human/task1_accounts_setup.md) |
+| 1 | Hesapları aç: Render, Resend DNS, YouTube, Google Drive | ✅ Tamamlandı | [`task1_accounts_setup.md`](tasks_human/task1_accounts_setup.md) |
 | 2 | Başlangıç verileri: logo, renkler, tenant SQL, KVKK metni | ⬜ Bekliyor | [`task2_initial_data.md`](tasks_human/task2_initial_data.md) |
 
 ---
@@ -106,7 +106,7 @@ Referans: [`roadmap/overview.md`](../roadmap/overview.md)
 | Faz | Toplam Görev | Tamamlanan | Durum |
 |-----|-------------|------------|-------|
 | Ön Hazırlık | 5 | 5 | ✅ Tamamlandı |
-| Faz 1 – Altyapı | 9 (7 Claude + 2 Human) | 0 | ⬜ Başlanmadı |
+| Faz 1 – Altyapı | 9 (7 Claude + 2 Human) | 3 | 🚧 Devam Ediyor |
 | Faz 2 – Akademi | 6 (5 Claude + 1 Human) | 0 | ⬜ Başlanmadı |
 | Canlıya Geçiş | 2 (Human) | 0 | ⬜ Başlanmadı |
 | Faz 3 – Global | Planlanacak | — | 📋 Planlandı |

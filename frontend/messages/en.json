@@ -1,0 +1,27 @@
+{
+  "nav": {
+    "academy": "Academy",
+    "shorts": "Shorts",
+    "masterclass": "Masterclass",
+    "calendar": "Calendar",
+    "resources": "Resources",
+    "dashboard": "Dashboard",
+    "settings": "Settings",
+    "logout": "Logout"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "email": "Email",
+    "password": "Password",
+    "username": "Username",
+    "captcha_hint": "Enter the sum of the numbers"
+  },
+  "academy": {
+    "continue_watching": "Continue watching",
+    "locked": "This content is locked",
+    "completed": "Completed",
+    "mark_complete": "Mark as Complete",
+    "search_placeholder": "Search content..."
+  }
+}

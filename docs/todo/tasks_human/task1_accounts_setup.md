@@ -95,7 +95,7 @@ Akademi videoları YouTube üzerinden "Liste Dışı" (Unlisted) yayınlanacak.
   - Profil fotoğrafı: Greenleaf logosu
   - Banner: Kurumsal banner görseli (görsel yoksa boş bırak)
 - [ ] **Şimdi video yükleme** (Task 3'te yapılacak)
-- [ ] Bu kanalın **URL'sini** not al: `https://youtube.com/@GreenleafAkademi`
+- [ ] Bu kanalın **URL'sini** not al: `https://www.youtube.com/@GreenleafAkademi`
 
 ---
 
@@ -116,6 +116,9 @@ Akademi dökümanları (sunumlar, PDF'ler) Drive'da tutulacak, sadece linki sist
   - Klasöre sağ tık → Paylaş → **"Bağlantıya sahip herkes"** → **"Görüntüleyici"**
   - ⚠️ **"Düzenleyici" veya "Yorumcu" YAPMA** – sadece görüntüleme yetki ver
   - Bu sayede link bilen herkes önizleyebilir ama indiremez/düzenleyemez
+
+https://drive.google.com/drive/folders/1Tf8iPu_Zepy_paj6Dxp6RGwJkQmLMOQf?usp=sharing
+
 
 ---
 
