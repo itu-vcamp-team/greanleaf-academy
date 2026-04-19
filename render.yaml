@@ -11,6 +11,8 @@ services:
     envVars:
       - key: APP_ENV
         value: production
+      - key: PYTHON_VERSION
+        value: 3.12.8
       - key: APP_SECRET_KEY
         sync: false
       - key: DATABASE_URL

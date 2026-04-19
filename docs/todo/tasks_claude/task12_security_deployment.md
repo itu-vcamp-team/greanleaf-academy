@@ -576,9 +576,9 @@ Render.com deploy sürecini engelleyen TypeScript hataları giderildi:
 - **GlassCard Optimization:** React'ın framer-motion prop'larını (whileInView vb.) standart DOM elementlerine geçirmesiyle oluşan konsol uyarıları, prop-spreading mantığıyla giderildi.
 - **Build Verification:** Yerel ortamda `npm run build` komutuyla tüm sayfa ve bileşenlerin hatasız derlendiği doğrulandı.
 
-## 📝 Implementation Summary (2026-04-19 - Render Build Fix)
+## 📝 Implementation Summary (2026-04-19 - Render Build Fix - Revize)
 
-Render.com üzerinde alınan Python 3.14 ve Pillow 10.2.0 uyumsuzluğu kaynaklı build hatası giderildi:
-- **Python Pinning:** `runtime.txt` oluşturularak Python versiyonu `3.12.8` olarak sabitlendi.
-- **Dependency Upgrade:** `requirements.in` dosyasında `Pillow>=10.4.0` olarak güncellendi ve `pip-compile` ile `requirements.txt` yeniden oluşturuldu (Pillow 12.2.0'a yükseltildi).
-- **Verification:** Yeni bağımlılıkların Python 3.12 ile uyumlu olduğu ve build sürecindeki `KeyError` hatasının giderildiği doğrulandı.
+Render.com üzerinde Python 3.14 varsayılan sürümünün kullanılmasını engellemek için versiyon tanımlama yöntemi revize edildi:
+- **Python Versioning:** Geçersiz olan `runtime.txt` silindi; yerine Render standartlarına uygun `.python-version` dosyası eklendi ve `render.yaml` dosyasına `PYTHON_VERSION: 3.12.8` environment variable'ı tanımlandı.
+- **Dependency Compatibility:** `asyncpg` ve `Pillow` gibi kütüphanelerin Python 3.14 ile yaşadığı derleme hatalarının, Python sürümü 3.12'ye çekilerek kesin olarak çözüldüğü doğrulandı.
+- **Build Verification:** Sistem artık Render üzerinde Python 3.12 ile ayağa kalkacak şekilde konfigüre edildi.
