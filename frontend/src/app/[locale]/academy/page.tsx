@@ -1,22 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { Zap, ShieldCheck } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { Navbar } from "@/components/ui/Navbar";
-import { GlassCard } from "@/components/ui/GlassCard";
 import MyProgressStats from "@/components/academy/MyProgressStats";
 import SearchBar from "@/components/academy/SearchBar";
 import ContentCard from "@/components/academy/ContentCard";
 import apiClient from "@/lib/api-client";
 
-interface AcademyPageProps {
-  params: { locale: string };
+interface PageProps {
+  params: Promise<{ locale: string }>;
 }
 
-export default function AcademyPage({ params }: AcademyPageProps) {
+export default function AcademyPage({ params }: PageProps) {
+  const { locale } = React.use(params);
   const t = useTranslations("academy");
   const [activeTab, setActiveTab] = useState<"SHORT" | "MASTERCLASS">("SHORT");
   const [contents, setContents] = useState<any[]>([]);
@@ -26,7 +26,7 @@ export default function AcademyPage({ params }: AcademyPageProps) {
     async function fetchContents() {
       setLoading(true);
       try {
-        const res = await apiClient.get(`/academy/contents?type=${activeTab}&locale=${params.locale}`);
+        const res = await apiClient.get(`/academy/contents?type=${activeTab}&locale=${locale}`);
         setContents(res.data);
       } catch (err) {
         console.error("Failed to fetch academy contents:", err);
@@ -35,7 +35,7 @@ export default function AcademyPage({ params }: AcademyPageProps) {
       }
     }
     fetchContents();
-  }, [activeTab, params.locale]);
+  }, [activeTab, locale]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -55,7 +55,7 @@ export default function AcademyPage({ params }: AcademyPageProps) {
         <MyProgressStats />
 
         {/* Global Search */}
-        <SearchBar className="mb-8" locale={params.locale} />
+        <SearchBar className="mb-8" locale={locale} />
 
         {/* Navigation Tabs */}
         <div className="flex p-1.5 bg-gray-100/80 backdrop-blur-md rounded-2xl border border-gray-200 mb-8 max-w-sm mx-auto shadow-sm">

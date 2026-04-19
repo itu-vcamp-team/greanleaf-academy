@@ -1,7 +1,4 @@
-"use client";
-
-import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { ChevronRight, ExternalLink, CheckCircle, BookmarkPlus, Lock, GraduationCap } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -26,8 +23,12 @@ interface ContentDetail {
   } | null;
 }
 
-export default function MasterclassPlayerPage() {
-  const { id } = useParams<{ id: string }>();
+interface PageProps {
+  params: Promise<{ locale: string; id: string }>;
+}
+
+export default function MasterclassPlayerPage({ params }: PageProps) {
+  const { id, locale } = React.use(params);
   const t = useTranslations("academy");
   const [content, setContent] = useState<ContentDetail | null>(null);
   const [loading, setLoading] = useState(true);

@@ -26,7 +26,8 @@ export default function AdminContentPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const endpoint = activeTab === "announcements" ? "/announcements/admin" : "/resources/admin";
+      // Backend routes: GET /announcements (admin gets all), GET /resource-links
+      const endpoint = activeTab === "announcements" ? "/announcements" : "/resource-links";
       const res = await apiClient.get(endpoint);
       setData(res.data);
     } catch (err) {

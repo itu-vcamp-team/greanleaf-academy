@@ -9,9 +9,14 @@ import { useTranslations } from "next-intl";
 import { useUserRole } from "@/context/UserRoleContext";
 import { useTenant } from "@/context/TenantContext";
 import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 
-export default function Home() {
+interface PageProps {
+  params: Promise<{ locale: string }>;
+}
+
+export default function Home({ params }: PageProps) {
+  const { locale } = React.use(params);
   const t = useTranslations();
   const { role } = useUserRole();
   const { tenant } = useTenant();
@@ -29,7 +34,6 @@ export default function Home() {
     return () => clearInterval(timer);
   }, []);
 
-  const locale = t("nav.academy") === "Akademi" ? "tr" : "en"; // Simple detection for now
   const isTR = locale === "tr";
 
   return (

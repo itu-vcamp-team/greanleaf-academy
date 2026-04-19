@@ -26,8 +26,26 @@ from src.services import (
 from src.config import get_settings
 from src.logger import logger
 
+from src.utils.auth_deps import get_current_user
+
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 settings = get_settings()
+
+@router.get("/verify-global")
+async def verify_token_and_get_user(current_user: User = Depends(get_current_user)):
+    """
+    Returns the current user's profile and role.
+    Used by frontend to sync state on load.
+    """
+    return {
+        "id": str(current_user.id),
+        "username": current_user.username,
+        "email": current_user.email,
+        "full_name": current_user.full_name,
+        "role": current_user.role.value,
+        "partner_id": current_user.partner_id,
+        "profile_image_path": current_user.profile_image_path
+    }
 
 # --- CAPTCHA ---
 

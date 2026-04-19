@@ -1,23 +1,7 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
-import axios from "axios";
-
-interface TenantConfig {
-  primary_color: string;
-  secondary_color: string;
-  logo_url: string | null;
-  support_links: Record<string, string>;
-  social_media: Record<string, string>;
-}
-
-interface TenantData {
-  id: string;
-  slug: string;
-  name: string;
-  logo: string;
-  config: TenantConfig;
-}
+import { createContext, useContext, useEffect } from "react";
+import { useTenantStore, TenantData } from "@/store/tenant.store";
 
 interface TenantContextType {
   activeTenant: TenantData;
@@ -31,75 +15,78 @@ interface TenantContextType {
 const TenantContext = createContext<TenantContextType | undefined>(undefined);
 
 export function TenantProvider({ children }: { children: React.ReactNode }) {
-  const [availableTenants] = useState<TenantData[]>([
-    {
-      id: "1",
-      slug: "tr",
-      name: "Greenleaf Türkiye",
-      logo: "🇹🇷",
-      config: {
-        primary_color: "#2D6A4F",
-        secondary_color: "#74C69D",
-        logo_url: null,
-        support_links: {},
-        social_media: {},
-      },
-    },
-    {
-      id: "2",
-      slug: "en",
-      name: "Greenleaf Global",
-      logo: "🇬🇧",
-      config: {
-        primary_color: "#1B4332",
-        secondary_color: "#40916C",
-        logo_url: null,
-        support_links: {},
-        social_media: {},
-      },
-    }
-  ]);
+  const { 
+    activeTenant, 
+    availableTenants, 
+    setAvailableTenants,
+    setActiveTenant,
+    setLoading,
+    loading, 
+    theme, 
+    toggleTheme 
+  } = useTenantStore();
 
-  const [activeTenant, setActiveTenant] = useState<TenantData>(availableTenants[0]);
-  const [loading, setLoading] = useState(false);
-  const [theme, setTheme] = useState<"light" | "dark">("dark");
+  useEffect(() => {
+    // Initial data setup if empty
+    if (availableTenants.length === 0) {
+      const initialTenants: TenantData[] = [
+        {
+          id: "1",
+          slug: "tr",
+          name: "Greenleaf Türkiye",
+          logo: "🇹🇷",
+          config: {
+            primary_color: "#2D6A4F",
+            secondary_color: "#74C69D",
+            logo_url: null,
+            support_links: {},
+            social_media: {},
+          },
+        },
+        {
+          id: "2",
+          slug: "en",
+          name: "Greenleaf Global",
+          logo: "🇬🇧",
+          config: {
+            primary_color: "#1B4332",
+            secondary_color: "#40916C",
+            logo_url: null,
+            support_links: {},
+            social_media: {},
+          },
+        }
+      ];
+      setAvailableTenants(initialTenants);
+      if (!activeTenant) {
+        setActiveTenant(initialTenants[0]);
+      }
+    }
+    
+    // Ensure dark mode class is present if theme is dark
+    if (theme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+
+    // Apply colors
+    if (activeTenant) {
+      document.documentElement.style.setProperty("--color-primary", activeTenant.config.primary_color);
+      document.documentElement.style.setProperty("--color-secondary", activeTenant.config.secondary_color);
+    }
+  }, [activeTenant, theme]);
 
   const setTenantBySlug = (slug: string) => {
     const tenant = availableTenants.find(t => t.slug === slug);
     if (tenant) {
       setActiveTenant(tenant);
-      updateThemeColors(tenant);
     }
   };
-
-  const updateThemeColors = (tenant: TenantData) => {
-    document.documentElement.style.setProperty("--color-primary", tenant.config.primary_color);
-    document.documentElement.style.setProperty("--color-secondary", tenant.config.secondary_color);
-  };
-
-  const toggleTheme = () => {
-    setTheme(prev => {
-      const newTheme = prev === "light" ? "dark" : "light";
-      if (newTheme === "dark") {
-        document.documentElement.classList.add("dark");
-      } else {
-        document.documentElement.classList.remove("dark");
-      }
-      return newTheme;
-    });
-  };
-
-  useEffect(() => {
-    updateThemeColors(activeTenant);
-    // Ensure dark mode by default if theme is dark
-    if (theme === "dark") {
-      document.documentElement.classList.add("dark");
-    }
-  }, []);
 
   return (
     <TenantContext.Provider value={{ 
-      activeTenant, 
+      activeTenant: activeTenant, 
       availableTenants, 
       setTenantBySlug, 
       loading, 

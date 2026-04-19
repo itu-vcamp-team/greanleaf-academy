@@ -24,7 +24,7 @@ export function BrandLogo() {
           Greenleaf<span className="text-primary-light">.</span>
         </span>
         <span className="text-[10px] uppercase tracking-[0.2em] text-foreground/40 font-bold">
-          {activeTenant.region}
+          {activeTenant?.name ?? "Greenleaf"}
         </span>
       </div>
     </motion.div>

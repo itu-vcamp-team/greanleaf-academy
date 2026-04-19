@@ -25,22 +25,22 @@ export function Navbar() {
         
         <div className="hidden md:flex items-center gap-8">
           <NavLink href="/calendar" icon={<Calendar className="w-4 h-4" />}>
-            {activeTenant.slug === "tr" ? "Takvim" : "Kalender"}
+            {activeTenant?.slug === "tr" ? "Takvim" : "Kalender"}
           </NavLink>
           <NavLink href="/academy">
-            {activeTenant.slug === "tr" ? "Akademi" : "Akademie"}
+            {activeTenant?.slug === "tr" ? "Akademi" : "Akademie"}
           </NavLink>
           <NavLink href="/dashboard">
-            {activeTenant.slug === "tr" ? "Panelim" : "Panel"}
+            {activeTenant?.slug === "tr" ? "Panelim" : "Panel"}
           </NavLink>
           {role === "GUEST" && (
-            <NavLink href="/#imkanlar">{activeTenant.slug === "tr" ? "İmkanlar" : "Vorteile"}</NavLink>
+            <NavLink href="/#imkanlar">{activeTenant?.slug === "tr" ? "İmkanlar" : "Vorteile"}</NavLink>
           )}
           {(role === "PARTNER" || role === "ADMIN") && (
             <>
               {role === "ADMIN" && (
                 <NavLink href="/settings" icon={<Settings className="w-4 h-4" />}>
-                  {activeTenant.slug === "tr" ? "Admin" : "Admin"}
+                  {activeTenant?.slug === "tr" ? "Admin" : "Admin"}
                 </NavLink>
               )}
             </>
@@ -57,7 +57,7 @@ export function Navbar() {
 
           <div className="flex items-center gap-2 p-1 bg-black/5 rounded-xl border border-black/10">
             <select 
-              value={activeTenant.slug} 
+              value={activeTenant?.slug ?? ""} 
               onChange={(e) => setTenantBySlug(e.target.value)}
               className="bg-transparent text-[10px] font-bold uppercase text-primary outline-none px-2 cursor-pointer"
             >

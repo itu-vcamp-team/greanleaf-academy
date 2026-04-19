@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -28,7 +28,12 @@ interface ChildUser {
   is_active: boolean;
 }
 
-export default function DashboardPage() {
+interface PageProps {
+  params: Promise<{ locale: string }>;
+}
+
+export default function DashboardPage({ params }: PageProps) {
+  const { locale } = React.use(params);
   const t = useTranslations("academy");
   const { role } = useUserRole();
   const { activeTenant } = useTenant();
@@ -39,18 +44,33 @@ export default function DashboardPage() {
   const [selectedChild, setSelectedChild] = useState<{ id: string, name: string } | null>(null);
   const [childProgress, setChildProgress] = useState<any[]>([]);
   const [loadingDetail, setLoadingDetail] = useState(false);
+  
+  const [announcements, setAnnouncements] = useState<any[]>([]);
+  const [resources, setResources] = useState<any[]>([]);
+  const [loadingStats, setLoadingStats] = useState(true);
 
   useEffect(() => {
     if (!isGuest) {
-      apiClient.get("/admin/users/my-children")
-        .then(res => {
-          setChildren(res.data);
-          setLoadingChildren(false);
-        })
-        .catch(err => {
-          console.error("Failed to fetch children:", err);
-          setLoadingChildren(false);
-        });
+      // Parallel fetch for non-guest data
+      Promise.all([
+        apiClient.get("/admin/users/my-children"),
+        apiClient.get("/announcements"),
+        apiClient.get("/resource-links")
+      ]).then(([childrenRes, announcementsRes, resourcesRes]) => {
+        setChildren(childrenRes.data);
+        setAnnouncements(announcementsRes.data);
+        setResources(resourcesRes.data);
+      }).catch(err => {
+        console.error("Dashboard data fetch error:", err);
+      }).finally(() => {
+        setLoadingChildren(false);
+        setLoadingStats(false);
+      });
+    } else {
+       // Guests only get announcements/resources if allowed, or we fetch guest-specific ones
+       apiClient.get("/announcements").then(res => setAnnouncements(res.data)).catch(() => {});
+       setLoadingChildren(false);
+       setLoadingStats(false);
     }
   }, [isGuest]);
 
@@ -227,9 +247,11 @@ export default function DashboardPage() {
              <GlassCard className="p-8 border-foreground/5 shadow-sm">
                 <h3 className="text-sm font-black uppercase tracking-widest text-foreground/40 mb-6">Mühimmat Kısayolu</h3>
                 <div className="space-y-3">
-                   <QuickLink label="Sunum Dosyaları (PDF)" isGuest={isGuest} />
-                   <QuickLink label="Ürün Fiyat Listesi" isGuest={isGuest} />
-                   <QuickLink label="Marka Varlık Kataloğu" isGuest={isGuest} />
+                   {resources.length > 0 ? resources.map(res => (
+                     <QuickLink key={res.id} label={res.title} url={res.url} isGuest={isGuest} />
+                   )) : (
+                     <div className="text-[10px] text-gray-300 italic">Henüz kaynak bulunmuyor.</div>
+                   )}
                 </div>
              </GlassCard>
 
@@ -238,9 +260,15 @@ export default function DashboardPage() {
                    <Clock className="w-5 h-5 text-gray-300" />
                    <h3 className="text-xs font-black uppercase tracking-widest text-gray-400">Son Duyurular</h3>
                 </div>
-                <div className="space-y-4 opacity-40">
-                   <div className="h-3 bg-gray-200 rounded w-full" />
-                   <div className="h-3 bg-gray-200 rounded w-3/4" />
+                <div className="space-y-4">
+                   {announcements.length > 0 ? announcements.map(ann => (
+                     <div key={ann.id} className="space-y-1">
+                        <p className="text-[11px] font-bold text-gray-700 line-clamp-2">{ann.title}</p>
+                        <p className="text-[9px] text-gray-400">{new Date(ann.created_at).toLocaleDateString(locale)}</p>
+                     </div>
+                   )) : (
+                     <div className="text-[10px] text-gray-300 italic">Yeni duyuru bulunmuyor.</div>
+                   )}
                 </div>
              </GlassCard>
           </div>
@@ -301,11 +329,16 @@ function MiniProgress({ label, percentage, color }: any) {
   );
 }
 
-function QuickLink({ label, isGuest }: any) {
+function QuickLink({ label, url, isGuest }: any) {
   return (
-    <div className={`flex items-center justify-between p-4 rounded-2xl border border-gray-100 transition-all ${isGuest ? 'opacity-30 cursor-not-allowed' : 'hover:border-primary/30 hover:bg-white hover:shadow-lg cursor-pointer'}`}>
+    <a 
+      href={isGuest ? "#" : url} 
+      target={isGuest ? undefined : "_blank"}
+      rel="noopener noreferrer"
+      className={`flex items-center justify-between p-4 rounded-2xl border border-gray-100 transition-all ${isGuest ? 'opacity-30 cursor-not-allowed' : 'hover:border-primary/30 hover:bg-white hover:shadow-lg cursor-pointer'}`}
+    >
        <span className="text-xs font-bold text-gray-600">{label}</span>
        {isGuest ? <Lock size={12} className="text-gray-300" /> : <ArrowUpRight size={16} className="text-gray-300" />}
-    </div>
+    </a>
   );
 }

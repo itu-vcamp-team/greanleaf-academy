@@ -1,20 +1,28 @@
 import axios from "axios";
 import { useAuthStore } from "@/store/auth.store";
+import { useTenantStore } from "@/store/tenant.store";
 
 const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000",
+  baseURL: (process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000") + "/api",
   headers: {
     "Content-Type": "application/json",
   },
   timeout: 15000,
 });
 
-// Request interceptor: Her isteğe Authorization header'ı ekle
+// Request interceptor: Her isteğe Authorization ve X-Tenant-ID header'larını ekle
 apiClient.interceptors.request.use((config) => {
   const token = useAuthStore.getState().access_token;
+  const tenantSlug = useTenantStore.getState().getTenantSlug();
+
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
+  if (tenantSlug) {
+    config.headers["X-Tenant-ID"] = tenantSlug;
+  }
+
   return config;
 });
 

@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import apiClient from "@/lib/api-client";
 import { useTranslations } from "next-intl";
+import { motion } from "framer-motion";
+import { Zap, PlayCircle, Trophy } from "lucide-react";
 
 interface Stats {
   shorts: { completed: number; total: number; percentage: number };
@@ -19,12 +21,19 @@ export default function MyProgressStats() {
       .catch((err) => console.error("Stats fetch error:", err));
   }, []);
 
-  if (!stats) return <div className="h-16 bg-gray-50 rounded-xl animate-pulse mb-6 border border-gray-100" />;
+  if (!stats) return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      {[1, 2].map(i => (
+        <div key={i} className="h-32 bg-gray-50 rounded-[2rem] animate-pulse border border-gray-100" />
+      ))}
+    </div>
+  );
 
   return (
-    <div className="grid grid-cols-2 gap-4 mb-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
       <StatCard 
-        label="Shorts" 
+        label="Momentum Shorts" 
+        icon={<Zap className="w-5 h-5" />}
         color="blue" 
         completed={stats.shorts.completed} 
         total={stats.shorts.total} 
@@ -33,7 +42,8 @@ export default function MyProgressStats() {
         t_completed={t("completed")}
       />
       <StatCard 
-        label="Masterclass" 
+        label="Masterclass Series" 
+        icon={<PlayCircle className="w-5 h-5" />}
         color="emerald" 
         completed={stats.masterclass.completed} 
         total={stats.masterclass.total} 
@@ -45,29 +55,72 @@ export default function MyProgressStats() {
   );
 }
 
-function StatCard({ label, completed, total, percentage, color, t_progress, t_completed }: any) {
-  const colorClasses: Record<string, string> = {
-    blue: "bg-blue-500",
-    emerald: "bg-emerald-500",
+function StatCard({ label, icon, completed, total, percentage, color, t_progress, t_completed }: any) {
+  const colors: any = {
+    blue: {
+      bg: "bg-blue-500/5",
+      border: "border-blue-500/10",
+      text: "text-blue-600",
+      bar: "bg-blue-500",
+      iconBg: "bg-blue-500/10"
+    },
+    emerald: {
+      bg: "bg-emerald-500/5",
+      border: "border-emerald-500/10",
+      text: "text-emerald-600",
+      bar: "bg-emerald-500",
+      iconBg: "bg-emerald-500/10"
+    }
   };
 
+  const c = colors[color];
+  const isCompleted = percentage >= 100;
+
   return (
-    <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
-      <div className="flex justify-between items-center mb-2">
-        <span className="text-[11px] font-black text-gray-400 uppercase tracking-widest">{label}</span>
-        <span className={`text-xs font-bold ${color === "blue" ? "text-blue-600" : "text-emerald-600"}`}>
-          {Math.round(percentage)}%
-        </span>
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={`relative group overflow-hidden bg-white border ${c.border} rounded-[2rem] p-6 shadow-sm hover:shadow-xl hover:shadow-gray-200/50 transition-all duration-500`}
+    >
+      <div className="flex justify-between items-start mb-6">
+        <div className="flex items-center gap-4">
+          <div className={`p-3 rounded-2xl ${c.iconBg} ${c.text} group-hover:scale-110 transition-transform duration-500`}>
+            {isCompleted ? <Trophy className="w-5 h-5" /> : icon}
+          </div>
+          <div>
+            <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1 block">{label}</span>
+            <div className="flex items-center gap-2">
+               <h4 className="text-xl font-black text-gray-900 leading-none">
+                 {completed}<span className="text-gray-300 mx-1">/</span>{total}
+               </h4>
+               <span className="text-[10px] font-bold text-gray-400 mt-1">{t_completed}</span>
+            </div>
+          </div>
+        </div>
+        <div className={`text-sm font-black italic ${c.text} bg-white px-3 py-1 rounded-full border ${c.border} shadow-sm`}>
+          %{Math.round(percentage)}
+        </div>
       </div>
-      <div className="h-2 bg-gray-50 rounded-full overflow-hidden border border-gray-100/50">
-        <div
-          className={`h-full rounded-full transition-all duration-1000 ${colorClasses[color]}`}
-          style={{ width: `${percentage}%` }}
-        />
+
+      <div className="space-y-2">
+        <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-gray-400">
+           <span>{t_progress}</span>
+           <span>{isCompleted ? "Zirve" : "Devam Ediyor"}</span>
+        </div>
+        <div className="h-3 bg-gray-50 rounded-full overflow-hidden p-0.5 border border-gray-100">
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${percentage}%` }}
+            transition={{ duration: 1.5, ease: "easeOut" }}
+            className={`h-full rounded-full ${c.bar} shadow-lg shadow-current/20 relative overflow-hidden`}
+          >
+             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
+          </motion.div>
+        </div>
       </div>
-      <p className="text-[10px] text-gray-400 mt-2 font-medium">
-        {completed}/{total} {t_completed.toLowerCase()}
-      </p>
-    </div>
+      
+      {/* Decorative background element */}
+      <div className={`absolute -right-4 -bottom-4 w-24 h-24 ${c.bg} rounded-full blur-3xl opacity-50 group-hover:scale-150 transition-transform duration-1000`} />
+    </motion.div>
   );
 }

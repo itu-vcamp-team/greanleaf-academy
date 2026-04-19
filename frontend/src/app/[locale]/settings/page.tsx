@@ -4,10 +4,15 @@ import { Navbar } from "@/components/ui/Navbar";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
 import { Shield, Trash2, ShieldCheck, History, Bell, Globe, ChevronRight } from "lucide-react";
-import { useState } from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 
-export default function SettingsPage() {
+interface PageProps {
+  params: Promise<{ locale: string }>;
+}
+
+export default function SettingsPage({ params }: PageProps) {
+  const { locale } = React.use(params);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   return (
