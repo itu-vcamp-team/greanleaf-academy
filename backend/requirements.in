@@ -43,3 +43,4 @@ pytest-asyncio
 httpx
 aiosqlite
 python-multipart
+ruff

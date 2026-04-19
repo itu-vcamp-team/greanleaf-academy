@@ -2,8 +2,10 @@
 
 @theme {
   --font-sans: var(--font-inter);
-  --color-primary: var(--color-primary);
-  --color-secondary: var(--color-secondary);
+  --color-primary: var(--primary);
+  --color-primary-light: var(--primary-light);
+  --color-primary-dark: var(--primary-dark);
+  --color-secondary: var(--secondary);
 }
 
 :root {
@@ -11,6 +13,11 @@
   --foreground: 15 23 42;
   --surface: 248 250 252;
   --border: 226 232 240;
+  
+  --primary: #10b981;
+  --primary-light: #34d399;
+  --primary-dark: #059669;
+  --secondary: #6366f1;
 }
 
 .dark {
