@@ -14,20 +14,20 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="flex flex-col gap-1.5 w-full">
         {label && (
-          <label className="text-xs font-medium text-white/40 uppercase tracking-widest pl-1">
+          <label className="text-xs font-medium text-foreground/40 uppercase tracking-widest pl-1">
             {label}
           </label>
         )}
         <div className="relative group">
           {icon && (
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-primary transition-colors duration-300">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-foreground/20 group-focus-within:text-primary transition-colors duration-300">
               {icon}
             </div>
           )}
           <input
             ref={ref}
             className={cn(
-              "w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-white/20 outline-none transition-all duration-300 focus:border-primary/50 focus:bg-white/10 focus:ring-4 focus:ring-primary/10",
+              "w-full bg-foreground/5 border border-foreground/10 rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-foreground/20 outline-none transition-all duration-300 focus:border-primary/50 focus:bg-foreground/10 focus:ring-4 focus:ring-primary/10",
               icon && "pl-11",
               error && "border-red-500/50 focus:border-red-500/50 focus:ring-red-500/10",
               className

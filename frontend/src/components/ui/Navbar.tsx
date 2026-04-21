@@ -28,6 +28,7 @@ export function Navbar() {
   };
 
   const navLinks = [
+    { href: "/", label: t("home"), icon: <User className="w-4 h-4" /> }, // t("home") or fallback
     { href: "/calendar", label: t("calendar"), icon: <Calendar className="w-4 h-4" /> },
     { href: "/academy", label: t("academy"), icon: null },
     ...(!isGuest ? [{ href: "/dashboard", label: t("dashboard"), icon: <LayoutDashboard className="w-4 h-4" /> }] : []),
@@ -63,7 +64,7 @@ export function Navbar() {
               {theme === "light" ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
             </button>
 
-            <div className="hidden sm:flex items-center gap-2 p-1 bg-black/5 rounded-xl border border-black/10">
+            <div className="hidden sm:flex items-center gap-2 p-1 bg-foreground/5 rounded-xl border border-foreground/10">
                <div className="px-3 py-1 text-[10px] font-bold uppercase text-primary flex items-center gap-1">
                   <span>{activeTenant?.logo}</span>
                   <span>{activeTenant?.name}</span>
@@ -138,7 +139,7 @@ export function Navbar() {
               {isGuest ? (
                 <div className="grid grid-cols-2 gap-4">
                   <Link href="/auth/login" onClick={() => setIsMobileMenuOpen(false)}>
-                    <Button variant="outline" className="w-full py-6 rounded-2xl border-white/10 uppercase text-[10px] font-black tracking-widest">{authT("login")}</Button>
+                    <Button variant="outline" className="w-full py-6 rounded-2xl border-foreground/10 uppercase text-[10px] font-black tracking-widest">{authT("login")}</Button>
                   </Link>
                   <Link href="/auth/register" onClick={() => setIsMobileMenuOpen(false)}>
                     <Button className="w-full py-6 rounded-2xl uppercase text-[10px] font-black tracking-widest">{authT("register")}</Button>

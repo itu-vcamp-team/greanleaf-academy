@@ -11,8 +11,8 @@
 :root {
   --background: 255 255 255;
   --foreground: 15 23 42;
-  --surface: 248 250 252;
-  --border: 226 232 240;
+  --surface: 243 244 246;
+  --border: 209 213 219;
   
   --primary: #10b981;
   --primary-light: #34d399;
@@ -37,7 +37,7 @@
 
 @layer components {
   .glass {
-    @apply backdrop-blur-xl bg-white/70 border border-black/5 shadow-xl;
+    @apply backdrop-blur-xl bg-white/80 border border-black/10 shadow-xl;
   }
   
   .dark .glass {
@@ -45,7 +45,7 @@
   }
 
   .crystal-blur {
-    @apply backdrop-blur-[24px] bg-white/40 border border-white/50 relative overflow-hidden;
+    @apply backdrop-blur-[24px] bg-white/60 border border-black/10 relative overflow-hidden;
   }
   
   .dark .crystal-blur {

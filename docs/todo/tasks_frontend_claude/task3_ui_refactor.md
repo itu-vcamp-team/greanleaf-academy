@@ -4,20 +4,20 @@ Navbar (Header) bileşeninin temizlenmesi, dil desteğinin tam entegrasyonu ve t
 
 ## 🎯 Hedefler
 
-- [ ] **Navbar Modernizasyonu:**
+- [x] **Navbar Modernizasyonu:**
     - Atıl dropdown'lardan arındırılmış, sade ve işlevsel bir Header tasarımı.
     - Menü elemanlarının (Akademi, Takvim vb.) ikon ve metinlerinin `next-intl` (`messages`) ile dile duyarlı hale getirilmesi.
-- [ ] **Tema Motoru (Dark/Light) Düzeltme:**
+- [x] **Tema Motoru (Dark/Light) Düzeltme:**
     - `layout.tsx` üzerindeki hardcoded `dark` sınıfının kaldırılması.
-    - Kullanıcının tercihine veya sistem ayarına göre otomatik tema seçimi (`Next-Themes` entegrasyonu önerilir).
-- [ ] **Mobil Menü:**
+    - Kullanıcının tercihine veya sistem ayarına göre otomatik tema seçimi (`TenantStore` entegrasyonu).
+- [x] **Mobil Menü:**
     - Mobil görünümde menü elemanlarının şık bir Drawer/Overlay içinde gösterilmesi.
 
 ## 🛠️ Teknik Detaylar
 
-- `src/components/ui/Navbar.tsx` dosyası baştan aşağı refaktör edilecek.
-- Linklerde `locale` prefix'i eklemek için `Link` bileşeni sarmalanacak.
-- CSS variables (`globals.css`) üzerinden tema renklerinin tam kontrolü sağlanacak.
+- `src/components/ui/Navbar.tsx` dosyası baştan aşağı refaktör edildi.
+- Linklerde `locale` prefix'i eklemek için `Link` bileşeni sarmalandı.
+- CSS variables (`globals.css`) üzerinden tema renklerinin tam kontrolü sağlandı.
 
 ## ✅ Doğrulama
 
@@ -29,3 +29,4 @@ Navbar (Header) bileşeninin temizlenmesi, dil desteğinin tam entegrasyonu ve t
 - Hardcoded dark-mode sınıfları kaldırılarak tema yönetimi TenantProvider üzerinden dinamikleştirildi.
 - globals.css üzerindeki CSS değişkenleri tüm ana sayfalara (Home, Academy, Dashboard, Calendar) uygulandı.
 - Tema geçişlerindeki tutarsızlıklar ve sert renkler CSS değişkenleri ile giderildi.
+- **Kritik Fix (Nisan 2026):** Light modda görünmez olan butonlar (Giriş Yap), inputlar ve Hero yazıları tamamen tema-uyumlu (theme-aware) hale getirildi. Hardcoded `white` ve `black` sınıfları `foreground` değişkenli sınıflarla değiştirildi.

@@ -11,7 +11,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
       {/* Left Side: Info */}
-      <div className="hidden lg:flex flex-col justify-between p-12 bg-primary/5 border-r border-white/5 relative overflow-hidden">
+      <div className="hidden lg:flex flex-col justify-between p-12 bg-primary/5 border-r border-foreground/5 relative overflow-hidden">
         <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-primary/10 rounded-full blur-[120px]" />
         
         <Link href="/">
@@ -28,7 +28,7 @@ export default function LoginPage() {
               Cephaneliğe <br />
               <span className="text-gradient">Geri Dönün.</span>
             </h2>
-            <p className="text-white/60 text-lg max-w-md mb-12 italic leading-relaxed">
+            <p className="text-foreground/60 text-lg max-w-md mb-12 italic leading-relaxed">
               Global ticaretteki yerinizi koruyun, mühimmatlarınızı güncelleyin ve ekibinizi yönetmeye devam edin.
             </p>
             
@@ -52,7 +52,7 @@ export default function LoginPage() {
           </motion.div>
         </div>
         
-        <p className="text-white/20 text-sm italic">
+        <p className="text-foreground/20 text-sm italic">
           "Bir mermi hedefi şaşırabilir ama bir sistem asla."
         </p>
       </div>
@@ -61,7 +61,7 @@ export default function LoginPage() {
       <div className="flex items-center justify-center p-6 sm:p-12 relative bg-surface/20">
         <div className="absolute top-0 right-0 p-8">
           <Link href="/">
-            <Button variant="ghost" size="sm" className="gap-2 text-white/40 hover:text-white transition-colors">
+            <Button variant="ghost" size="sm" className="gap-2 text-foreground/40 hover:text-foreground transition-colors">
               <ArrowLeft className="w-4 h-4" /> Ana Sayfaya Dön
             </Button>
           </Link>
@@ -76,12 +76,12 @@ export default function LoginPage() {
 function InfoItem({ icon, title, desc }: { icon: React.ReactNode; title: string, desc: string }) {
   return (
     <div className="flex items-start gap-4 group">
-      <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 group-hover:bg-primary/20 group-hover:border-primary/50 transition-all duration-500">
+      <div className="w-12 h-12 rounded-2xl bg-foreground/5 flex items-center justify-center border border-foreground/10 group-hover:bg-primary/20 group-hover:border-primary/50 transition-all duration-500">
         {icon}
       </div>
       <div>
-        <h4 className="text-white font-bold mb-1">{title}</h4>
-        <p className="text-white/40 text-sm leading-relaxed">{desc}</p>
+        <h4 className="text-foreground font-bold mb-1">{title}</h4>
+        <p className="text-foreground/40 text-sm leading-relaxed">{desc}</p>
       </div>
     </div>
   );

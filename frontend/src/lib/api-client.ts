@@ -3,7 +3,8 @@ import { useAuthStore } from "@/store/auth.store";
 import { useTenantStore } from "@/store/tenant.store";
 
 const apiClient = axios.create({
-  baseURL: (process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000") + "/api",
+  // Use relative path for proxying through Next.js
+  baseURL: typeof window !== "undefined" ? "/api/backend/api" : (process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000") + "/api",
   headers: {
     "Content-Type": "application/json",
   },
@@ -36,10 +37,11 @@ apiClient.interceptors.response.use(
       const refresh_token = useAuthStore.getState().refresh_token;
       if (refresh_token) {
         try {
+          const isBrowser = typeof window !== "undefined";
           const res = await axios.post(
-            `${
-              process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000"
-            }/auth/refresh`,
+            isBrowser 
+              ? "/api/backend/auth/refresh" 
+              : `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000"}/auth/refresh`,
             { refresh_token }
           );
           const { access_token } = res.data;

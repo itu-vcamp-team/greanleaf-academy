@@ -25,7 +25,7 @@ export default async function LocaleLayout(props: {
   const messages = await getMessages();
 
   return (
-    <html lang={locale}>
+    <html lang={locale} suppressHydrationWarning>
       <body className={`${inter.variable} antialiased selection:bg-primary/30`}>
         <NextIntlClientProvider messages={messages}>
           <TenantProvider>

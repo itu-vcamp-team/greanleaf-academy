@@ -116,13 +116,13 @@ export function LoginForm() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
           >
-            <GlassCard className="p-8 border-white/5">
+            <GlassCard className="p-8 border-foreground/5">
               <div className="text-center mb-8">
                 <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4 border border-primary/20 text-primary">
                   <ShieldCheck className="w-6 h-6" />
                 </div>
                 <h1 className="text-2xl font-bold mb-2">{t("login")}</h1>
-                <p className="text-white/40 text-sm italic">Giriş yaparak cephaneliğinize erişin.</p>
+                <p className="text-foreground/40 text-sm italic">Giriş yaparak cephaneliğinize erişin.</p>
               </div>
 
               <form onSubmit={handleLogin} className="space-y-4">
@@ -147,7 +147,7 @@ export function LoginForm() {
                 {captcha && (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                       <label className="text-xs font-black uppercase tracking-widest text-white/40 italic">
+                       <label className="text-xs font-black uppercase tracking-widest text-foreground/40 italic">
                          {t("captcha_hint")}
                        </label>
                        <button type="button" onClick={fetchCaptcha} className="text-primary hover:rotate-180 transition-transform">
@@ -155,7 +155,7 @@ export function LoginForm() {
                        </button>
                     </div>
                     <div className="flex items-center gap-4">
-                      <div className="flex-1 h-14 bg-white/5 rounded-xl border border-white/10 flex items-center justify-center text-xl font-black tracking-[0.5em] text-primary select-none">
+                      <div className="flex-1 h-14 bg-foreground/5 rounded-xl border border-foreground/10 flex items-center justify-center text-xl font-black tracking-[0.5em] text-primary select-none">
                         {captcha.numbers.join(" + ")}
                       </div>
                       <div className="w-24">
@@ -188,8 +188,8 @@ export function LoginForm() {
                   {loading ? "Giriş Yapılıyor..." : t("login")}
                 </Button>
 
-                <div className="text-center pt-4 border-t border-white/5">
-                  <p className="text-xs text-white/30">
+                <div className="text-center pt-4 border-t border-foreground/5">
+                  <p className="text-xs text-foreground/30">
                     Henüz hesabınız yok mu?{" "}
                     <button 
                       type="button" 
@@ -210,13 +210,13 @@ export function LoginForm() {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
           >
-            <GlassCard className="p-8 border-white/5">
+            <GlassCard className="p-8 border-foreground/5">
               <div className="text-center mb-8">
                 <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4 border border-primary/20 text-primary">
                   <Key className="w-6 h-6" />
                 </div>
                 <h1 className="text-2xl font-bold mb-2">2FA Doğrulama</h1>
-                <p className="text-white/40 text-sm italic">
+                <p className="text-foreground/40 text-sm italic">
                   {maskedEmail ? (
                     <><strong>{maskedEmail}</strong> adresinize gönderilen 6 haneli kodu girin.</>
                   ) : (
@@ -255,7 +255,7 @@ export function LoginForm() {
                 <button 
                   type="button"
                   onClick={() => setShow2FA(false)}
-                  className="w-full text-xs text-white/20 hover:text-white/40 transition-colors"
+                  className="w-full text-xs text-foreground/20 hover:text-foreground/40 transition-colors"
                 >
                   Vazgeç ve Başa Dön
                 </button>

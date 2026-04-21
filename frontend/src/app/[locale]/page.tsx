@@ -115,9 +115,9 @@ export default function Home({ params }: PageProps) {
             
             <h1 className="text-5xl md:text-8xl font-black tracking-tighter mb-8 leading-[1.1] md:leading-[0.9] text-foreground">
               {isTR ? (
-                <>Mühimmatı <span className="text-gradient">Kuşan,</span><br /> Globalde <span className="text-primary-dark opacity-40">Büyü.</span></>
+                <>Mühimmatı <span className="text-gradient">Kuşan,</span><br /> Globalde <span className="text-primary-dark dark:opacity-40 opacity-70">Büyü.</span></>
               ) : (
-                <>Equip the <span className="text-gradient">Arsenal,</span><br /> Scale <span className="text-primary-dark opacity-40">Globally.</span></>
+                <>Equip the <span className="text-gradient">Arsenal,</span><br /> Scale <span className="text-primary-dark dark:opacity-40 opacity-70">Globally.</span></>
               )}
             </h1>
             
@@ -280,7 +280,7 @@ function PerkCard({ icon, title, desc }: { icon: React.ReactNode, title: string,
 function RoadmapStep({ number, label, desc }: { number: string, label: string, desc: string }) {
   return (
     <div className="space-y-4">
-      <div className="text-4xl font-black text-primary/10 tracking-widest">{number}</div>
+      <div className="text-4xl font-black text-primary/20 dark:text-primary/10 tracking-widest">{number}</div>
       <div className="space-y-1">
         <div className="text-sm font-black uppercase tracking-widest text-foreground">{label}</div>
         <div className="text-xs text-foreground/40 leading-relaxed italic">{desc}</div>

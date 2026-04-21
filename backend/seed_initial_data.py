@@ -8,6 +8,7 @@ from src.datalayer.model.db.tenant import Tenant
 from src.datalayer.model.db.user import User, UserRole
 from src.datalayer.model.db.academy_content import AcademyContent, ContentType, ContentStatus
 from src.datalayer.model.db.user_progress import UserProgress
+from src.datalayer.model.db.resource_link import ResourceLink
 from src.services.academy_service import AcademyService
 
 async def seed_initial_data():
@@ -164,6 +165,50 @@ async def seed_initial_data():
             thumbnail_url=service.get_youtube_thumbnail_url("https://youtu.be/A8sze3bezaM")
         )
         session.add(mc)
+        await session.flush()
+
+        # 4. Seed Resource Links
+        print("Seeding Resource Links...")
+        from sqlalchemy import delete
+        await session.execute(delete(ResourceLink).where(ResourceLink.tenant_id == tenant_id))
+        await session.flush()
+
+        resources = [
+            {
+                "title": "Greenleaf Global Office",
+                "description": "Organizasyon ve aday yönetimi paneli.",
+                "url": "https://greenleaf-global.com/office",
+                "category": "Tools",
+                "order": 1
+            },
+            {
+                "title": "Telegram Duyuru Kanalı",
+                "description": "Anlık haberler ve duyurular için resmi kanal.",
+                "url": "https://t.me/greenleafakademi",
+                "category": "Communication",
+                "order": 2
+            },
+            {
+                "title": "Zoom Eğitim Odası",
+                "description": "Canlı Masterclass eğitimleri için giriş linki.",
+                "url": "https://zoom.us/j/greenleaf",
+                "category": "Education",
+                "order": 3
+            }
+        ]
+
+        for r in resources:
+            res_link = ResourceLink(
+                tenant_id=tenant_id,
+                title=r["title"],
+                description=r["description"],
+                url=r["url"],
+                category=r["category"],
+                order=r["order"],
+                is_active=True,
+                created_by=admin_id
+            )
+            session.add(res_link)
 
         try:
             await session.commit()

@@ -10,7 +10,7 @@ from src.utils.auth_deps import get_current_partner, get_current_admin
 from src.utils.tenant_deps import get_current_tenant_id
 from src.datalayer.model.db.user import User
 
-router = APIRouter(prefix="/resources", tags=["Resource Links"])
+router = APIRouter(prefix="/resource-links", tags=["Resource Links"])
 
 @router.get("/")
 async def list_resources(

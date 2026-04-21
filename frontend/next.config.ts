@@ -10,7 +10,7 @@ const nextConfig: NextConfig = {
         // Frontend → Backend API proxy
         source: "/api/backend/:path*",
         destination: `${
-          process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000"
+          process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000"
         }/:path*`,
       },
     ];
@@ -19,6 +19,9 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       { hostname: "img.youtube.com" }, // YouTube thumbnails
     ],
+  },
+  experimental: {
+    allowedDevOrigins: ["0.0.0.0", "localhost:3000"],
   },
 };
 
