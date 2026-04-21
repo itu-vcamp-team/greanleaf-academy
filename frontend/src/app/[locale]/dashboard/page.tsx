@@ -334,7 +334,4 @@ function QuickLink({ label, url, isGuest }: any) {
        {isGuest ? <Lock size={12} className="text-foreground/20" /> : <ArrowUpRight size={16} className="text-foreground/20" />}
     </a>
   );
-}00" />}
-    </a>
-  );
 }
