@@ -16,7 +16,7 @@ from src.datalayer.model.dto.auth_dto import (
     RegisterStep1Schema, RegisterStep2Schema, RegisterStep3Schema,
     LoginSchema, LoginResponseSchema, TokenResponseSchema,
     VerifyEmailSchema, Verify2FASchema, RefreshTokenSchema,
-    ForgotPasswordSchema, ResetPasswordSchema
+    ForgotPasswordSchema, ResetPasswordSchema, ProfileUpdateSchema
 )
 from src.services import (
     PasswordService, TokenService, CaptchaService, 
@@ -394,3 +394,63 @@ async def reset_password(
     await db.commit()
     
     return {"message": "Password reset successfully."}
+
+
+# --- PROFILE ---
+
+@router.get("/profile")
+async def get_profile(current_user: User = Depends(get_current_user)):
+    """Returns the current user's full profile."""
+    return {
+        "id": str(current_user.id),
+        "username": current_user.username,
+        "email": current_user.email,
+        "full_name": current_user.full_name,
+        "phone": current_user.phone,
+        "role": current_user.role.value,
+        "partner_id": current_user.partner_id,
+        "profile_image_path": current_user.profile_image_path,
+        "is_verified": current_user.is_verified,
+        "consent_given_at": current_user.consent_given_at.isoformat() if current_user.consent_given_at else None,
+    }
+
+
+@router.patch("/profile")
+async def update_profile(
+    data: ProfileUpdateSchema,
+    db: AsyncSession = Depends(get_db_session),
+    current_user: User = Depends(get_current_user),
+):
+    """Updates the current user's profile (name, phone, password)."""
+    if data.new_password:
+        if not data.current_password:
+            raise HTTPException(status_code=400, detail="Current password is required.")
+        if not PasswordService.verify_password(data.current_password, current_user.password_hash):
+            raise HTTPException(status_code=400, detail="Current password is incorrect.")
+        current_user.password_hash = PasswordService.hash_password(data.new_password)
+
+    if data.full_name is not None:
+        current_user.full_name = data.full_name
+
+    if data.phone is not None:
+        current_user.phone = data.phone
+
+    await db.commit()
+    return {"message": "Profile updated successfully."}
+
+
+# --- LOGOUT ---
+
+@router.post("/logout")
+async def logout(
+    token: str = Depends(oauth2_scheme_strict),
+    db: AsyncSession = Depends(get_db_session),
+    current_user: User = Depends(get_current_user),
+):
+    """Invalidates the current session (single-device logout)."""
+    payload = TokenService.decode_token(token)
+    jti = payload.get("jti") if payload else None
+    if jti:
+        await SessionService.deactivate_session(db, jti)
+        await db.commit()
+    return {"message": "Logged out successfully."}

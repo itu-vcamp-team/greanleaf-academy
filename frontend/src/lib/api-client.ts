@@ -39,9 +39,9 @@ apiClient.interceptors.response.use(
         try {
           const isBrowser = typeof window !== "undefined";
           const res = await axios.post(
-            isBrowser 
-              ? "/api/backend/auth/refresh" 
-              : `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000"}/auth/refresh`,
+            isBrowser
+              ? "/api/backend/api/auth/refresh"
+              : `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000"}/api/auth/refresh`,
             { refresh_token }
           );
           const { access_token } = res.data;

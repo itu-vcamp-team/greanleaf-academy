@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.datalayer.database import get_db_session
 from src.datalayer.model.db.user import User
-from src.schemas.favorite import FavoriteCreateSchema, FavoriteResponseSchema
+from src.datalayer.model.dto.favorite_dto import FavoriteCreateSchema, FavoriteResponseSchema
 from src.datalayer.repository.favorite_repository import FavoriteRepository
 from src.utils.auth_deps import get_current_partner
 

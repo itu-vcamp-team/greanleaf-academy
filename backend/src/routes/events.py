@@ -14,7 +14,7 @@ from src.services.mailing_service import MailingService
 from src.utils.auth_deps import get_current_user, get_current_admin, get_current_partner, get_optional_user
 from src.utils.tenant_deps import get_current_tenant_id
 from src.utils.ical_generator import generate_ics
-from src.schemas.event import EventResponse, GuestEventResponse
+from src.datalayer.model.dto.event_dto import EventResponse, GuestEventResponse
 
 router = APIRouter(prefix="/events", tags=["Events"])
 
@@ -35,14 +35,15 @@ async def get_calendar_events(
     year: int | None = Query(None, ge=2024, le=2100),
     month: int | None = Query(None, ge=1, le=12),
     db: AsyncSession = Depends(get_db_session),
-    current_user=Depends(get_optional_user)
+    tenant_id: uuid.UUID = Depends(get_current_tenant_id),
+    current_user=Depends(get_optional_user),
 ):
     """Returns events for a specific month for calendar view."""
     now = datetime.now()
     year = year or now.year
     month = month or now.month
-    
-    repo = EventRepository(db)
+
+    repo = EventRepository(db, tenant_id)
     events = await repo.get_month_events(year, month, current_user.role)
     return [_sanitize_event(e, current_user.role) for e in events]
 

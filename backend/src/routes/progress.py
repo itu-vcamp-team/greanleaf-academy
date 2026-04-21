@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.datalayer.database import get_db_session
 from src.datalayer.model.db.user import User
 from src.datalayer.model.db.academy_content import ContentType
-from src.schemas.progress import WatchProgressSchema
+from src.datalayer.model.dto.progress_dto import WatchProgressSchema
 from src.datalayer.repository.progress_repository import ProgressRepository
 from src.services.progress_service import ProgressService
 from src.utils.auth_deps import get_current_partner, get_optional_user

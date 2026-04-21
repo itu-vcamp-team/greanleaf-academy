@@ -10,9 +10,28 @@ import { useUserRole } from "@/context/UserRoleContext";
 import { useTenant } from "@/context/TenantContext";
 import { motion } from "framer-motion";
 import React, { useState, useEffect } from "react";
+import apiClient from "@/lib/api-client";
 
 interface PageProps {
   params: Promise<{ locale: string }>;
+}
+
+interface UpcomingEvent {
+  id: string;
+  title: string;
+  start_time: string;
+  contact_info?: string | null;
+}
+
+function getTimeLeft(targetDate: Date) {
+  const diff = targetDate.getTime() - Date.now();
+  if (diff <= 0) return { hours: 0, minutes: 0, seconds: 0 };
+  const totalSeconds = Math.floor(diff / 1000);
+  return {
+    hours: Math.floor(totalSeconds / 3600),
+    minutes: Math.floor((totalSeconds % 3600) / 60),
+    seconds: totalSeconds % 60,
+  };
 }
 
 export default function Home({ params }: PageProps) {
@@ -20,19 +39,35 @@ export default function Home({ params }: PageProps) {
   const t = useTranslations();
   const { role } = useUserRole();
   const { activeTenant } = useTenant();
-  const [timeLeft, setTimeLeft] = useState({ hours: 14, minutes: 24, seconds: 45 });
 
+  const [nextEvent, setNextEvent] = useState<UpcomingEvent | null>(null);
+  const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 });
+
+  // Fetch next upcoming event (public — guests can see title/time)
   useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev.seconds > 0) return { ...prev, seconds: prev.seconds - 1 };
-        if (prev.minutes > 0) return { ...prev, minutes: 59, seconds: 59, hours: prev.hours };
-        if (prev.hours > 0) return { hours: prev.hours - 1, minutes: 59, seconds: 59 };
-        return prev;
+    apiClient
+      .get("/events/?limit=1")
+      .then((res) => {
+        const events: UpcomingEvent[] = res.data;
+        if (events.length > 0) {
+          setNextEvent(events[0]);
+          setTimeLeft(getTimeLeft(new Date(events[0].start_time)));
+        }
+      })
+      .catch(() => {
+        // Fallback: show a placeholder countdown from now + 14h
+        const fallback = new Date(Date.now() + 14 * 3600 * 1000);
+        setTimeLeft(getTimeLeft(fallback));
       });
-    }, 1000);
-    return () => clearInterval(timer);
   }, []);
+
+  // Live countdown ticker
+  useEffect(() => {
+    if (!nextEvent) return;
+    const target = new Date(nextEvent.start_time);
+    const timer = setInterval(() => setTimeLeft(getTimeLeft(target)), 1000);
+    return () => clearInterval(timer);
+  }, [nextEvent]);
 
   const isTR = locale.startsWith("tr");
 
@@ -63,13 +98,19 @@ export default function Home({ params }: PageProps) {
               <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-12">
                 <div className="text-center md:text-left">
                   <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-3">
-                    {isTR ? "Sıradaki Canlı Eğitim" : "Nächste Live-Schulung"}
+                    {isTR ? "Sıradaki Canlı Eğitim" : "Next Live Session"}
                   </p>
                   <h3 className="text-3xl font-bold mb-2 tracking-tight">
-                    {isTR ? "Momentum Lansman Stratejisi" : "Momentum Launch-Strategie"}
+                    {nextEvent?.title ?? (isTR ? "Yakında Duyurulacak" : "Coming Soon")}
                   </h3>
                   <p className="text-foreground/40 text-sm italic font-medium">
-                    {isTR ? "Katılımcı: M. Dünya Kahtalı • 21:00" : "Sprecher: M. D. Kahtali • 21:00"}
+                    {nextEvent
+                      ? new Date(nextEvent.start_time).toLocaleString(isTR ? "tr-TR" : "en-US", {
+                          weekday: "long",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })
+                      : (isTR ? "Tarih bekleniyor..." : "Date pending...")}
                   </p>
                 </div>
                 

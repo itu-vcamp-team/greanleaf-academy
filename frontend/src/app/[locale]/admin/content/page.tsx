@@ -26,8 +26,8 @@ export default function AdminContentPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Backend routes: GET /announcements (admin gets all), GET /resource-links
-      const endpoint = activeTab === "announcements" ? "/announcements" : "/resource-links";
+      // Admin views use dedicated admin sub-routes that include inactive items
+      const endpoint = activeTab === "announcements" ? "/announcements/admin" : "/resource-links/admin";
       const res = await apiClient.get(endpoint);
       setData(res.data);
     } catch (err) {
@@ -41,7 +41,7 @@ export default function AdminContentPage() {
     e.preventDefault();
     setSaving(true);
     try {
-      const endpoint = activeTab === "announcements" ? "/announcements/" : "/resources/";
+      const endpoint = activeTab === "announcements" ? "/announcements/" : "/resource-links/";
       await apiClient.post(endpoint, formData);
       setShowModal(false);
       setFormData({});
@@ -55,9 +55,9 @@ export default function AdminContentPage() {
 
   const handleToggleActive = async (id: string, currentStatus: boolean) => {
     try {
-       const endpoint = activeTab === "announcements" 
-        ? `/announcements/${id}` 
-        : `/resources/${id}`;
+       const endpoint = activeTab === "announcements"
+        ? `/announcements/${id}`
+        : `/resource-links/${id}`;
        await apiClient.patch(endpoint, { is_active: !currentStatus });
        fetchData();
     } catch (err) {
@@ -68,9 +68,9 @@ export default function AdminContentPage() {
   const handleDelete = async (id: string) => {
     if (!confirm("Bu içeriği kaldırmak istediğinize emin misiniz? (Soft delete)")) return;
     try {
-       const endpoint = activeTab === "announcements" 
-        ? `/announcements/${id}` 
-        : `/resources/${id}`;
+       const endpoint = activeTab === "announcements"
+        ? `/announcements/${id}`
+        : `/resource-links/${id}`;
        await apiClient.delete(endpoint);
        fetchData();
     } catch (err) {

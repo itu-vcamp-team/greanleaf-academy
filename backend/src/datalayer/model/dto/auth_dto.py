@@ -78,6 +78,15 @@ class ForgotPasswordSchema(BaseModel):
     email: EmailStr
 
 
+# --- PROFILE UPDATE SCHEMA ---
+
+class ProfileUpdateSchema(BaseModel):
+    full_name: Optional[str] = None
+    phone: Optional[str] = None
+    current_password: Optional[str] = None
+    new_password: Optional[str] = None
+
+
 class ResetPasswordSchema(BaseModel):
     user_id: uuid.UUID
     code: str
