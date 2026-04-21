@@ -307,36 +307,46 @@ async def verify_2fa(
     request: Request,
     db: AsyncSession = Depends(get_db_session)
 ):
-    r = aioredis.from_url(settings.REDIS_URL, decode_responses=True)
-    stored_user_id = await r.get(f"login_2fa:{data.temp_token}")
-    
-    if not stored_user_id or stored_user_id != str(data.user_id):
+    try:
+        r = aioredis.from_url(settings.REDIS_URL, decode_responses=True)
+        stored_user_id = await r.get(f"login_2fa:{data.temp_token}")
+        
+        if not stored_user_id or stored_user_id != str(data.user_id):
+            await r.aclose()
+            raise HTTPException(status_code=400, detail="Invalid or expired 2FA session.")
+
+        if not await OTPService.verify_otp(str(data.user_id), data.code):
+            await r.aclose()
+            raise HTTPException(status_code=400, detail="Invalid OTP code.")
+
+        await r.delete(f"login_2fa:{data.temp_token}")
         await r.aclose()
-        raise HTTPException(status_code=400, detail="Invalid or expired 2FA session.")
 
-    if not await OTPService.verify_otp(str(data.user_id), data.code):
-        await r.aclose()
-        raise HTTPException(status_code=400, detail="Invalid OTP code.")
+        stmt = select(User).where(User.id == data.user_id)
+        res = await db.execute(stmt)
+        user = res.scalar_one()
+        user.last_2fa_at = datetime.now(timezone.utc)
 
-    await r.delete(f"login_2fa:{data.temp_token}")
-    await r.aclose()
+        jti = await SessionService.create_session(
+            db, user.id, 
+            ip_address=request.client.host if request.client else None,
+            device_info=request.headers.get("user-agent")
+        )
+        await db.commit()
 
-    stmt = select(User).where(User.id == data.user_id)
-    res = await db.execute(stmt)
-    user = res.scalar_one()
-    user.last_2fa_at = datetime.now(timezone.utc)
+        access_token = TokenService.create_access_token(str(user.id), user.role.value, str(user.tenant_id), jti)
+        refresh_token = TokenService.create_refresh_token(str(user.id), jti)
 
-    jti = await SessionService.create_session(
-        db, user.id, 
-        ip_address=request.client.host if request.client else None,
-        device_info=request.headers.get("user-agent")
-    )
-    await db.commit()
-
-    access_token = TokenService.create_access_token(str(user.id), user.role.value, str(user.tenant_id), jti)
-    refresh_token = TokenService.create_refresh_token(str(user.id), jti)
-
-    return TokenResponseSchema(access_token=access_token, refresh_token=refresh_token)
+        return TokenResponseSchema(access_token=access_token, refresh_token=refresh_token)
+    except HTTPException:
+        raise
+    except Exception as e:
+        error_msg = str(e)
+        logger.error(f"CRITICAL 2FA ERROR: {error_msg}", exc_info=True)
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Backend Error (2FA): {error_msg}"
+        )
 
 
 # --- PASSWORD RESET FLOW ---
