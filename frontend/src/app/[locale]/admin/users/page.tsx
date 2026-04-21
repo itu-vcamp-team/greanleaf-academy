@@ -5,10 +5,13 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import {
   UserCheck, UserX, Shield, Mail, Calendar,
   Loader2, BadgeCheck, Users, ToggleLeft, ToggleRight,
+  UserPlus, X, Eye, EyeOff,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import apiClient from "@/lib/api-client";
 import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { useUserRole } from "@/context/UserRoleContext";
 
 type Tab = "pending" | "all";
 
@@ -24,12 +27,48 @@ interface UserRow {
   created_at: string;
 }
 
+interface Tenant {
+  id: string;
+  slug: string;
+  name: string;
+}
+
+interface CreateUserForm {
+  full_name: string;
+  username: string;
+  email: string;
+  phone: string;
+  password: string;
+  role: "ADMIN" | "PARTNER";
+  tenant_id: string;
+}
+
 export default function AdminUsersPage() {
+  const { role: currentUserRole } = useUserRole();
+  const isSuperAdmin = currentUserRole === "SUPERADMIN";
+
   const [activeTab, setActiveTab] = useState<Tab>("pending");
   const [pendingUsers, setPendingUsers] = useState<UserRow[]>([]);
   const [allUsers, setAllUsers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  // Create User Modal State
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [createLoading, setCreateLoading] = useState(false);
+  const [createError, setCreateError] = useState("");
+  const [createSuccess, setCreateSuccess] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [createForm, setCreateForm] = useState<CreateUserForm>({
+    full_name: "",
+    username: "",
+    email: "",
+    phone: "",
+    password: "",
+    role: "PARTNER",
+    tenant_id: "",
+  });
 
   useEffect(() => {
     if (activeTab === "pending") {
@@ -38,6 +77,13 @@ export default function AdminUsersPage() {
       fetchAll();
     }
   }, [activeTab]);
+
+  // Fetch tenants when superadmin opens modal
+  useEffect(() => {
+    if (showCreateModal && isSuperAdmin && tenants.length === 0) {
+      fetchTenants();
+    }
+  }, [showCreateModal]);
 
   const fetchPending = async () => {
     setLoading(true);
@@ -60,6 +106,18 @@ export default function AdminUsersPage() {
       console.error("Fetch all users error");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchTenants = async () => {
+    try {
+      const res = await apiClient.get("/superadmin/users/tenants");
+      setTenants(res.data);
+      if (res.data.length > 0) {
+        setCreateForm((prev) => ({ ...prev, tenant_id: res.data[0].id }));
+      }
+    } catch {
+      console.error("Fetch tenants error");
     }
   };
 
@@ -96,16 +154,67 @@ export default function AdminUsersPage() {
     }
   };
 
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCreateLoading(true);
+    setCreateError("");
+    setCreateSuccess("");
+    try {
+      const payload = {
+        ...createForm,
+        phone: createForm.phone ? `+90${createForm.phone.replace(/\D/g, "").slice(0, 10)}` : null,
+      };
+      const res = await apiClient.post("/superadmin/users/create", payload);
+      setCreateSuccess(res.data.message || "Kullanıcı başarıyla oluşturuldu.");
+      // Reset form
+      setCreateForm({
+        full_name: "",
+        username: "",
+        email: "",
+        phone: "",
+        password: "",
+        role: "PARTNER",
+        tenant_id: tenants[0]?.id || "",
+      });
+      // Refresh list after creation
+      if (activeTab === "all") fetchAll();
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { detail?: string } } };
+      setCreateError(e?.response?.data?.detail || "Kullanıcı oluşturulamadı.");
+    } finally {
+      setCreateLoading(false);
+    }
+  };
+
+  const closeModal = () => {
+    setShowCreateModal(false);
+    setCreateError("");
+    setCreateSuccess("");
+  };
+
   return (
     <div className="space-y-10">
-      <header>
-        <div className="flex items-center gap-3 text-emerald-500 mb-3">
-          <Shield className="w-5 h-5" fill="currentColor" fillOpacity={0.2} />
-          <span className="text-xs font-black uppercase tracking-[0.3em]">Kullanıcı Yönetimi</span>
+      <header className="flex items-start justify-between">
+        <div>
+          <div className="flex items-center gap-3 text-emerald-500 mb-3">
+            <Shield className="w-5 h-5" fill="currentColor" fillOpacity={0.2} />
+            <span className="text-xs font-black uppercase tracking-[0.3em]">Kullanıcı Yönetimi</span>
+          </div>
+          <h1 className="text-4xl font-black text-gray-900 tracking-tight">
+            Partner <span className="text-emerald-500 italic">Yönetimi</span>
+          </h1>
         </div>
-        <h1 className="text-4xl font-black text-gray-900 tracking-tight">
-          Partner <span className="text-emerald-500 italic">Yönetimi</span>
-        </h1>
+
+        {/* Superadmin-only: Create User Button */}
+        {isSuperAdmin && (
+          <Button
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center gap-2 rounded-2xl bg-emerald-500 hover:bg-emerald-600 shadow-lg shadow-emerald-100 px-5 py-3 h-auto"
+          >
+            <UserPlus size={16} />
+            <span className="text-xs font-black uppercase tracking-widest">Kullanıcı Oluştur</span>
+          </Button>
+        )}
       </header>
 
       {/* Tab Switcher */}
@@ -192,6 +301,226 @@ export default function AdminUsersPage() {
           </table>
         </div>
       </GlassCard>
+
+      {/* ── Create User Modal (Superadmin Only) ── */}
+      <AnimatePresence>
+        {showCreateModal && (
+          <motion.div
+            key="create-user-modal"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+            onClick={(e) => e.target === e.currentTarget && closeModal()}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ type: "spring", bounce: 0.2, duration: 0.4 }}
+              className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden"
+            >
+              {/* Modal Header */}
+              <div className="flex items-center justify-between px-8 py-6 border-b border-gray-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 flex items-center justify-center">
+                    <UserPlus className="w-5 h-5 text-emerald-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-black text-gray-900">Kullanıcı Oluştur</h2>
+                    <p className="text-[11px] text-gray-400 font-medium">
+                      Tenant&apos;a Admin veya Partner ekle
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={closeModal}
+                  className="p-2 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-all"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="px-8 py-6 max-h-[70vh] overflow-y-auto">
+                {createSuccess ? (
+                  <div className="text-center py-8">
+                    <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-4">
+                      <BadgeCheck className="w-8 h-8 text-emerald-500" />
+                    </div>
+                    <h3 className="text-lg font-black text-gray-900 mb-2">Başarılı!</h3>
+                    <p className="text-sm text-gray-500 leading-relaxed mb-6">{createSuccess}</p>
+                    <div className="flex gap-3">
+                      <Button
+                        onClick={() => setCreateSuccess("")}
+                        className="flex-1 rounded-2xl bg-emerald-500 hover:bg-emerald-600"
+                      >
+                        Yeni Kullanıcı Ekle
+                      </Button>
+                      <Button
+                        onClick={closeModal}
+                        className="flex-1 rounded-2xl bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      >
+                        Kapat
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <form onSubmit={handleCreateUser} className="space-y-4">
+                    {/* Tenant Select */}
+                    <div className="space-y-1">
+                      <label className="block text-xs font-black uppercase tracking-widest text-gray-400 mb-1">
+                        Tenant (Ülke/Bölge)
+                      </label>
+                      <select
+                        value={createForm.tenant_id}
+                        onChange={(e) => setCreateForm({ ...createForm, tenant_id: e.target.value })}
+                        required
+                        className="w-full h-12 px-4 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-800 outline-none focus:border-emerald-400 transition-colors"
+                      >
+                        {tenants.length === 0 && (
+                          <option value="">Yükleniyor...</option>
+                        )}
+                        {tenants.map((t) => (
+                          <option key={t.id} value={t.id}>
+                            {t.name} ({t.slug})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Role Select */}
+                    <div className="space-y-1">
+                      <label className="block text-xs font-black uppercase tracking-widest text-gray-400 mb-1">
+                        Rol
+                      </label>
+                      <div className="flex gap-2">
+                        {(["PARTNER", "ADMIN"] as const).map((r) => (
+                          <button
+                            key={r}
+                            type="button"
+                            onClick={() => setCreateForm({ ...createForm, role: r })}
+                            className={`flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest border transition-all ${
+                              createForm.role === r
+                                ? "bg-emerald-500 text-white border-emerald-500 shadow-md shadow-emerald-100"
+                                : "bg-gray-50 text-gray-400 border-gray-200 hover:border-gray-300"
+                            }`}
+                          >
+                            {r === "ADMIN" ? "🛡 Admin" : "👤 Partner"}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <Input
+                      label="Ad Soyad"
+                      placeholder="Ahmet Yılmaz"
+                      value={createForm.full_name}
+                      onChange={(e) => setCreateForm({ ...createForm, full_name: e.target.value })}
+                      required
+                    />
+
+                    <Input
+                      label="Kullanıcı Adı"
+                      placeholder="ahmet_yilmaz"
+                      value={createForm.username}
+                      onChange={(e) => setCreateForm({ ...createForm, username: e.target.value })}
+                      required
+                    />
+
+                    <Input
+                      label="E-Posta"
+                      type="email"
+                      placeholder="ahmet@example.com"
+                      value={createForm.email}
+                      onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
+                      required
+                    />
+
+                    {/* Phone */}
+                    <div className="space-y-1">
+                      <label className="block text-xs font-black uppercase tracking-widest text-gray-400 mb-1">
+                        Telefon <span className="text-gray-300 font-normal normal-case tracking-normal">(opsiyonel)</span>
+                      </label>
+                      <div className="flex items-stretch">
+                        <span className="flex items-center px-3 bg-gray-100 border border-gray-200 border-r-0 rounded-l-xl text-sm text-gray-500 font-mono select-none">
+                          +90
+                        </span>
+                        <input
+                          type="tel"
+                          placeholder="5XX XXX XXXX"
+                          maxLength={10}
+                          value={createForm.phone}
+                          onChange={(e) => {
+                            const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
+                            setCreateForm({ ...createForm, phone: digits });
+                          }}
+                          className="flex-1 h-12 px-3 bg-gray-50 border border-gray-200 rounded-r-xl text-sm text-gray-800 outline-none focus:border-emerald-400 transition-colors"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Password with toggle */}
+                    <div className="space-y-1">
+                      <label className="block text-xs font-black uppercase tracking-widest text-gray-400 mb-1">
+                        Geçici Şifre
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          placeholder="En az 8 karakter, 1 büyük harf, 1 rakam"
+                          value={createForm.password}
+                          onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
+                          required
+                          className="w-full h-12 px-4 pr-10 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-800 outline-none focus:border-emerald-400 transition-colors"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        >
+                          {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
+                      </div>
+                      <p className="text-[10px] text-gray-400 italic">
+                        Kullanıcıya e-posta ile gönderilecek. Giriş sonrası değiştirmesi önerilir.
+                      </p>
+                    </div>
+
+                    {createError && (
+                      <div className="p-3 bg-red-50 border border-red-100 rounded-xl text-xs text-red-500 font-medium">
+                        {createError}
+                      </div>
+                    )}
+
+                    <div className="flex gap-3 pt-2">
+                      <Button
+                        type="button"
+                        onClick={closeModal}
+                        className="flex-1 rounded-2xl bg-gray-100 text-gray-700 hover:bg-gray-200 h-12"
+                      >
+                        İptal
+                      </Button>
+                      <Button
+                        type="submit"
+                        disabled={createLoading}
+                        className="flex-1 rounded-2xl bg-emerald-500 hover:bg-emerald-600 shadow-md shadow-emerald-100 h-12 gap-2"
+                      >
+                        {createLoading ? (
+                          <Loader2 size={15} className="animate-spin" />
+                        ) : (
+                          <UserPlus size={15} />
+                        )}
+                        {createLoading ? "Oluşturuluyor..." : "Hesap Oluştur"}
+                      </Button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

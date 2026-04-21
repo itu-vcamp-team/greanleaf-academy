@@ -1,6 +1,6 @@
 import re
 import uuid
-from typing import Optional
+from typing import Optional, Literal
 from pydantic import BaseModel, EmailStr, field_validator
 
 
@@ -121,4 +121,37 @@ class ResetPasswordSchema(BaseModel):
     def password_strength(cls, v: str) -> str:
         if len(v) < 8:
             raise ValueError("Password must be at least 8 characters long.")
+        return v
+
+
+# --- SUPERADMIN: Manual User Creation ---
+
+class SuperadminCreateUserSchema(BaseModel):
+    full_name: str
+    username: str
+    email: EmailStr
+    phone: Optional[str] = None
+    password: str
+    role: Literal["ADMIN", "PARTNER"]
+    tenant_id: uuid.UUID
+
+    @field_validator("phone", mode="before")
+    @classmethod
+    def validate_phone(cls, v: Optional[str]) -> Optional[str]:
+        if v is None or v == "":
+            return None
+        cleaned = str(v).strip()
+        if not re.match(r'^\+[0-9]{7,15}$', cleaned):
+            raise ValueError("Telefon numarası uluslararası formatta olmalıdır. Örnek: +905551234567")
+        return cleaned
+
+    @field_validator("password")
+    @classmethod
+    def password_strength(cls, v: str) -> str:
+        if len(v) < 8:
+            raise ValueError("Şifre en az 8 karakter olmalıdır.")
+        if not re.search(r"[A-Z]", v):
+            raise ValueError("Şifre en az bir büyük harf içermelidir.")
+        if not re.search(r"[0-9]", v):
+            raise ValueError("Şifre en az bir rakam içermelidir.")
         return v

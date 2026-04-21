@@ -22,6 +22,7 @@ from src.routes.resource_links import router as resources_router
 from src.routes.waitlist import router as waitlist_router
 from src.routes.admin_stats import router as admin_stats_router
 from src.routes.tenants import router as tenants_router
+from src.routes.superadmin_users import router as superadmin_users_router
 
 settings = get_settings()
 
@@ -71,6 +72,7 @@ app.include_router(events_router, prefix="/api")
 app.include_router(admin_maintenance_router, prefix="/api")
 app.include_router(admin_users_router, prefix="/api")
 app.include_router(admin_stats_router, prefix="/api")
+app.include_router(superadmin_users_router, prefix="/api")
 
 # Content & Support Management (Admin Only)
 app.include_router(announcements_router, prefix="/api")

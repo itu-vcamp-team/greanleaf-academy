@@ -180,3 +180,66 @@ class MailingService:
         """Notifies user about account status."""
         html = f"<div>Hesap durumunuz güncellendi. Onay: {is_approved}</div>"
         return await MailingService._send_email(to_email, "Hesap Durumu", html)
+
+    @staticmethod
+    async def send_account_created_by_admin_email(
+        to_email: str,
+        full_name: str,
+        username: str,
+        temp_password: str,
+        role: str,
+        frontend_url: str,
+    ) -> bool:
+        """
+        Superadmin tarafından manuel oluşturulan hesaplar için
+        kullanıcıya gönderilen hoş geldiniz e-postası.
+        """
+        role_label = "Yönetici (Admin)" if role == "ADMIN" else "Partner"
+        html = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;
+                    color: #333; border: 1px solid #4AA435; border-radius: 12px; overflow: hidden;">
+          <div style="background: #4AA435; color: white; padding: 30px; text-align: center;">
+            <h1 style="margin: 0; font-size: 22px;">🌿 Greenleaf Akademi</h1>
+            <p style="margin: 8px 0 0; opacity: 0.9; font-size: 14px;">Hesabınız Oluşturuldu</p>
+          </div>
+          <div style="padding: 28px;">
+            <p style="font-size: 16px;">Merhaba <strong>{full_name}</strong>,</p>
+            <p style="line-height: 1.6; color: #555;">
+              Greenleaf Akademi platformuna <strong>{role_label}</strong> rolüyle
+              kaydınız bir yönetici tarafından oluşturuldu.
+              Aşağıdaki bilgilerle giriş yapabilirsiniz:
+            </p>
+            <div style="background: #f0f9f4; border: 1px solid #c6e8bc; border-radius: 8px;
+                        padding: 20px; margin: 24px 0;">
+              <p style="margin: 6px 0; font-size: 14px;">
+                <strong>Kullanıcı Adı:</strong>
+                <code style="background: #e0f4d8; padding: 2px 6px; border-radius: 4px;">{username}</code>
+              </p>
+              <p style="margin: 6px 0; font-size: 14px;">
+                <strong>Geçici Şifre:</strong>
+                <code style="background: #e0f4d8; padding: 2px 6px; border-radius: 4px;">{temp_password}</code>
+              </p>
+            </div>
+            <p style="font-size: 13px; color: #e05c00;">
+              ⚠️ Güvenliğiniz için giriş yaptıktan sonra şifrenizi değiştirmenizi önemle tavsiye ederiz.
+            </p>
+            <div style="text-align: center; margin-top: 28px;">
+              <a href="{frontend_url}/login"
+                 style="background: #4AA435; color: white; padding: 14px 32px;
+                        text-decoration: none; border-radius: 8px; font-weight: bold;
+                        font-size: 14px; display: inline-block;">
+                Giriş Yap
+              </a>
+            </div>
+          </div>
+          <div style="background: #f9f9f9; padding: 15px; text-align: center;
+                      font-size: 12px; color: #999;">
+            © 2026 Greenleaf Akademi. Tüm hakları saklıdır.
+          </div>
+        </div>
+        """
+        return await MailingService._send_email(
+            to_email,
+            "Greenleaf Akademi – Hesabınız Oluşturuldu",
+            html,
+        )
