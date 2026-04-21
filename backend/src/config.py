@@ -12,6 +12,19 @@ class Settings(BaseSettings):
 
     # Database
     DATABASE_URL: str  # örn: postgresql+asyncpg://user:pass@localhost:5432/greenleaf
+    
+    @field_validator("DATABASE_URL", mode="before")
+    @classmethod
+    def fix_database_url_scheme(cls, v: str) -> str:
+        """
+        Render.com (ve Heroku) varsayılan olarak 'postgres://' formatında bir URL verir.
+        SQLAlchemy 2.0+ ve asyncpg için bunu 'postgresql+asyncpg://' formatına çevirmemiz gerekir.
+        """
+        if v.startswith("postgres://"):
+            return v.replace("postgres://", "postgresql+asyncpg://", 1)
+        if v.startswith("postgresql://") and "+asyncpg" not in v:
+            return v.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return v
 
     # Redis
     REDIS_URL: str  # örn: redis://localhost:6379/0
