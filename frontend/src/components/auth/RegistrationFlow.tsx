@@ -1,6 +1,24 @@
 "use client";
 
 import { useState } from "react";
+
+// Pydantic v2 + FastAPI 422 validation hatalarını düz string'e çevirir.
+// detail: string  → direkt döndürür
+// detail: [{msg, loc, ...}] → ilk hata mesajını prefix temizleyerek döndürür
+function extractErrorMessage(err: unknown, fallback: string): string {
+  const e = err as { response?: { data?: { detail?: unknown } } };
+  const detail = e?.response?.data?.detail;
+  if (!detail) return fallback;
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail) && detail.length > 0) {
+    const first = detail[0] as { msg?: string; message?: string };
+    const raw = first?.msg || first?.message || fallback;
+    // Pydantic "Value error, ..." prefix'ini temizle
+    return raw.replace(/^Value error,\s*/i, "");
+  }
+  return fallback;
+}
+
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { GlassCard } from "@/components/ui/GlassCard";
@@ -48,8 +66,7 @@ export function RegistrationFlow() {
       setSessionId(res.data.session_id);
       setStep(2);
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { detail?: string } } };
-      setError(e.response?.data?.detail || "Kayıt başlatılamadı.");
+      setError(extractErrorMessage(err, "Kayıt başlatılamadı."));
     } finally {
       setLoading(false);
     }
@@ -66,8 +83,7 @@ export function RegistrationFlow() {
       });
       setStep(3);
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { detail?: string } } };
-      setError(e.response?.data?.detail || "Global hesap doğrulanamadı.");
+      setError(extractErrorMessage(err, "Global hesap doğrulanamadı."));
     } finally {
       setLoading(false);
     }
@@ -90,8 +106,7 @@ export function RegistrationFlow() {
         router.push("/academy");
       }
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { detail?: string } } };
-      setError(e.response?.data?.detail || "Kayıt tamamlanamadı.");
+      setError(extractErrorMessage(err, "Kayıt tamamlanamadı."));
     } finally {
       setLoading(false);
     }

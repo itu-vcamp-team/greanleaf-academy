@@ -54,7 +54,11 @@ apiClient.interceptors.response.use(
           return apiClient(originalRequest);
         } catch {
           useAuthStore.getState().clearAuth();
-          window.location.href = "/login";
+          // Mevcut locale'i koru, geçerli bir locale değilse default kullan
+          const validLocales = ["tr-TR", "en-US"];
+          const segment = window.location.pathname.split("/")[1];
+          const locale = validLocales.includes(segment) ? segment : "tr-TR";
+          window.location.href = `/${locale}/auth/login`;
         }
       }
     }
