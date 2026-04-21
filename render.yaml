@@ -46,7 +46,7 @@ services:
     plan: free
     envVars:
       - key: NEXT_PUBLIC_BACKEND_URL
-        value: https://greenleaf-backend.onrender.com
+        value: https://greenleaf-backend-wkfv.onrender.com
 
   # --- REDIS ---
   - type: redis
