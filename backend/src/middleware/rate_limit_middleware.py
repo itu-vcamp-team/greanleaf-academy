@@ -11,7 +11,7 @@ settings = get_settings()
 
 # Rate limit configurations: (max_requests, window_seconds, block_seconds)
 RATE_LIMIT_CONFIGS = {
-    "/api/auth/login": (100, 60, 0),            # TEMPORARY: 100 attempts per minute for debugging
+    "/api/auth/login": (5, 900, 900),           # 5 attempts in 15m -> 15m block                                                  
     "/api/auth/register": (10, 3600, 1800),     # 10 attempts in 1h -> 30m block
     "/api/auth/forgot-password": (3, 3600, 3600),# 3 attempts in 1h -> 1h block
     "default": (100, 60, 0),                    # Default: 100 requests per minute
@@ -53,11 +53,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         
         max_requests, window_seconds, block_seconds = config
 
-        # 4. Check if blocked (BYPASS during debugging for /login)
+        # 4. Check if blocked
         block_key = f"rl_block:{ip}:{path}"
-        is_blocked = await self.redis.get(block_key)
-        
-        if is_blocked and not path.startswith("/api/auth/login"):
+        if await self.redis.get(block_key):
             minutes = block_seconds // 60
             return Response(
                 content=json.dumps({

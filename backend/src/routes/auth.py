@@ -224,11 +224,6 @@ async def login(
         res = await db.execute(stmt)
         user = res.scalar_one_or_none()
 
-        # [DIAGNOSTIC] Check password length and first 3 chars
-        pw_len = len(data.password) if data.password else 0
-        pw_prefix = data.password[:3] if pw_len >= 3 else "N/A"
-        logger.info(f"DEBUG LOGIN: Username={data.username}, PW_Len={pw_len}, PW_Prefix={pw_prefix}")
-
         if not user or not PasswordService.verify_password(data.password, user.password_hash):
             raise HTTPException(status_code=401, detail="Invalid username or password.")
 
@@ -283,12 +278,10 @@ async def login(
     except HTTPException:
         raise
     except Exception as e:
-        error_msg = str(e)
-        logger.error(f"CRITICAL LOGIN ERROR: {error_msg}", exc_info=True)
-        # TEMPORARY DIAGNOSTIC: Show the error message in the response
+        logger.error(f"CRITICAL LOGIN ERROR: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=500, 
-            detail=f"Backend Error: {error_msg}"
+            detail="An internal server error occurred during login. Please try again later."
         )
 
 
