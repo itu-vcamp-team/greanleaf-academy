@@ -278,10 +278,12 @@ async def login(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"CRITICAL LOGIN ERROR: {str(e)}", exc_info=True)
+        error_msg = str(e)
+        logger.error(f"CRITICAL LOGIN ERROR: {error_msg}", exc_info=True)
+        # TEMPORARY DIAGNOSTIC: Show the error message in the response
         raise HTTPException(
             status_code=500, 
-            detail="An internal server error occurred during login. Please try again later."
+            detail=f"Backend Error: {error_msg}"
         )
 
 
