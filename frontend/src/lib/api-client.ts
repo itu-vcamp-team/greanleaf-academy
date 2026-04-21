@@ -11,7 +11,7 @@ const apiClient = axios.create({
   timeout: 15000,
 });
 
-// Request interceptor: Her isteğe Authorization ve X-Tenant-ID header'larını ekle
+// Request interceptor: Authorization, X-Tenant-ID header'ları ve trailing-slash normalizasyonu
 apiClient.interceptors.request.use((config) => {
   const token = useAuthStore.getState().access_token;
   const tenantSlug = useTenantStore.getState().getTenantSlug();
@@ -22,6 +22,18 @@ apiClient.interceptors.request.use((config) => {
 
   if (tenantSlug) {
     config.headers["X-Tenant-ID"] = tenantSlug;
+  }
+
+  // FastAPI'nin redirect_slashes=True davranışı, trailing slash olmayan istekleri
+  // 307 ile yönlendirir; bu redirect sırasında proxy auth header'larını kaybeder.
+  // Tüm isteklere otomatik trailing slash ekleyerek 307 redirect'ini önle.
+  if (config.url) {
+    const qIdx = config.url.indexOf("?");
+    const pathPart = qIdx >= 0 ? config.url.slice(0, qIdx) : config.url;
+    const queryPart = qIdx >= 0 ? config.url.slice(qIdx) : "";
+    if (pathPart && !pathPart.endsWith("/")) {
+      config.url = pathPart + "/" + queryPart;
+    }
   }
 
   return config;

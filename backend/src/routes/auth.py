@@ -15,7 +15,8 @@ from src.datalayer.model.db.reference_code import ReferenceCode
 from src.datalayer.model.dto.auth_dto import (
     RegisterStep1Schema, RegisterStep2Schema, RegisterStep3Schema,
     LoginSchema, LoginResponseSchema, TokenResponseSchema,
-    Verify2FASchema, ResetPasswordSchema, ProfileUpdateSchema
+    Verify2FASchema, ResetPasswordSchema, ProfileUpdateSchema,
+    RefreshTokenSchema,
 )
 from src.services import (
     PasswordService, TokenService, CaptchaService, 
@@ -213,6 +214,62 @@ async def register_step3(
     logger.info(f"OTP generated and background task added for user {new_user.username}")
 
     return {"user_id": new_user.id, "status": "pending_email_verification"}
+
+
+# --- TOKEN REFRESH ---
+
+@router.post("/refresh", response_model=TokenResponseSchema)
+async def refresh_token_endpoint(
+    data: RefreshTokenSchema,
+    db: AsyncSession = Depends(get_db_session),
+):
+    """
+    Validates the refresh token and issues a new access token.
+    The refresh token and session JTI remain unchanged (no rotation).
+    """
+    payload = TokenService.decode_token(data.refresh_token)
+
+    if not payload or payload.get("type") != "refresh":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired refresh token.",
+        )
+
+    user_id: str | None = payload.get("sub")
+    jti: str | None = payload.get("jti")
+
+    if not user_id or not jti:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Malformed refresh token.",
+        )
+
+    # Verify the session is still active
+    if not await SessionService.is_session_active(db, jti):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Session expired or revoked. Please log in again.",
+        )
+
+    # Get fresh user data (role / tenant_id may have changed)
+    stmt = select(User).where(User.id == user_id)
+    res = await db.execute(stmt)
+    user = res.scalar_one_or_none()
+
+    if not user or not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found or account deactivated.",
+        )
+
+    new_access_token = TokenService.create_access_token(
+        str(user.id), user.role.value, str(user.tenant_id), jti
+    )
+
+    return TokenResponseSchema(
+        access_token=new_access_token,
+        refresh_token=data.refresh_token,   # same refresh token — no rotation
+    )
 
 
 # --- LOGIN & 2FA ---
