@@ -1,3 +1,4 @@
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
 
@@ -32,6 +33,7 @@ class Settings(BaseSettings):
 
     # Frontend URL (CORS için)
     FRONTEND_URL: str = "http://localhost:3000"
+    CORS_ALLOWED_ORIGIN_REGEX: str | None = None  # Production'da tüm subdomain'leri kapsar
 
 
 @lru_cache()

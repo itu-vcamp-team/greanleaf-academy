@@ -30,6 +30,8 @@ services:
         value: noreply@greenleafakademi.com
       - key: MAIL_FROM_NAME
         value: Greenleaf Akademi
+      - key: CORS_ALLOWED_ORIGIN_REGEX
+        value: 'https?://([a-z0-9-]+\.)*greenleafakademi\.com'
       - key: FRONTEND_URL
         value: https://tr.greenleafakademi.com
 
