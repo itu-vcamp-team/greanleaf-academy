@@ -4,10 +4,10 @@ from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 from sqlalchemy import select
-from datalayer.database import AsyncSessionFactory
-from datalayer.model.db.tenant import Tenant
-from config import get_settings
-from logger import logger
+from src.datalayer.database import AsyncSessionFactory
+from src.datalayer.model.db.tenant import Tenant
+from src.config import get_settings
+from src.logger import logger
 
 settings = get_settings()
 

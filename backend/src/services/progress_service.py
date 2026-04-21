@@ -2,8 +2,8 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 from typing import Optional
-from datalayer.repository.progress_repository import ProgressRepository
-from datalayer.model.db.user_progress import UserProgress
+from src.datalayer.repository.progress_repository import ProgressRepository
+from src.datalayer.model.db.user_progress import UserProgress
 
 class ProgressService:
     """Service for handling academy progress business logic."""

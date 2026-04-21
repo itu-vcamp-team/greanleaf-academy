@@ -2,7 +2,7 @@ import uuid
 from typing import TypeVar, List, Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from datalayer.database import PrimaryKeyType
+from src.datalayer.database import PrimaryKeyType
 from ._base_repository import AsyncBaseRepository
 
 T = TypeVar('T')

@@ -5,15 +5,15 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, Query, BackgroundTasks, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from datalayer.database import get_db_session
-from datalayer.model.db.user import User, UserRole
-from datalayer.model.db.event import EventCategory, EventVisibility
-from datalayer.repository.event_repository import EventRepository
-from services.event_service import EventService
-from services.mailing_service import MailingService
-from utils.auth_deps import get_current_user, get_current_admin, get_current_partner
-from utils.tenant_deps import get_current_tenant_id
-from utils.ical_generator import generate_ics
+from src.datalayer.database import get_db_session
+from src.datalayer.model.db.user import User, UserRole
+from src.datalayer.model.db.event import EventCategory, EventVisibility
+from src.datalayer.repository.event_repository import EventRepository
+from src.services.event_service import EventService
+from src.services.mailing_service import MailingService
+from src.utils.auth_deps import get_current_user, get_current_admin, get_current_partner
+from src.utils.tenant_deps import get_current_tenant_id
+from src.utils.ical_generator import generate_ics
 
 router = APIRouter(prefix="/events", tags=["Events"])
 

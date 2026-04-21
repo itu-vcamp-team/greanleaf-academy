@@ -4,7 +4,7 @@ from datetime import datetime
 from enum import Enum
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import String, ForeignKey, Enum as SQLEnum, DateTime
-from datalayer.model.db.base import BaseModel
+from src.datalayer.model.db.base import BaseModel
 
 
 class EventCategory(str, Enum):

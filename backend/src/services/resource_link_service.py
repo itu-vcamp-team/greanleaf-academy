@@ -1,7 +1,7 @@
 import uuid
 from typing import List, Optional
-from datalayer.model.db.resource_link import ResourceLink
-from datalayer.repository.resource_link_repository import ResourceLinkRepository
+from src.datalayer.model.db.resource_link import ResourceLink
+from src.datalayer.repository.resource_link_repository import ResourceLinkRepository
 
 
 class ResourceLinkService:

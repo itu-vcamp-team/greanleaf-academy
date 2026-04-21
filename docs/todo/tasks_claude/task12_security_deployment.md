@@ -582,3 +582,10 @@ Render.com üzerinde Python 3.14 varsayılan sürümünün kullanılmasını eng
 - **Python Versioning:** Geçersiz olan `runtime.txt` silindi; yerine Render standartlarına uygun `.python-version` dosyası eklendi ve `render.yaml` dosyasına `PYTHON_VERSION: 3.12.8` environment variable'ı tanımlandı.
 - **Dependency Compatibility:** `asyncpg` ve `Pillow` gibi kütüphanelerin Python 3.14 ile yaşadığı derleme hatalarının, Python sürümü 3.12'ye çekilerek kesin olarak çözüldüğü doğrulandı.
 - **Build Verification:** Sistem artık Render üzerinde Python 3.12 ile ayağa kalkacak şekilde konfigüre edildi.
+
+## 📝 Implementation Summary (2026-04-21 - Import Paths & Render Fix)
+
+Render.com üzerinde yaşanan `ModuleNotFoundError: No module named 'config'` hatası ve genel import tutarsızlıkları giderildi:
+- **Import Standardizasyonu:** Tüm backend `src/` içindeki modüller, projenin kök dizini (backend/) baz alınarak `src.` prefix'i ile import edilecek şekilde güncellendi. Bu sayede Alembic, Uvicorn ve yerel scriptlerin aynı paket yapısını görmesi sağlandı.
+- **PYTHONPATH Revizyonu:** `Dockerfile` içindeki `PYTHONPATH` değeri `/app/src` yerine `/app` (kök dizin) olarak güncellendi.
+- **Robustness:** Inline importlar dahil tüm iç bağımlılıklar standart hale getirilerek, projenin farklı ortamlarda (Docker, Render, Local) çalışma kararlılığı artırıldı.

@@ -2,10 +2,10 @@ import uuid
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from datalayer.database import get_db_session
-from services.admin_stats_service import AdminStatsService
-from utils.auth_deps import get_current_admin
-from utils.tenant_deps import get_current_tenant_id
+from src.datalayer.database import get_db_session
+from src.services.admin_stats_service import AdminStatsService
+from src.utils.auth_deps import get_current_admin
+from src.utils.tenant_deps import get_current_tenant_id
 
 router = APIRouter(prefix="/admin/stats", tags=["Admin - Stats"])
 

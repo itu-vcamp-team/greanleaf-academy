@@ -1,26 +1,26 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app_lifespan import lifespan
-from config import get_settings
+from src.app_lifespan import lifespan
+from src.config import get_settings
 
 # Middleware imports
-from middleware.tenant_middleware import TenantMiddleware
-from middleware.rate_limit_middleware import RateLimitMiddleware
-from middleware.security_headers_middleware import SecurityHeadersMiddleware
+from src.middleware.tenant_middleware import TenantMiddleware
+from src.middleware.rate_limit_middleware import RateLimitMiddleware
+from src.middleware.security_headers_middleware import SecurityHeadersMiddleware
 
 # Router imports
-from routes.auth import router as auth_router
-from routes.admin_maintenance import router as admin_maintenance_router
-from routes.academy import router as academy_router
-from routes.progress import router as progress_router
-from routes.favorites import router as favorites_router
-from routes.events import router as events_router
-from routes.reference_codes import router as reference_codes_router
-from routes.admin_users import router as admin_users_router
-from routes.announcements import router as announcements_router
-from routes.resource_links import router as resources_router
-from routes.waitlist import router as waitlist_router
-from routes.admin_stats import router as admin_stats_router
+from src.routes.auth import router as auth_router
+from src.routes.admin_maintenance import router as admin_maintenance_router
+from src.routes.academy import router as academy_router
+from src.routes.progress import router as progress_router
+from src.routes.favorites import router as favorites_router
+from src.routes.events import router as events_router
+from src.routes.reference_codes import router as reference_codes_router
+from src.routes.admin_users import router as admin_users_router
+from src.routes.announcements import router as announcements_router
+from src.routes.resource_links import router as resources_router
+from src.routes.waitlist import router as waitlist_router
+from src.routes.admin_stats import router as admin_stats_router
 
 settings = get_settings()
 

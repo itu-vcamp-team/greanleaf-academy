@@ -3,13 +3,13 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from datalayer.database import get_db_session
-from datalayer.repository import UserRepository, TenantRepository, ProgressRepository
-from services.admin_user_service import AdminUserService
-from services.progress_service import ProgressService
-from utils.auth_deps import get_current_admin, get_current_partner
-from utils.tenant_deps import get_current_tenant_id
-from datalayer.model.db.user import User, UserRole
+from src.datalayer.database import get_db_session
+from src.datalayer.repository import UserRepository, TenantRepository, ProgressRepository
+from src.services.admin_user_service import AdminUserService
+from src.services.progress_service import ProgressService
+from src.utils.auth_deps import get_current_admin, get_current_partner
+from src.utils.tenant_deps import get_current_tenant_id
+from src.datalayer.model.db.user import User, UserRole
 
 router = APIRouter(prefix="/admin/users", tags=["Admin - Users"])
 

@@ -3,21 +3,21 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from datalayer.database import get_db_session
-from datalayer.model.db.user import UserRole
-from datalayer.model.db.academy_content import ContentType
-from datalayer.model.dto.academy_schemas import (
+from src.datalayer.database import get_db_session
+from src.datalayer.model.db.user import UserRole
+from src.datalayer.model.db.academy_content import ContentType
+from src.datalayer.model.dto.academy_schemas import (
     ContentCreate, 
     ContentUpdate, 
     ContentResponse, 
     GuestContentResponse,
     UserProgressSchema
 )
-from datalayer.repository.academy_repository import AcademyRepository
-from services.academy_service import AcademyService
-from utils.auth_deps import get_current_user, get_current_admin
-from utils.tenant_deps import get_current_tenant_id
-from exceptions import PrerequisiteNotMetError, NotFoundError
+from src.datalayer.repository.academy_repository import AcademyRepository
+from src.services.academy_service import AcademyService
+from src.utils.auth_deps import get_current_user, get_current_admin
+from src.utils.tenant_deps import get_current_tenant_id
+from src.exceptions import PrerequisiteNotMetError, NotFoundError
 
 router = APIRouter(prefix="/academy", tags=["Academy"])
 
@@ -121,7 +121,7 @@ async def get_content(
     progress = None
     
     if content.prerequisite_id:
-        from datalayer.model.db.user_progress import UserProgress
+        from src.datalayer.model.db.user_progress import UserProgress
         from sqlalchemy import select
         
         # Check prerequisite progress
@@ -136,7 +136,7 @@ async def get_content(
             is_locked = True
             
     # Fetch current content progress
-    from datalayer.model.db.user_progress import UserProgress
+    from src.datalayer.model.db.user_progress import UserProgress
     from sqlalchemy import select
     stmt = select(UserProgress).where(
         UserProgress.user_id == current_user.id,

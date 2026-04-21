@@ -1,7 +1,7 @@
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 from fastapi import Request, Response
-from config import get_settings
+from src.config import get_settings
 
 settings = get_settings()
 

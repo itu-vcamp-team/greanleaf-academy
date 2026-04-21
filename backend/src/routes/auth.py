@@ -8,25 +8,25 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 import redis.asyncio as aioredis
 
-from datalayer.database import get_db_session
-from datalayer.model.db.user import User, UserRole
-from datalayer.model.db.tenant import Tenant
-from datalayer.model.db.reference_code import ReferenceCode
-from datalayer.model.dto.auth_dto import (
+from src.datalayer.database import get_db_session
+from src.datalayer.model.db.user import User, UserRole
+from src.datalayer.model.db.tenant import Tenant
+from src.datalayer.model.db.reference_code import ReferenceCode
+from src.datalayer.model.dto.auth_dto import (
     RegisterStep1Schema, RegisterStep2Schema, RegisterStep3Schema,
     LoginSchema, LoginResponseSchema, TokenResponseSchema,
     VerifyEmailSchema, Verify2FASchema, RefreshTokenSchema,
     ForgotPasswordSchema, ResetPasswordSchema
 )
-from services import (
+from src.services import (
     PasswordService, TokenService, CaptchaService, 
     OTPService, GreenleafGlobalService, SessionService,
     MailingService
 )
-from config import get_settings
-from logger import logger
+from src.config import get_settings
+from src.logger import logger
 
-from utils.auth_deps import get_current_user
+from src.utils.auth_deps import get_current_user
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 settings = get_settings()

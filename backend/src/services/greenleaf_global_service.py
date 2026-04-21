@@ -1,6 +1,6 @@
 import httpx
-from config import get_settings
-from logger import logger
+from src.config import get_settings
+from src.logger import logger
 
 settings = get_settings()
 

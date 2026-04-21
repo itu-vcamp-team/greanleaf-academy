@@ -1,7 +1,7 @@
 import uuid
 from typing import List
 from sqlalchemy import select
-from datalayer.model.db.waitlist import Waitlist
+from src.datalayer.model.db.waitlist import Waitlist
 from ._tenant_base_repository import AsyncTenantBaseRepository
 
 

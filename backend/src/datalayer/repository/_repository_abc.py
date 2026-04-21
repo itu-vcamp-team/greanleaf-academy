@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Generic, TypeVar, List, Optional
-from datalayer.database import PrimaryKeyType
+from src.datalayer.database import PrimaryKeyType
 
 T = TypeVar('T')
 

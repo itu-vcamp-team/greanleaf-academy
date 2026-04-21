@@ -4,8 +4,8 @@ from datetime import datetime, timezone
 from typing import Optional, List
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
-from datalayer.model.db.user_progress import UserProgress
-from datalayer.model.db.academy_content import AcademyContent, ContentStatus
+from src.datalayer.model.db.user_progress import UserProgress
+from src.datalayer.model.db.academy_content import AcademyContent, ContentStatus
 
 class ProgressRepository:
     """Repository for managing user progress on academy contents."""

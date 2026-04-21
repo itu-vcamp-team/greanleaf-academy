@@ -1,6 +1,6 @@
 from typing import List
-from datalayer.model.db.user import User
-from datalayer.model.dto.user_dto import UserResponse, UserCreate
+from src.datalayer.model.db.user import User
+from src.datalayer.model.dto.user_dto import UserResponse, UserCreate
 
 
 class UserMapper:

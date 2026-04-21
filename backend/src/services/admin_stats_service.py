@@ -1,9 +1,9 @@
 import uuid
 from sqlalchemy import select, func
-from datalayer.model.db.user import User, UserRole
-from datalayer.model.db.waitlist import Waitlist
-from datalayer.model.db.academy_content import AcademyContent, ContentStatus
-from datalayer.database import PrimaryKeyType
+from src.datalayer.model.db.user import User, UserRole
+from src.datalayer.model.db.waitlist import Waitlist
+from src.datalayer.model.db.academy_content import AcademyContent, ContentStatus
+from src.datalayer.database import PrimaryKeyType
 
 
 class AdminStatsService:

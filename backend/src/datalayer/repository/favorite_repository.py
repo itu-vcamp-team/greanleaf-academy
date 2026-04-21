@@ -3,7 +3,7 @@ import uuid
 from typing import List, Optional
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
-from datalayer.model.db.favorite import Favorite
+from src.datalayer.model.db.favorite import Favorite
 
 class FavoriteRepository:
     """Repository for managing user's favorite academy contents."""

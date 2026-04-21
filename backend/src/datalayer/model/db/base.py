@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime, timezone
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import DateTime, text
-from datalayer.database import Base
+from src.datalayer.database import Base
 
 
 def utcnow() -> datetime:

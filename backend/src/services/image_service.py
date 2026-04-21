@@ -4,8 +4,8 @@ from pathlib import Path
 from PIL import Image
 import io
 from fastapi import UploadFile, HTTPException
-from config import get_settings
-from logger import logger
+from src.config import get_settings
+from src.logger import logger
 
 settings = get_settings()
 

@@ -2,9 +2,9 @@ import uuid
 from datetime import datetime, timezone
 from typing import List
 from sqlalchemy import select
-from datalayer.model.db.event import Event, EventVisibility
-from datalayer.model.db.user import User, UserRole
-from datalayer.repository._tenant_base_repository import AsyncTenantBaseRepository
+from src.datalayer.model.db.event import Event, EventVisibility
+from src.datalayer.model.db.user import User, UserRole
+from src.datalayer.repository._tenant_base_repository import AsyncTenantBaseRepository
 
 class EventRepository(AsyncTenantBaseRepository[Event]):
     def __init__(self, session, tenant_id: uuid.UUID):

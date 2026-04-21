@@ -1,8 +1,8 @@
 import uuid
 from typing import Optional, List
 from sqlalchemy import select
-from datalayer.model.db.user import User, UserRole
-from datalayer.repository._base_repository import AsyncBaseRepository
+from src.datalayer.model.db.user import User, UserRole
+from src.datalayer.repository._base_repository import AsyncBaseRepository
 
 
 class UserRepository(AsyncBaseRepository[User]):

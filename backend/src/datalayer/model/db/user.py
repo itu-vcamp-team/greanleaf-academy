@@ -4,7 +4,7 @@ from enum import Enum
 from datetime import datetime
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import String, ForeignKey, Enum as SQLEnum, DateTime
-from datalayer.model.db.base import BaseModel
+from src.datalayer.model.db.base import BaseModel
 
 
 class UserRole(str, Enum):

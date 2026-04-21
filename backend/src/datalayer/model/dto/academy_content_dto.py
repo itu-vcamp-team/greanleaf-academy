@@ -2,7 +2,7 @@ from typing import Optional
 from uuid import UUID
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
-from datalayer.model.db.academy_content import ContentType, ContentStatus
+from src.datalayer.model.db.academy_content import ContentType, ContentStatus
 
 
 class AcademyContentBase(BaseModel):

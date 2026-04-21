@@ -1,7 +1,7 @@
 import uuid
 from typing import List, Optional
-from datalayer.model.db.announcement import Announcement
-from datalayer.repository.announcement_repository import AnnouncementRepository
+from src.datalayer.model.db.announcement import Announcement
+from src.datalayer.repository.announcement_repository import AnnouncementRepository
 
 
 class AnnouncementService:

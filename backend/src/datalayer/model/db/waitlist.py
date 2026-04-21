@@ -2,7 +2,7 @@ import uuid
 from typing import Optional
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import String, ForeignKey, Text
-from datalayer.model.db.base import BaseModel
+from src.datalayer.model.db.base import BaseModel
 
 
 class Waitlist(BaseModel):
