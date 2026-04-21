@@ -69,6 +69,7 @@ class LoginResponseSchema(BaseModel):
     temp_token: Optional[str] = None
     tokens: Optional[TokenResponseSchema] = None
     user_id: Optional[uuid.UUID] = None
+    masked_email: Optional[str] = None
 
 
 # --- PASSWORD RESET SCHEMAS ---

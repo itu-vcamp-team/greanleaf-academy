@@ -28,6 +28,17 @@ from src.logger import logger
 
 from src.utils.auth_deps import get_current_user
 
+
+def mask_email(email: str) -> str:
+    """Masks an email address for privacy: gaffar@gmail.com -> g***r@gmail.com"""
+    try:
+        user_part, domain = email.split("@")
+        if len(user_part) <= 2:
+            return f"{user_part[0]}***@{domain}"
+        return f"{user_part[0]}{'*' * (len(user_part) - 2)}{user_part[-1]}@{domain}"
+    except Exception:
+        return email
+
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 settings = get_settings()
 
@@ -259,7 +270,12 @@ async def login(
             await r.setex(f"login_2fa:{temp_token}", 300, str(user.id))
             await r.aclose()
             
-            return LoginResponseSchema(requires_2fa=True, temp_token=temp_token, user_id=user.id)
+            return LoginResponseSchema(
+                requires_2fa=True, 
+                temp_token=temp_token, 
+                user_id=user.id,
+                masked_email=mask_email(user.email)
+            )
 
         # 4. Success -> Create Session (Kick-out happens here)
         jti = await SessionService.create_session(

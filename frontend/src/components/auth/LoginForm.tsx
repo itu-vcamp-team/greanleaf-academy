@@ -18,6 +18,7 @@ export function LoginForm() {
   const [show2FA, setShow2FA] = useState(false);
   const [tempToken, setTempToken] = useState("");
   const [userId, setUserId] = useState("");
+  const [maskedEmail, setMaskedEmail] = useState("");
   
   const [captcha, setCaptcha] = useState<{ session_key: string; numbers: number[] } | null>(null);
   const [captchaAnswer, setCaptchaAnswer] = useState("");
@@ -60,6 +61,7 @@ export function LoginForm() {
       if (res.data.requires_2fa) {
         setTempToken(res.data.temp_token);
         setUserId(res.data.user_id);
+        setMaskedEmail(res.data.masked_email || "");
         setShow2FA(true);
       } else {
         const { tokens } = res.data;
@@ -214,7 +216,13 @@ export function LoginForm() {
                   <Key className="w-6 h-6" />
                 </div>
                 <h1 className="text-2xl font-bold mb-2">2FA Doğrulama</h1>
-                <p className="text-white/40 text-sm italic">E-posta adresinize gönderilen 6 haneli kodu girin.</p>
+                <p className="text-white/40 text-sm italic">
+                  {maskedEmail ? (
+                    <><strong>{maskedEmail}</strong> adresinize gönderilen 6 haneli kodu girin.</>
+                  ) : (
+                    "E-posta adresinize gönderilen 6 haneli kodu girin."
+                  )}
+                </p>
               </div>
 
               <form onSubmit={handle2FASubmit} className="space-y-6">
