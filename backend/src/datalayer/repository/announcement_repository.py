@@ -1,7 +1,7 @@
 import uuid
 from typing import List, Optional
 from sqlalchemy import select
-from src.datalayer.model.db.announcement import Announcement
+from datalayer.model.db.announcement import Announcement
 from ._tenant_base_repository import AsyncTenantBaseRepository
 
 

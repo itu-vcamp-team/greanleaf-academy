@@ -2,14 +2,14 @@ from __future__ import annotations
 import uuid
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.datalayer.database import get_db_session
-from src.datalayer.model.db.user import User
-from src.datalayer.model.db.academy_content import ContentType
-from src.schemas.progress import WatchProgressSchema
-from src.datalayer.repository.progress_repository import ProgressRepository
-from src.services.progress_service import ProgressService
-from src.utils.auth_deps import get_current_partner
-from src.utils.tenant_deps import get_current_tenant_id
+from datalayer.database import get_db_session
+from datalayer.model.db.user import User
+from datalayer.model.db.academy_content import ContentType
+from schemas.progress import WatchProgressSchema
+from datalayer.repository.progress_repository import ProgressRepository
+from services.progress_service import ProgressService
+from utils.auth_deps import get_current_partner
+from utils.tenant_deps import get_current_tenant_id
 
 router = APIRouter(prefix="/progress", tags=["Progress"])
 

@@ -11,7 +11,7 @@ from sqlalchemy import select, update, delete, and_, or_
 from sqlalchemy.orm import Session, selectinload, joinedload
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.exc import NoResultFound, MultipleResultsFound
-from src.datalayer.database import PrimaryKeyType
+from datalayer.database import PrimaryKeyType
 from ._repository_abc import ISyncRepository, IRepository
 # Type variables
 T = TypeVar('T')

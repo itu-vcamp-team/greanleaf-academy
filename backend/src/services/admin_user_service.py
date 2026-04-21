@@ -1,9 +1,9 @@
 import uuid
 import secrets
 from typing import List, Optional
-from src.datalayer.model.db.user import User, UserRole
-from src.datalayer.repository.user_repository import UserRepository
-from src.datalayer.repository.tenant_repository import TenantRepository
+from datalayer.model.db.user import User, UserRole
+from datalayer.repository.user_repository import UserRepository
+from datalayer.repository.tenant_repository import TenantRepository
 
 
 class AdminUserService:

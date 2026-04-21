@@ -1,7 +1,7 @@
 import uuid
 from typing import List
 from sqlalchemy import select
-from src.datalayer.model.db.resource_link import ResourceLink
+from datalayer.model.db.resource_link import ResourceLink
 from ._tenant_base_repository import AsyncTenantBaseRepository
 
 

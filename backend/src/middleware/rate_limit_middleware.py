@@ -4,8 +4,8 @@ import uuid
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 from fastapi import Request, Response
-from src.config import get_settings
-from src.logger import logger
+from config import get_settings
+from logger import logger
 
 settings = get_settings()
 

@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from src.datalayer.database import create_tables
-from src.logger import setup_logging, logger
+from datalayer.database import create_tables
+from logger import setup_logging, logger
 
 
 @asynccontextmanager

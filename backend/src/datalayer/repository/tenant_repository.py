@@ -1,7 +1,7 @@
 from typing import Optional
 from sqlalchemy import select
-from src.datalayer.model.db.tenant import Tenant
-from src.datalayer.repository._base_repository import AsyncBaseRepository
+from datalayer.model.db.tenant import Tenant
+from datalayer.repository._base_repository import AsyncBaseRepository
 
 
 class TenantRepository(AsyncBaseRepository[Tenant]):

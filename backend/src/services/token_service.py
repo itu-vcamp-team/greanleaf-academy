@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 import jwt
-from src.config import get_settings
+from config import get_settings
 
 settings = get_settings()
 

@@ -1,7 +1,7 @@
 import uuid
 from typing import Optional
 from sqlalchemy import select
-from src.datalayer.model.db.reference_code import ReferenceCode
+from datalayer.model.db.reference_code import ReferenceCode
 from ._tenant_base_repository import AsyncTenantBaseRepository
 
 

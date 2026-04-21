@@ -1,9 +1,9 @@
 from datetime import datetime, timezone, timedelta
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.datalayer.model.db.user import User, UserRole
-from src.datalayer.model.db.user_session import UserSession
-from src.logger import logger
+from datalayer.model.db.user import User, UserRole
+from datalayer.model.db.user_session import UserSession
+from logger import logger
 
 
 class CleanupService:

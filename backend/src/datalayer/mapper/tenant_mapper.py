@@ -1,6 +1,6 @@
 from typing import List
-from src.datalayer.model.db.tenant import Tenant
-from src.datalayer.model.dto.tenant_dto import TenantResponse, TenantCreate
+from datalayer.model.db.tenant import Tenant
+from datalayer.model.dto.tenant_dto import TenantResponse, TenantCreate
 
 
 class TenantMapper:

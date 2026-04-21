@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime, timezone
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.datalayer.model.db.user_session import UserSession
+from datalayer.model.db.user_session import UserSession
 
 
 class SessionService:

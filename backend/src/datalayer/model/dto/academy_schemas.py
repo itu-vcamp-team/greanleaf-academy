@@ -1,7 +1,7 @@
 import uuid
 from typing import Optional
 from pydantic import BaseModel, ConfigDict
-from src.datalayer.model.db import ContentType, ContentStatus
+from datalayer.model.db import ContentType, ContentStatus
 
 
 class ContentBase(BaseModel):

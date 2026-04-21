@@ -3,7 +3,7 @@ from typing import Optional
 from enum import Enum
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import String, ForeignKey, Enum as SQLEnum
-from src.datalayer.model.db.base import BaseModel
+from datalayer.model.db.base import BaseModel
 
 
 class ContentType(str, Enum):

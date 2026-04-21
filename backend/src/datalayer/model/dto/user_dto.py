@@ -2,7 +2,7 @@ from typing import Optional
 from uuid import UUID
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field, EmailStr
-from src.datalayer.model.db.user import UserRole
+from datalayer.model.db.user import UserRole
 
 
 class UserBase(BaseModel):

@@ -1,12 +1,12 @@
 import asyncio
 import uuid
 from sqlalchemy import select
-from src.datalayer.database import get_db_session_context
-from src.datalayer.model.db.tenant import Tenant
-from src.datalayer.model.db.academy_content import AcademyContent, ContentType, ContentStatus
-from src.datalayer.model.db.user import User, UserRole
-from src.datalayer.model.db.user_progress import UserProgress
-from src.services.academy_service import AcademyService
+from datalayer.database import get_db_session_context
+from datalayer.model.db.tenant import Tenant
+from datalayer.model.db.academy_content import AcademyContent, ContentType, ContentStatus
+from datalayer.model.db.user import User, UserRole
+from datalayer.model.db.user_progress import UserProgress
+from services.academy_service import AcademyService
 
 async def seed_academy():
     async with get_db_session_context() as db:

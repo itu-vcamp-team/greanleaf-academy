@@ -1,7 +1,7 @@
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 from fastapi import Request, Response
-from src.config import get_settings
+from config import get_settings
 
 settings = get_settings()
 
@@ -30,13 +30,13 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
 
         # 5. Content Security Policy (CSP)
-        # Allows self, YouTube embeds, and basic styles/scripts
+        # Allows self, YouTube embeds, and necessary CDNs for Swagger UI
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline' https://www.youtube.com; "
+            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://www.youtube.com; "
             "frame-src https://www.youtube.com https://drive.google.com; "
-            "img-src 'self' data: https://img.youtube.com https://i.ytimg.com; "
-            "style-src 'self' 'unsafe-inline'; "
+            "img-src 'self' data: https://fastapi.tiangolo.com https://cdn.jsdelivr.net https://img.youtube.com https://i.ytimg.com; "
+            "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
             "connect-src 'self';"
         )
 

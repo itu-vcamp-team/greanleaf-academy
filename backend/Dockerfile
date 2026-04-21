@@ -1,6 +1,7 @@
 FROM python:3.12-slim
 
 WORKDIR /app
+ENV PYTHONPATH=/app/src
 
 # Sistem bağımlılıkları
 RUN apt-get update && apt-get install -y --no-install-recommends \

@@ -2,9 +2,9 @@ import re
 import uuid
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.datalayer.model.db.academy_content import AcademyContent
-from src.datalayer.repository.academy_repository import AcademyRepository
-from src.exceptions import InvalidYouTubeURLError
+from datalayer.model.db.academy_content import AcademyContent
+from datalayer.repository.academy_repository import AcademyRepository
+from exceptions import InvalidYouTubeURLError
 
 
 class AcademyService:

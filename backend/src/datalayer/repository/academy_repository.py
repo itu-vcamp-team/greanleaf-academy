@@ -1,9 +1,9 @@
 import uuid
 from typing import List, Optional
 from sqlalchemy import select, or_
-from src.datalayer.model.db.academy_content import AcademyContent, ContentType, ContentStatus
-from src.datalayer.model.db.user_progress import UserProgress
-from src.datalayer.repository._tenant_base_repository import AsyncTenantBaseRepository
+from datalayer.model.db.academy_content import AcademyContent, ContentType, ContentStatus
+from datalayer.model.db.user_progress import UserProgress
+from datalayer.repository._tenant_base_repository import AsyncTenantBaseRepository
 
 
 class AcademyRepository(AsyncTenantBaseRepository[AcademyContent]):

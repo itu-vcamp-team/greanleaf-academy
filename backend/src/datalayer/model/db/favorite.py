@@ -1,7 +1,7 @@
 import uuid
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import ForeignKey, UniqueConstraint
-from src.datalayer.model.db.base import BaseModel
+from datalayer.model.db.base import BaseModel
 
 
 class Favorite(BaseModel):

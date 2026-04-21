@@ -1,10 +1,10 @@
 import uuid
 from typing import List, Optional
 from datetime import datetime
-from src.datalayer.repository.event_repository import EventRepository
-from src.datalayer.model.db.event import Event, EventVisibility
-from src.services.mailing_service import MailingService
-from src.services.image_service import ImageService
+from datalayer.repository.event_repository import EventRepository
+from datalayer.model.db.event import Event, EventVisibility
+from services.mailing_service import MailingService
+from services.image_service import ImageService
 from fastapi import UploadFile
 
 class EventService:

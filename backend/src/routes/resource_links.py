@@ -3,12 +3,12 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Body, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.datalayer.database import get_db_session
-from src.datalayer.repository import ResourceLinkRepository
-from src.services.resource_link_service import ResourceLinkService
-from src.utils.auth_deps import get_current_partner, get_current_admin
-from src.utils.tenant_deps import get_current_tenant_id
-from src.datalayer.model.db.user import User
+from datalayer.database import get_db_session
+from datalayer.repository import ResourceLinkRepository
+from services.resource_link_service import ResourceLinkService
+from utils.auth_deps import get_current_partner, get_current_admin
+from utils.tenant_deps import get_current_tenant_id
+from datalayer.model.db.user import User
 
 router = APIRouter(prefix="/resources", tags=["Resource Links"])
 

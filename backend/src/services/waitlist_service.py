@@ -1,7 +1,7 @@
 import uuid
 from typing import List, Optional
-from src.datalayer.model.db.waitlist import Waitlist
-from src.datalayer.repository.waitlist_repository import WaitlistRepository
+from datalayer.model.db.waitlist import Waitlist
+from datalayer.repository.waitlist_repository import WaitlistRepository
 
 
 class WaitlistService:

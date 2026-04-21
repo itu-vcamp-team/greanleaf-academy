@@ -1,7 +1,7 @@
 import resend
 from datetime import datetime
-from src.config import get_settings
-from src.logger import logger
+from config import get_settings
+from logger import logger
 
 settings = get_settings()
 resend.api_key = settings.RESEND_API_KEY
