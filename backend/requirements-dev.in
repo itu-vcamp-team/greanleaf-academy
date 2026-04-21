@@ -1,0 +1,14 @@
+# Dev/Test-only dependencies
+# Production'da gereksiz olan bu paketler requirements.in'den kaldırılabilir.
+# Kullanım: pip-compile requirements-dev.in -o requirements-dev.txt
+
+-r requirements.in
+
+# Testing
+pytest
+pytest-asyncio
+httpx
+aiosqlite
+
+# Linting / formatting
+ruff

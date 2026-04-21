@@ -15,8 +15,7 @@ from src.datalayer.model.db.reference_code import ReferenceCode
 from src.datalayer.model.dto.auth_dto import (
     RegisterStep1Schema, RegisterStep2Schema, RegisterStep3Schema,
     LoginSchema, LoginResponseSchema, TokenResponseSchema,
-    VerifyEmailSchema, Verify2FASchema, RefreshTokenSchema,
-    ForgotPasswordSchema, ResetPasswordSchema, ProfileUpdateSchema
+    Verify2FASchema, ResetPasswordSchema, ProfileUpdateSchema
 )
 from src.services import (
     PasswordService, TokenService, CaptchaService, 
@@ -26,7 +25,7 @@ from src.services import (
 from src.config import get_settings
 from src.logger import logger
 
-from src.utils.auth_deps import get_current_user
+from src.utils.auth_deps import get_current_user, oauth2_scheme_strict
 
 
 def mask_email(email: str) -> str:
