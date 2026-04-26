@@ -20,7 +20,7 @@ class ImageService:
     @staticmethod
     async def save_image(
         upload_file: UploadFile,
-        subfolder: str,  # "events", "profiles", "tenants"
+        subfolder: str,  # "events", "profiles"
     ) -> str:
         """
         Saves and converts uploaded image to WebP format.

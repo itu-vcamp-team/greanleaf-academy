@@ -18,7 +18,7 @@ declare global {
   }
 }
 
-const SYNC_INTERVAL_MS = 15000; // 15 seconds
+const SYNC_INTERVAL_MS = 5000; // 5 seconds — short enough to capture progress in short videos
 
 export default function YouTubePlayer({
   videoUrl,
@@ -32,11 +32,21 @@ export default function YouTubePlayer({
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const [playerReady, setPlayerReady] = useState(false);
 
-  // Extract YouTube ID from URL
-  const getYouTubeId = (url: string) => {
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-    const match = url.match(regExp);
-    return match && match[2].length === 11 ? match[2] : null;
+  // Extract YouTube ID from URL — supports standard, shorts and youtu.be formats
+  const getYouTubeId = (url: string): string | null => {
+    if (!url) return null;
+
+    // YouTube Shorts: youtube.com/shorts/VIDEO_ID
+    const shortsMatch = url.match(/youtube\.com\/shorts\/([0-9A-Za-z_-]{11})/);
+    if (shortsMatch) return shortsMatch[1];
+
+    // Standard & embed: watch?v=, /v/, /embed/, youtu.be/
+    const standardMatch = url.match(
+      /(?:youtu\.be\/|youtube\.com\/(?:watch\?.*v=|v\/|embed\/|u\/\w\/))([0-9A-Za-z_-]{11})/
+    );
+    if (standardMatch) return standardMatch[1];
+
+    return null;
   };
 
   const videoId = getYouTubeId(videoUrl);
@@ -92,10 +102,13 @@ export default function YouTubePlayer({
 
     function onPlayerStateChange(event: any) {
       if (onStateChange) onStateChange(event.data);
-      
-      // Start/Stop progress polling based on playback state
+
       if (event.data === window.YT.PlayerState.PLAYING) {
         startPolling();
+      } else if (event.data === window.YT.PlayerState.ENDED) {
+        // Video ended — immediately sync 100% completion
+        stopPolling();
+        syncProgress(event.target, true);
       } else {
         stopPolling();
       }
@@ -109,30 +122,33 @@ export default function YouTubePlayer({
     };
   }, [videoId, contentId, initialPosition]);
 
+  const syncProgress = async (player: any, forceComplete = false) => {
+    if (!player || !player.getCurrentTime) return;
+    const currentTime = player.getCurrentTime();
+    const duration = player.getDuration();
+    if (duration <= 0) return;
+
+    const percentage = forceComplete ? 100 : (currentTime / duration) * 100;
+    const position = forceComplete ? duration : currentTime;
+
+    if (onProgressUpdate) onProgressUpdate(percentage);
+
+    try {
+      await apiClient.post("/progress/watch", {
+        content_id: contentId,
+        completion_percentage: percentage,
+        last_position_seconds: position,
+      });
+    } catch (error) {
+      console.error("Failed to sync watch progress:", error);
+    }
+  };
+
   const startPolling = () => {
     if (intervalRef.current) return;
-    
-    intervalRef.current = setInterval(async () => {
-      if (playerRef.current && playerRef.current.getCurrentTime) {
-        const currentTime = playerRef.current.getCurrentTime();
-        const duration = playerRef.current.getDuration();
-        
-        if (duration > 0) {
-          const percentage = (currentTime / duration) * 100;
-          
-          if (onProgressUpdate) onProgressUpdate(percentage);
 
-          try {
-            await apiClient.post("/progress/watch", {
-              content_id: contentId,
-              completion_percentage: percentage,
-              last_position_seconds: currentTime,
-            });
-          } catch (error) {
-            console.error("Failed to sync watch progress:", error);
-          }
-        }
-      }
+    intervalRef.current = setInterval(() => {
+      syncProgress(playerRef.current);
     }, SYNC_INTERVAL_MS);
   };
 

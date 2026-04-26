@@ -11,7 +11,26 @@ from src.utils.auth_deps import get_current_admin, get_current_partner
 from src.datalayer.model.db.user import User, UserRole
 from src.datalayer.model.db.academy_content import ContentType
 
+from src.datalayer.model.dto.auth_dto import AdminCreateUserSchema
+
 router = APIRouter(prefix="/admin/users", tags=["Admin - Users"])
+
+@router.post("/create", dependencies=[Depends(get_current_admin)])
+async def create_user(
+    data: AdminCreateUserSchema,
+    db: AsyncSession = Depends(get_db_session),
+):
+    """Admin tarafından manuel kullanıcı oluşturur."""
+    repo = UserRepository(db)
+    service = AdminUserService(repo)
+    try:
+        user = await service.create_user(data)
+        return {"message": f"{user.full_name} oluşturuldu.", "id": user.id}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.get("/pending", dependencies=[Depends(get_current_admin)])
 async def get_pending_users(

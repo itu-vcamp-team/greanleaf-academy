@@ -65,7 +65,7 @@ export default function CalendarPage() {
             </h1>
           </div>
 
-          {(role === "ADMIN" || role === "SUPERADMIN") && (
+          {(role === "ADMIN") && (
             <Button onClick={() => setIsAdding(true)} className="gap-2 rounded-2xl px-8 shadow-lg shadow-primary/20">
               <Plus className="w-5 h-5" /> Yeni Etkinlik Ekle
             </Button>
@@ -204,7 +204,7 @@ function EventCard({
           <div className="flex-1">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-xl font-bold text-foreground">{event.title}</h3>
-              {(role === "ADMIN" || role === "SUPERADMIN") && (
+              {(role === "ADMIN") && (
                 <button
                   onClick={() => onDelete(event.id)}
                   className="p-2 text-foreground/20 hover:text-red-500 transition-colors"

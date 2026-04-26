@@ -124,8 +124,7 @@ class ResetPasswordSchema(BaseModel):
         return v
 
 
-# NOTE: SuperadminCreateUserSchema moved to superadmin service.
-# Kept for backward compatibility — tenant_id removed.
+
 
 class AdminCreateUserSchema(BaseModel):
     """Used by ADMIN to create PARTNER users directly."""

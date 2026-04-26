@@ -71,3 +71,44 @@ class AdminUserService:
 
         user.is_active = not user.is_active
         return await self.repo.save(user)
+    async def create_user(self, data: 'AdminCreateUserSchema') -> User:
+        """
+        Creates a new user directly (Admin or Partner).
+        Used by local ADMINs.
+        """
+        from src.services.password_service import PasswordService
+        import uuid
+
+        # Check for existing user
+        if await self.repo.get_by_email(data.email):
+            raise ValueError("Email already in use")
+        if await self.repo.get_by_username(data.username):
+            raise ValueError("Username already in use")
+
+        partner_id = None
+        if data.role == UserRole.PARTNER:
+            # Generate Partner ID
+            for _ in range(5):
+                hex_part = secrets.token_hex(3).upper()
+                temp_id = f"GL-{hex_part}"
+                existing = await self.repo.find_by(partner_id=temp_id)
+                if not existing:
+                    partner_id = temp_id
+                    break
+            if not partner_id:
+                raise RuntimeError("Could not generate a unique partner ID")
+
+        new_user = User(
+            id=uuid.uuid4(),
+            username=data.username,
+            email=data.email,
+            full_name=data.full_name,
+            phone=data.phone,
+            password_hash=PasswordService.hash_password(data.password),
+            role=data.role,
+            is_active=True,
+            is_verified=True,
+            partner_id=partner_id
+        )
+
+        return await self.repo.save(new_user)

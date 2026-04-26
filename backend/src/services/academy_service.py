@@ -10,7 +10,6 @@ from src.exceptions import InvalidYouTubeURLError
 class AcademyService:
     """
     Service layer for Academy logic including URL processing and high-level content management.
-    Single-tenant: no tenant_id required.
     """
 
     @staticmethod

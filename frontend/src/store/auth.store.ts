@@ -6,7 +6,7 @@ interface User {
   username: string;
   email: string;
   full_name: string;
-  role: "SUPERADMIN" | "ADMIN" | "EDITOR" | "PARTNER" | "GUEST";
+  role: "ADMIN" | "EDITOR" | "PARTNER" | "GUEST";
   partner_id: string | null;
   profile_image_path: string | null;
 }

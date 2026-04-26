@@ -38,7 +38,7 @@ class ContentUpdate(BaseModel):
 class UserProgressSchema(BaseModel):
     status: str
     completion_percentage: float = 0.0
-    last_position_seconds: Optional[int] = None
+    last_position_seconds: Optional[float] = None  # DB stores float; int would reject fractional values
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -55,7 +55,7 @@ class ContentResponse(BaseModel):
     resource_link_label: Optional[str] = None
     order: int
     is_new: bool
-    is_locked: bool
+    is_locked: bool = False
     progress: Optional[UserProgressSchema] = None
 
     model_config = ConfigDict(from_attributes=True)

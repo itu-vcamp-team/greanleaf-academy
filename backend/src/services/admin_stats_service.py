@@ -11,7 +11,6 @@ class AdminStatsService:
     async def get_dashboard_stats(self) -> dict:
         """
         Calculates basic metrics for the admin dashboard.
-        Single-tenant: no tenant filtering.
         """
         # 1. Total Partners (Active)
         total_partners_stmt = (

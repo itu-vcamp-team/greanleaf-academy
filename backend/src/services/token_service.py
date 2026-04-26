@@ -8,7 +8,6 @@ settings = get_settings()
 class TokenService:
     """
     Service for JWT generation, verification and decoding.
-    Single-tenant: tenant_id removed from tokens.
     """
 
     @staticmethod

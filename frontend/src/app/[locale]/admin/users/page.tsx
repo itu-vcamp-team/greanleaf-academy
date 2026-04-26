@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { GlassCard } from "@/components/ui/GlassCard";
 import {
   UserCheck, UserX, Shield, Mail, Calendar,
@@ -27,12 +28,6 @@ interface UserRow {
   created_at: string;
 }
 
-interface Tenant {
-  id: string;
-  slug: string;
-  name: string;
-}
-
 interface CreateUserForm {
   full_name: string;
   username: string;
@@ -40,22 +35,24 @@ interface CreateUserForm {
   phone: string;
   password: string;
   role: "ADMIN" | "PARTNER";
-  tenant_id: string;
 }
 
 export default function AdminUsersPage() {
-  const { role: currentUserRole } = useUserRole();
-  const isSuperAdmin = currentUserRole === "SUPERADMIN";
-
   const [activeTab, setActiveTab] = useState<Tab>("pending");
   const [pendingUsers, setPendingUsers] = useState<UserRow[]>([]);
   const [allUsers, setAllUsers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get("action") === "create") {
+      setShowCreateModal(true);
+    }
+  }, [searchParams]);
 
   // Create User Modal State
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [tenants, setTenants] = useState<Tenant[]>([]);
   const [createLoading, setCreateLoading] = useState(false);
   const [createError, setCreateError] = useState("");
   const [createSuccess, setCreateSuccess] = useState("");
@@ -67,7 +64,6 @@ export default function AdminUsersPage() {
     phone: "",
     password: "",
     role: "PARTNER",
-    tenant_id: "",
   });
 
   useEffect(() => {
@@ -77,13 +73,6 @@ export default function AdminUsersPage() {
       fetchAll();
     }
   }, [activeTab]);
-
-  // Fetch tenants when superadmin opens modal
-  useEffect(() => {
-    if (showCreateModal && isSuperAdmin && tenants.length === 0) {
-      fetchTenants();
-    }
-  }, [showCreateModal]);
 
   const fetchPending = async () => {
     setLoading(true);
@@ -106,18 +95,6 @@ export default function AdminUsersPage() {
       console.error("Fetch all users error");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchTenants = async () => {
-    try {
-      const res = await apiClient.get("/superadmin/users/tenants");
-      setTenants(res.data);
-      if (res.data.length > 0) {
-        setCreateForm((prev) => ({ ...prev, tenant_id: res.data[0].id }));
-      }
-    } catch {
-      console.error("Fetch tenants error");
     }
   };
 
@@ -164,7 +141,7 @@ export default function AdminUsersPage() {
         ...createForm,
         phone: createForm.phone ? `+90${createForm.phone.replace(/\D/g, "").slice(0, 10)}` : null,
       };
-      const res = await apiClient.post("/superadmin/users/create", payload);
+      const res = await apiClient.post("/admin/users/create", payload);
       setCreateSuccess(res.data.message || "Kullanıcı başarıyla oluşturuldu.");
       // Reset form
       setCreateForm({
@@ -174,7 +151,6 @@ export default function AdminUsersPage() {
         phone: "",
         password: "",
         role: "PARTNER",
-        tenant_id: tenants[0]?.id || "",
       });
       // Refresh list after creation
       if (activeTab === "all") fetchAll();
@@ -205,16 +181,13 @@ export default function AdminUsersPage() {
           </h1>
         </div>
 
-        {/* Superadmin-only: Create User Button */}
-        {isSuperAdmin && (
-          <Button
-            onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 rounded-2xl bg-emerald-500 hover:bg-emerald-600 shadow-lg shadow-emerald-100 px-5 py-3 h-auto"
-          >
-            <UserPlus size={16} />
-            <span className="text-xs font-black uppercase tracking-widest">Kullanıcı Oluştur</span>
-          </Button>
-        )}
+        <Button
+          onClick={() => setShowCreateModal(true)}
+          className="flex items-center gap-2 rounded-2xl bg-emerald-500 hover:bg-emerald-600 shadow-lg shadow-emerald-100 px-5 py-3 h-auto"
+        >
+          <UserPlus size={16} />
+          <span className="text-xs font-black uppercase tracking-widest">Kullanıcı Oluştur</span>
+        </Button>
       </header>
 
       {/* Tab Switcher */}
@@ -302,7 +275,7 @@ export default function AdminUsersPage() {
         </div>
       </GlassCard>
 
-      {/* ── Create User Modal (Superadmin Only) ── */}
+      {/* ── Create User Modal ── */}
       <AnimatePresence>
         {showCreateModal && (
           <motion.div
@@ -329,7 +302,7 @@ export default function AdminUsersPage() {
                   <div>
                     <h2 className="text-lg font-black text-gray-900">Kullanıcı Oluştur</h2>
                     <p className="text-[11px] text-gray-400 font-medium">
-                      Tenant&apos;a Admin veya Partner ekle
+                      Yeni Admin veya Partner ekle
                     </p>
                   </div>
                 </div>
@@ -367,28 +340,6 @@ export default function AdminUsersPage() {
                   </div>
                 ) : (
                   <form onSubmit={handleCreateUser} className="space-y-4">
-                    {/* Tenant Select */}
-                    <div className="space-y-1">
-                      <label className="block text-xs font-black uppercase tracking-widest text-gray-400 mb-1">
-                        Tenant (Ülke/Bölge)
-                      </label>
-                      <select
-                        value={createForm.tenant_id}
-                        onChange={(e) => setCreateForm({ ...createForm, tenant_id: e.target.value })}
-                        required
-                        className="w-full h-12 px-4 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-800 outline-none focus:border-emerald-400 transition-colors"
-                      >
-                        {tenants.length === 0 && (
-                          <option value="">Yükleniyor...</option>
-                        )}
-                        {tenants.map((t) => (
-                          <option key={t.id} value={t.id}>
-                            {t.name} ({t.slug})
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
                     {/* Role Select */}
                     <div className="space-y-1">
                       <label className="block text-xs font-black uppercase tracking-widest text-gray-400 mb-1">

@@ -24,8 +24,6 @@ export function RoleGuard({ children, allowedRoles, fallback }: RoleGuardProps) 
     );
   }
 
-  // SUPERADMIN has access to everything
-  if (role === "SUPERADMIN") return <>{children}</>;
 
   if (!allowedRoles.includes(role)) {
     if (fallback) return <>{fallback}</>;

@@ -4,7 +4,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { useAuthStore } from "@/store/auth.store";
 import apiClient from "@/lib/api-client";
 
-export type UserRole = "SUPERADMIN" | "ADMIN" | "EDITOR" | "PARTNER" | "GUEST";
+export type UserRole = "ADMIN" | "EDITOR" | "PARTNER" | "GUEST";
 
 type UserRoleContextType = {
   role: UserRole;

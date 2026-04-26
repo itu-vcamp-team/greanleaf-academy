@@ -9,7 +9,6 @@ from src.datalayer.repository._base_repository import AsyncBaseRepository
 class AcademyRepository(AsyncBaseRepository[AcademyContent]):
     """
     Repository for managing Academy Content.
-    Single-tenant: no tenant filtering required.
     """
     def __init__(self, session):
         super().__init__(session, AcademyContent)

@@ -169,11 +169,33 @@ Geri sayım artık hardcoded değil:
 
 ---
 
+## Single-Tenant & Superadmin Separation (April 2026)
+
+### 17. Single-Tenant Architecture
+**Problem:** Multi-tenant architecture was over-complicating deployments and scaling.  
+**Action:** Removed all `tenant_id` logic and database columns. Each deployment is now a separate instance.  
+**Changes:**
+- Removed `tenant_id` from all models (`User`, `AcademyContent`, `Event`, etc.).
+- Cleaned up service and repository layers to remove tenant filtering.
+- Updated JWT tokens to remove `tenant_id` claim.
+
+### 18. Superadmin Service Separation
+**Problem:** Superadmin tasks (tenant management, global user creation) were mixed with the main application.  
+**Action:** Moved superadmin logic to a standalone service in the `/superadmin` directory.  
+**Changes:**
+- Removed `SUPERADMIN` role from the main application's `UserRole` enum.
+- The highest role within a deployment is now `ADMIN`.
+- Superadmin routes (`/superadmin/*`) were removed from the main backend.
+- Frontend `AdminUsersPage` was refactored to allow local `ADMIN` users to create partners/admins without tenant selection.
+- Superadmin-only UI components were removed from the main academy frontend.
+
+---
+
 ## Mimari Kararlar
 
 1. **DTO'lar `datalayer/model/dto/` altında:** Tüm Pydantic request/response şemaları bu dizinde. `schemas/` dizini kaldırıldı.
-2. **Tenant izolasyonu:** Tüm `EventRepository`, `AcademyRepository` vb. çağrıları `tenant_id` parametresi almalı. Calendar endpoint'indeki eksik `tenant_id` bu prensibin kritik önemine örnek.
-3. **Middleware önceliği:** Next.js middleware'in çalışması için dosya adı kesinlikle `middleware.ts` olmalı. Auth koruması sunucu tarafında cookie-based olarak çalışır.
+2. **Single-Tenant Yapı:** Deployment başına tek instance. İzolasyon deployment düzeyinde (domain/db) sağlanır. `tenant_id` kullanımı tamamen kaldırılmıştır.
+3. **Superadmin Ayrımı:** Global yönetim paneli (superadmin) artık ana uygulamadan bağımsız bir servistir. Ana uygulamada en yetkili rol `ADMIN`'dir.
 4. **API client refresh URL:** Next.js proxy `/api/backend/*` → `{BACKEND_URL}/*` şeklinde çalışır. Backend API prefix'i `/api` olduğundan doğru URL `/api/backend/api/...` şeklindedir.
 
 ---

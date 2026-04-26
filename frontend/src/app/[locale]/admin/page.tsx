@@ -6,7 +6,7 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { 
   Users, UserCheck, Clock, FileText, 
   ArrowUpRight, Zap, Target, MessageSquare,
-  Link2, Calendar
+  Link2, Calendar, UserPlus
 } from "lucide-react";
 import { motion } from "framer-motion";
 import apiClient from "@/lib/api-client";
@@ -141,17 +141,23 @@ export default function AdminDashboardPage({ params }: PageProps) {
               </p>
               <p className="text-sm font-bold">Kaynaklar</p>
             </Link>
+            <Link href={`/${locale}/admin/users?action=create`} className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20 transition-all text-left group">
+              <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1 flex items-center gap-1">
+                <UserPlus size={10} /> Yeni
+              </p>
+              <p className="text-sm font-bold text-emerald-900">Kullanıcı Oluştur</p>
+            </Link>
             <Link href={`/${locale}/admin/users`} className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-left group">
               <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1 flex items-center gap-1">
-                <UserCheck size={10} /> Gözden Geçir
+                <Users size={10} /> Yönet
               </p>
-              <p className="text-sm font-bold">Başvurular</p>
+              <p className="text-sm font-bold">Kullanıcı Yönetimi</p>
             </Link>
             <Link href={`/${locale}/admin/waitlist`} className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-left group text-primary">
               <p className="text-[10px] font-black text-primary/60 uppercase tracking-widest mb-1 flex items-center gap-1">
                 <Clock size={10} /> Bekleyenler
               </p>
-              <p className="text-sm font-bold">Waitlist</p>
+              <p className="text-sm font-bold text-white">Waitlist</p>
             </Link>
           </div>
         </GlassCard>

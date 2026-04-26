@@ -6,7 +6,7 @@ import { AdminSidebar } from "@/components/admin/AdminSidebar";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <RoleGuard allowedRoles={["ADMIN", "SUPERADMIN", "EDITOR"]}>
+    <RoleGuard allowedRoles={["ADMIN", "EDITOR"]}>
       <div className="flex min-h-screen bg-gray-50">
         <AdminSidebar />
         {/* Main content area offset by sidebar width */}

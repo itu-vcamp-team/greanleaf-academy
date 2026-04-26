@@ -49,7 +49,11 @@ export default function AcademyPage({ params }: PageProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchContents() {
+    // AbortController cancels in-flight requests when activeTab/selectedLocale changes,
+    // preventing stale responses from overwriting newer tab data (race condition fix).
+    const controller = new AbortController();
+
+    async function fetchContents(signal: AbortSignal) {
       setLoading(true);
       try {
         // Locale is a UI-based filter — not URL-based.
@@ -58,15 +62,40 @@ export default function AcademyPage({ params }: PageProps) {
         if (selectedLocale) {
           params.set("locale", selectedLocale);
         }
-        const res = await apiClient.get(`/academy/contents?${params.toString()}`);
+        const res = await apiClient.get(`/academy/contents?${params.toString()}`, {
+          signal,
+        });
         setContents(res.data);
       } catch (err) {
-        console.error("Failed to fetch academy contents:", err);
+        // Ignore AbortError — a new request is already in flight
+        const axiosErr = err as { name?: string; code?: string };
+        if (axiosErr?.name !== "CanceledError" && axiosErr?.code !== "ERR_CANCELED") {
+          console.error("Failed to fetch academy contents:", err);
+        }
       } finally {
         setLoading(false);
       }
     }
-    fetchContents();
+
+    fetchContents(controller.signal);
+
+    // Re-fetch progress data when the user returns to this tab/page after watching a video.
+    // Each visibility-triggered fetch gets its own controller so it can also be aborted.
+    let visibilityController: AbortController | null = null;
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        visibilityController?.abort();
+        visibilityController = new AbortController();
+        fetchContents(visibilityController.signal);
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      controller.abort();
+      visibilityController?.abort();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, [activeTab, selectedLocale]);
 
   return (
