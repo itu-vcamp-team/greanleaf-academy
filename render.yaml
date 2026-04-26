@@ -58,10 +58,7 @@ services:
     plan: free
     envVars:
       - key: NEXT_PUBLIC_BACKEND_URL
-        fromService:
-          name: greenleaf-backend
-          type: web
-          property: hostWithProtocol
+        value: https://greenleaf-backend-wkfv.onrender.com
       - key: NEXT_PUBLIC_TURNSTILE_SITE_KEY
         value: 0x4AAAAAADDnJNGyXUKu4w1k
 
