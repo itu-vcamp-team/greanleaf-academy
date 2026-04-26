@@ -40,9 +40,7 @@ export function RegistrationFlow() {
   });
 
   // Step 2: Partner / Reference
-  const [hasPartnerId, setHasPartnerId] = useState(true);
   const [referenceCode, setReferenceCode] = useState("");
-  const [supervisorName, setSupervisorName] = useState("");
 
   // Step 3: Account Details
   const [formData, setFormData] = useState({
@@ -56,7 +54,7 @@ export function RegistrationFlow() {
 
   // Step 4: OTP
   const [otpCode, setOtpCode] = useState("");
-  const [regStatus, setRegStatus] = useState<"waitlisted" | "pending_approval" | null>(null);
+  const [regStatus, setRegStatus] = useState<"pending_approval" | null>(null);
 
   const router = useRouter();
 
@@ -82,13 +80,13 @@ export function RegistrationFlow() {
     try {
       await apiClient.post("/auth/register/step2", {
         session_id: sessionId,
-        has_partner_id: hasPartnerId,
-        reference_code: hasPartnerId ? referenceCode : null,
-        supervisor_name: !hasPartnerId ? supervisorName : null,
+        has_partner_id: true,
+        reference_code: referenceCode,
+        supervisor_name: null,
       });
       setStep(3);
     } catch (err: unknown) {
-      setError(extractErrorMessage(err, "Partner bilgileri kaydedilemedi."));
+      setError(extractErrorMessage(err, "Referans kodu geçersiz veya daha önce kullanılmış."));
     } finally {
       setLoading(false);
     }
@@ -219,53 +217,20 @@ export function RegistrationFlow() {
                 <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4 border border-primary/20">
                   <Key className="w-6 h-6 text-primary" />
                 </div>
-                <h1 className="text-2xl font-bold mb-2">Partner Bilgisi</h1>
-                <p className="text-foreground/40 text-sm">
-                  Referans kodunuzu girin veya danışmanınızı belirtin.
+                <h1 className="text-2xl font-bold mb-2">Referans Kodu</h1>
+                <p className="text-foreground/40 text-sm italic leading-relaxed">
+                  Kayıt olabilmek için bir partnerden aldığınız referans kodunu girmeniz gerekmektedir.
                 </p>
               </div>
               <form onSubmit={handleStep2Submit} className="space-y-4">
-                <div className="flex gap-3 mb-2">
-                  <button
-                    type="button"
-                    onClick={() => setHasPartnerId(true)}
-                    className={`flex-1 py-2 rounded-xl text-xs font-black uppercase tracking-widest border transition-all ${
-                      hasPartnerId
-                        ? "bg-primary text-white border-primary"
-                        : "bg-foreground/5 text-foreground/40 border-foreground/10"
-                    }`}
-                  >
-                    Referans Kodum Var
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setHasPartnerId(false)}
-                    className={`flex-1 py-2 rounded-xl text-xs font-black uppercase tracking-widest border transition-all ${
-                      !hasPartnerId
-                        ? "bg-primary text-white border-primary"
-                        : "bg-foreground/5 text-foreground/40 border-foreground/10"
-                    }`}
-                  >
-                    Danışmanım Var
-                  </button>
-                </div>
-                {hasPartnerId ? (
-                  <Input
-                    label="Referans Kodu"
-                    placeholder="GL-XXXXX"
-                    value={referenceCode}
-                    onChange={(e) => setReferenceCode(e.target.value)}
-                    required
-                  />
-                ) : (
-                  <Input
-                    label="Danışman / Üst Kol Adı"
-                    placeholder="Danışmanınızın adı"
-                    value={supervisorName}
-                    onChange={(e) => setSupervisorName(e.target.value)}
-                    required
-                  />
-                )}
+                <Input
+                  label="Referans Kodu"
+                  placeholder="GL-XXXXX"
+                  value={referenceCode}
+                  onChange={(e) => setReferenceCode(e.target.value)}
+                  required
+                  autoFocus
+                />
                 {error && <p className="text-red-400 text-xs italic">{error}</p>}
                 <Button
                   type="submit"
@@ -444,13 +409,9 @@ export function RegistrationFlow() {
               <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-6 border border-green-500/20">
                 <CheckCircle2 className="w-8 h-8 text-green-400" />
               </div>
-              <h1 className="text-2xl font-bold mb-3">
-                {regStatus === "waitlisted" ? "Bekleme Listesine Alındınız!" : "Kaydınız Alındı!"}
-              </h1>
+              <h1 className="text-2xl font-bold mb-3">Kaydınız Alındı!</h1>
               <p className="text-foreground/40 text-sm leading-relaxed mb-8">
-                {regStatus === "waitlisted" 
-                  ? "Başvurunuz bekleme listesine kaydedildi. Ekibimiz en kısa sürede sizinle iletişime geçecektir."
-                  : "Hesabınız oluşturuldu. Danışmanınız ve Admin onayından sonra giriş yapabileceksiniz."}
+                Hesabınız oluşturuldu. Danışmanınız ve Admin onayından sonra giriş yapabileceksiniz.
               </p>
               <Button onClick={() => router.push("/")} className="w-full rounded-2xl py-6 h-auto font-black text-xs uppercase tracking-widest">
                 Ana Sayfaya Dön

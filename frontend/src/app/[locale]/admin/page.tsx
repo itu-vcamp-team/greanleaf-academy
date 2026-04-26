@@ -14,7 +14,6 @@ import apiClient from "@/lib/api-client";
 interface Stats {
   total_partners: number;
   pending_approvals: number;
-  waitlist_count: number;
   total_contents: number;
 }
 
@@ -53,7 +52,7 @@ export default function AdminDashboardPage({ params }: PageProps) {
       </header>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <StatCard 
           icon={<Users size={24} />} 
           label="Toplam Partner" 
@@ -70,14 +69,6 @@ export default function AdminDashboardPage({ params }: PageProps) {
           color="emerald"
           highlight={stats && stats.pending_approvals > 0}
           href={`/${locale}/admin/users`}
-        />
-        <StatCard 
-          icon={<Clock size={24} />} 
-          label="Waitlist" 
-          value={loading ? "..." : stats?.waitlist_count.toString() || "0"} 
-          details="Sıradaki Adaylar"
-          color="orange"
-          href={`/${locale}/admin/waitlist`}
         />
         <StatCard 
           icon={<FileText size={24} />} 
@@ -152,12 +143,6 @@ export default function AdminDashboardPage({ params }: PageProps) {
                 <Users size={10} /> Yönet
               </p>
               <p className="text-sm font-bold text-gray-900">Kullanıcı Yönetimi</p>
-            </Link>
-            <Link href={`/${locale}/admin/waitlist`} className="p-4 rounded-2xl bg-gray-50 border border-gray-100 hover:bg-primary/5 transition-all text-left group">
-              <p className="text-[10px] font-black text-primary/60 uppercase tracking-widest mb-1 flex items-center gap-1">
-                <Clock size={10} /> Bekleyenler
-              </p>
-              <p className="text-sm font-bold text-gray-900">Waitlist</p>
             </Link>
           </div>
         </GlassCard>

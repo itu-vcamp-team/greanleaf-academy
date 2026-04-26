@@ -19,7 +19,6 @@ from .admin_user_service import AdminUserService
 from .announcement_service import AnnouncementService
 from .reference_code_service import ReferenceCodeService
 from .resource_link_service import ResourceLinkService
-from .waitlist_service import WaitlistService
 
 __all__ = [
     "PasswordService",
@@ -38,5 +37,4 @@ __all__ = [
     "AnnouncementService",
     "ReferenceCodeService",
     "ResourceLinkService",
-    "WaitlistService",
 ]

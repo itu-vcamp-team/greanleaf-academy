@@ -11,7 +11,6 @@ import redis.asyncio as aioredis
 from src.datalayer.database import get_db_session
 from src.datalayer.model.db.user import User, UserRole
 from src.datalayer.model.db.reference_code import ReferenceCode
-from src.datalayer.repository import WaitlistRepository
 from src.datalayer.model.dto.auth_dto import (
     RegisterStep1Schema, RegisterStep2Schema, RegisterStep3Schema, RegisterVerifyOTPSchema,
     LoginSchema, LoginResponseSchema, TokenResponseSchema,
@@ -20,7 +19,7 @@ from src.datalayer.model.dto.auth_dto import (
 )
 from src.services import (
     OTPService, GreenleafGlobalService, SessionService,
-    MailingService, WaitlistService, DeviceService
+    MailingService, DeviceService
 )
 from src.config import get_settings
 from src.logger import logger
@@ -200,39 +199,11 @@ async def register_verify_otp(
 
     temp_data = json.loads(stored)
     
-    # 3. Decision Logic: Waitlist or User?
-    if not temp_data.get("has_partner_id"):
-        # CASE: NO PARTNER ID -> WAITLIST
-        repo = WaitlistRepository(db)
-        service = WaitlistService(repo)
-        
-        await service.apply(
-            full_name=temp_data["full_name"],
-            email=temp_data["email"],
-            phone=temp_data.get("phone"),
-            supervisor_name=temp_data.get("supervisor_name"),
-            message="Self-registration via Waitlist flow."
-        )
-
-        # Notify Admins
-        stmt_admins = select(User.email).where(User.role.in_([UserRole.ADMIN]))
-        res_admins = await db.execute(stmt_admins)
-        admin_emails = [row[0] for row in res_admins.all()]
-        if admin_emails:
-            background_tasks.add_task(
-                MailingService.send_waitlist_notification_to_admin,
-                admin_emails=admin_emails,
-                applicant_name=temp_data["full_name"],
-                applicant_email=temp_data["email"],
-                supervisor_name=temp_data.get("supervisor_name")
-            )
-
-        await db.commit()
-        await r.delete(f"reg_temp:{data.session_id}")
+    # CASE: REFERENCE CODE IS MANDATORY
+    ref_code = temp_data.get("reference_code")
+    if not ref_code:
         await r.aclose()
-        return {"status": "waitlisted"}
-
-    # CASE: HAS PARTNER ID -> PENDING USER
+        raise HTTPException(status_code=400, detail="Referans kodu zorunludur.")
     ref_code = temp_data.get("reference_code")
     if not ref_code:
         await r.aclose()

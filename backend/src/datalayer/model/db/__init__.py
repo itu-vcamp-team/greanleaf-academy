@@ -8,8 +8,8 @@ from .favorite import Favorite
 from .event import Event, EventCategory, EventVisibility
 from .announcement import Announcement
 from .resource_link import ResourceLink
-from .waitlist import Waitlist
 from .user_device import UserDevice
+from .audit_log import AuditLog
 
 __all__ = [
     "BaseModel",
@@ -28,6 +28,5 @@ __all__ = [
     "EventVisibility",
     "Announcement",
     "ResourceLink",
-    "Waitlist",
     "AuditLog",
 ]

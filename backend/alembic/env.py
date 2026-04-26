@@ -10,7 +10,7 @@ from src.datalayer.database import Base
 from src.datalayer.model.db import (
     User, ReferenceCode, UserSession, AcademyContent,
     UserProgress, Favorite, Event, Announcement, ResourceLink,
-    Waitlist, AuditLog
+    AuditLog
 )
 
 # this is the Alembic Config object, which provides

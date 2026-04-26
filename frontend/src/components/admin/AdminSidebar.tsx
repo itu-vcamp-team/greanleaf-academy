@@ -15,7 +15,6 @@ const menuItems = [
   { icon: Zap, label: "Akademi İçerikleri", href: "/admin/academy-content", color: "text-primary" },
   { icon: Calendar, label: "Etkinlikler", href: "/admin/events", color: "text-orange-500" },
   { icon: MessageSquare, label: "Duyurular & Kaynaklar", href: "/admin/content", color: "text-purple-500" },
-  { icon: MousePointer2, label: "Waitlist", href: "/admin/waitlist", color: "text-pink-500" },
 ];
 
 export function AdminSidebar() {
