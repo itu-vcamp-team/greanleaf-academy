@@ -20,6 +20,7 @@ class EventResponse(BaseModel):
     cover_image_url: Optional[str] = None
     contact_info: Optional[str] = None
     visibility: str
+    is_published: bool = True
 
 
 class GuestEventResponse(BaseModel):

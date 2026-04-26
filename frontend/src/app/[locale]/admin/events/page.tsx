@@ -73,7 +73,7 @@ export default function AdminEventsPage() {
   const fetchEvents = async () => {
     setLoading(true);
     try {
-      const res = await apiClient.get("/events/?limit=50");
+      const res = await apiClient.get("/events/admin/list?limit=100");
       setEvents(res.data);
     } catch {
       console.error("Failed to fetch events");

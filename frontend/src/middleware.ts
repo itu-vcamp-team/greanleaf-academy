@@ -36,7 +36,8 @@ export default function middleware(request: NextRequest) {
   }
 
   if (isAuthPage && token) {
-    return NextResponse.redirect(new URL(`/${locale}/dashboard`, request.url));
+    const target = (role === "ADMIN" || role === "EDITOR") ? "admin" : "dashboard";
+    return NextResponse.redirect(new URL(`/${locale}/${target}`, request.url));
   }
 
   // Only ADMIN and EDITOR roles can access admin pages

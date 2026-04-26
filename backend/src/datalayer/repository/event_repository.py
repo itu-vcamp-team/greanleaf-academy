@@ -67,6 +67,12 @@ class EventRepository(AsyncBaseRepository[Event]):
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
+    async def get_all_events(self, limit: int = 100) -> List[Event]:
+        """Admin view: Fetches all events regardless of status or date."""
+        stmt = select(Event).order_by(Event.start_time.desc()).limit(limit)
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
     async def get_partner_emails_for_announcement(self) -> List[str]:
         """
         Fetches emails of all active and verified partners.

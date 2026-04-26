@@ -28,6 +28,18 @@ async def list_events(
     events = await repo.get_upcoming_events(current_user.role, limit)
     return [_sanitize_event(e, current_user.role) for e in events]
 
+@router.get("/admin/list", response_model=list[EventResponse])
+async def list_admin_events(
+    limit: int = Query(default=100, le=500),
+    db: AsyncSession = Depends(get_db_session),
+    admin_user: User = Depends(get_current_admin),
+):
+    """Admin view: Lists all events without filters."""
+    repo = EventRepository(db)
+    events = await repo.get_all_events(limit)
+    # Admin sees everything, no sanitization needed beyond the base model
+    return [EventResponse.model_validate(e) for e in events]
+
 @router.get("/calendar", response_model=list[EventResponse | GuestEventResponse])
 async def get_calendar_events(
     year: int | None = Query(None, ge=2024, le=2100),

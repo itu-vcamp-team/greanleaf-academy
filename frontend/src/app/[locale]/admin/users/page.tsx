@@ -86,10 +86,18 @@ export default function AdminUsersPage() {
     }
   };
 
-  const fetchAll = async () => {
+  const fetchAll = async (role?: string, isActive?: boolean) => {
     setLoading(true);
     try {
-      const res = await apiClient.get("/admin/users/all");
+      let url = "/admin/users/all";
+      const params = new URLSearchParams();
+      if (role) params.append("role", role);
+      if (isActive !== undefined) params.append("is_active", String(isActive));
+      
+      const queryString = params.toString();
+      if (queryString) url += `?${queryString}`;
+
+      const res = await apiClient.get(url);
       setAllUsers(res.data);
     } catch {
       console.error("Fetch all users error");
@@ -205,6 +213,29 @@ export default function AdminUsersPage() {
           label="Tüm Kullanıcılar"
         />
       </div>
+
+      {activeTab === "all" && (
+        <div className="flex gap-4 mb-6 px-2">
+          <button 
+            onClick={() => fetchAll()} 
+            className="text-xs font-bold text-gray-500 hover:text-primary transition-colors underline underline-offset-4 decoration-gray-200"
+          >
+            Tümünü Göster
+          </button>
+          <button 
+            onClick={() => fetchAll(undefined, true)} 
+            className="text-xs font-bold text-emerald-600 hover:text-emerald-700 transition-colors"
+          >
+            Sadece Aktifler
+          </button>
+          <button 
+            onClick={() => fetchAll(undefined, false)} 
+            className="text-xs font-bold text-red-500 hover:text-red-600 transition-colors"
+          >
+            Sadece Pasifler
+          </button>
+        </div>
+      )}
 
       <GlassCard className="border-gray-100 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">

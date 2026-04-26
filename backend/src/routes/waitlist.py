@@ -28,11 +28,14 @@ async def apply_to_waitlist(
 
 @router.get("/admin", dependencies=[Depends(get_current_admin)])
 async def get_waitlist(
+    include_processed: bool = Query(False),
     db: AsyncSession = Depends(get_db_session),
 ):
     """Admin view: Bekleyen başvuruları listeler."""
     repo = WaitlistRepository(db)
     service = WaitlistService(repo)
+    if include_processed:
+        return await service.list_all()
     return await service.list_pending()
 
 @router.post("/{wait_id}/process", dependencies=[Depends(get_current_admin)])

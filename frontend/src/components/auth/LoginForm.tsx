@@ -76,7 +76,8 @@ export function LoginForm() {
         });
         
         setAuth(profileRes.data, tokens.access_token, tokens.refresh_token);
-        router.push("/dashboard");
+        const isAdmin = ["ADMIN", "EDITOR"].includes(profileRes.data.role);
+        router.push(isAdmin ? "/admin" : "/dashboard");
       }
     } catch (err: any) {
       setError(err.response?.data?.detail || "Giriş başarısız. Bilgilerinizi kontrol edin.");
@@ -103,7 +104,8 @@ export function LoginForm() {
       });
       
       setAuth(profileRes.data, access_token, refresh_token);
-      router.push("/dashboard");
+      const isAdmin = ["ADMIN", "EDITOR"].includes(profileRes.data.role);
+      router.push(isAdmin ? "/admin" : "/dashboard");
     } catch (err: any) {
       setError(err.response?.data?.detail || "Doğrulama kodu hatalı.");
     } finally {

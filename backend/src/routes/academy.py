@@ -64,6 +64,30 @@ async def list_contents(
     return responses
 
 
+@router.get("/admin/contents", response_model=list[ContentResponse])
+async def list_admin_contents(
+    type: Optional[ContentType] = None,
+    locale: Optional[str] = None,
+    db: AsyncSession = Depends(get_db_session),
+    admin_user: User = Depends(get_current_admin),
+):
+    """Admin view: Lists all contents (Draft, Published, etc.) without locks."""
+    from sqlalchemy import select
+    from src.datalayer.model.db.academy_content import AcademyContent
+    
+    stmt = select(AcademyContent)
+    if type:
+        stmt = stmt.where(AcademyContent.type == type)
+    if locale:
+        stmt = stmt.where(AcademyContent.locale == locale)
+    
+    stmt = stmt.order_by(AcademyContent.order.asc())
+    result = await db.execute(stmt)
+    contents = result.scalars().all()
+    
+    return [ContentResponse.model_validate(c, update={"is_locked": False}) for c in contents]
+
+
 @router.get("/contents/search", response_model=list[ContentResponse | GuestContentResponse])
 async def search_contents(
     q: str = Query(..., min_length=2),
