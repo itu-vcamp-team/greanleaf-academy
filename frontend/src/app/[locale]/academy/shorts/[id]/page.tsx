@@ -122,8 +122,6 @@ export default function ShortsPlayerPage({ params }: PageProps) {
             <CheckCircle size={16} />
             {isCompleted ? t("completed") + " ✓" : t("watching")}
           </div>
-
-          </div>
           
           {/* Navigation Area */}
           <div className="grid grid-cols-2 gap-4 mt-6 border-t border-gray-100 pt-6">
