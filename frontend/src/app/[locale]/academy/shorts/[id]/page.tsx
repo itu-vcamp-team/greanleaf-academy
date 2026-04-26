@@ -54,7 +54,7 @@ export default function ShortsPlayerPage({ params }: PageProps) {
   };
 
   if (loading) return <ShortsPlayerSkeleton />;
-  if (!content || content.is_locked) return <LockedContent t={t} />;
+  if (!content) return <LockedContent t={t} />;
 
   return (
     <div className="min-h-screen bg-white text-foreground">
@@ -71,16 +71,20 @@ export default function ShortsPlayerPage({ params }: PageProps) {
         </nav>
 
         {/* Video Player - 9:16 vertical style */}
-        <div className="relative mx-auto shadow-2xl rounded-[2.5rem] overflow-hidden border-8 border-gray-900 bg-black" 
+        <div className="relative mx-auto shadow-2xl rounded-[2.5rem] overflow-hidden border-8 border-gray-900 bg-black"
              style={{ maxWidth: "340px", aspectRatio: "9/16" }}>
-          <YouTubePlayer
-            videoUrl={content.video_url}
-            contentId={content.id}
-            initialPosition={content.progress?.last_position_seconds ?? 0}
-            onProgressUpdate={(percentage) => {
-              if (percentage >= 85) setIsCompleted(true);
-            }}
-          />
+          {content.is_locked ? (
+            <LockedVideoOverlay />
+          ) : (
+            <YouTubePlayer
+              videoUrl={content.video_url}
+              contentId={content.id}
+              initialPosition={content.progress?.last_position_seconds ?? 0}
+              onProgressUpdate={(percentage) => {
+                if (percentage >= 85) setIsCompleted(true);
+              }}
+            />
+          )}
         </div>
 
         {/* Information Section */}
@@ -95,8 +99,8 @@ export default function ShortsPlayerPage({ params }: PageProps) {
 
         {/* Action Area */}
         <div className="flex flex-col gap-3 mt-8">
-          {/* Resource Link */}
-          {content.resource_link && (
+          {/* Resource Link — hidden when locked */}
+          {!content.is_locked && content.resource_link && (
             <a
               href={content.resource_link}
               target="_blank"
@@ -110,24 +114,38 @@ export default function ShortsPlayerPage({ params }: PageProps) {
             </a>
           )}
 
-          {/* Completion Status */}
-          <div
-            className={`flex items-center justify-center gap-3 w-full py-4 px-6
-                       rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${
-              isCompleted
-                ? "bg-green-100 text-green-700 border border-green-200"
-                : "bg-gray-50 text-gray-400 border border-gray-100"
-            }`}
-          >
-            <CheckCircle size={16} />
-            {isCompleted ? t("completed") + " ✓" : t("watching")}
-          </div>
-          
+          {/* Locked CTA */}
+          {content.is_locked && (
+            <Link href="/auth/register"
+              className="flex items-center justify-center gap-3 w-full py-4 px-6
+                         bg-primary text-white rounded-2xl font-black text-xs uppercase tracking-widest
+                         hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
+            >
+              <Lock size={16} />
+              Partner Ol ve İzle
+            </Link>
+          )}
+
+          {/* Completion Status — only for unlocked */}
+          {!content.is_locked && (
+            <div
+              className={`flex items-center justify-center gap-3 w-full py-4 px-6
+                         rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${
+                isCompleted
+                  ? "bg-green-100 text-green-700 border border-green-200"
+                  : "bg-gray-50 text-gray-400 border border-gray-100"
+              }`}
+            >
+              <CheckCircle size={16} />
+              {isCompleted ? t("completed") + " ✓" : t("watching")}
+            </div>
+          )}
+
           {/* Navigation Area */}
           <div className="grid grid-cols-2 gap-4 mt-6 border-t border-gray-100 pt-6">
             <Link href={content.prev_id ? `/academy/shorts/${content.prev_id}` : "#"}>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="w-full rounded-2xl gap-2 text-xs font-black"
                 disabled={!content.prev_id}
               >
@@ -135,7 +153,7 @@ export default function ShortsPlayerPage({ params }: PageProps) {
               </Button>
             </Link>
             <Link href={content.next_id ? `/academy/shorts/${content.next_id}` : "#"}>
-              <Button 
+              <Button
                 className="w-full rounded-2xl gap-2 text-xs font-black shadow-lg shadow-primary/20"
                 disabled={!content.next_id}
               >
@@ -165,12 +183,25 @@ function ShortsPlayerSkeleton() {
   );
 }
 
+function LockedVideoOverlay() {
+  return (
+    <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-950/90 backdrop-blur-sm gap-4">
+      <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center border border-primary/20">
+        <Lock className="w-7 h-7 text-primary" />
+      </div>
+      <p className="text-white text-xs font-black uppercase tracking-widest text-center px-6">
+        Partner üyelere özel
+      </p>
+    </div>
+  );
+}
+
 function LockedContent({ t }: { t: any }) {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <Navbar />
       <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-        <motion.div 
+        <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           className="max-w-md"
@@ -187,9 +218,6 @@ function LockedContent({ t }: { t: any }) {
               <Button size="lg" className="rounded-2xl w-full">
                 {t("back_to_list")}
               </Button>
-            </Link>
-            <Link href="/auth/register" className="text-primary text-xs font-bold hover:underline">
-               Partner Ol ve Tümünü İzle
             </Link>
           </div>
         </motion.div>

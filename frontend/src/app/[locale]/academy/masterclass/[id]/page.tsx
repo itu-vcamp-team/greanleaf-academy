@@ -53,7 +53,7 @@ export default function MasterclassPlayerPage({ params }: PageProps) {
   };
 
   if (loading) return <MasterclassPlayerSkeleton />;
-  if (!content || content.is_locked) return <LockedContent t={t} />;
+  if (!content) return <LockedContent t={t} />;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -78,14 +78,18 @@ export default function MasterclassPlayerPage({ params }: PageProps) {
             {/* Player Side (Left) */}
             <div className="lg:col-span-2 space-y-6">
               <div className="relative w-full aspect-video rounded-3xl overflow-hidden glass border-foreground/5 shadow-2xl bg-black">
-                <YouTubePlayer
-                  videoUrl={content.video_url}
-                  contentId={content.id}
-                  initialPosition={content.progress?.last_position_seconds ?? 0}
-                  onProgressUpdate={(percentage) => {
-                    if (percentage >= 85) setIsCompleted(true);
-                  }}
-                />
+                {content.is_locked ? (
+                  <LockedVideoOverlay />
+                ) : (
+                  <YouTubePlayer
+                    videoUrl={content.video_url}
+                    contentId={content.id}
+                    initialPosition={content.progress?.last_position_seconds ?? 0}
+                    onProgressUpdate={(percentage) => {
+                      if (percentage >= 85) setIsCompleted(true);
+                    }}
+                  />
+                )}
               </div>
 
               <div className="p-8 bg-white border border-gray-100 rounded-3xl space-y-4 shadow-sm">
@@ -121,29 +125,43 @@ export default function MasterclassPlayerPage({ params }: PageProps) {
                 </div>
 
                 <div className="flex flex-col gap-3 pt-4 border-t border-gray-100">
-                  {content.resource_link && (
-                    <a
-                      href={content.resource_link}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                  {content.is_locked ? (
+                    <Link
+                      href="/auth/register"
                       className="flex items-center justify-center gap-2 w-full py-4 px-6
                                  bg-primary text-white rounded-2xl font-black text-xs uppercase tracking-widest
                                  hover:scale-[1.02] transition-all shadow-xl shadow-primary/20"
                     >
-                      <ExternalLink size={16} />
-                      {content.resource_link_label || t("view_resource")}
-                    </a>
-                  )}
+                      <Lock size={16} />
+                      Partner Ol ve İzle
+                    </Link>
+                  ) : (
+                    <>
+                      {content.resource_link && (
+                        <a
+                          href={content.resource_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-center gap-2 w-full py-4 px-6
+                                     bg-primary text-white rounded-2xl font-black text-xs uppercase tracking-widest
+                                     hover:scale-[1.02] transition-all shadow-xl shadow-primary/20"
+                        >
+                          <ExternalLink size={16} />
+                          {content.resource_link_label || t("view_resource")}
+                        </a>
+                      )}
 
-                  <button
-                    onClick={handleAddFavorite}
-                    className="flex items-center justify-center gap-2 w-full py-4 px-6
-                               border-2 border-gray-100 text-gray-400 rounded-2xl font-black text-xs uppercase tracking-widest
-                               hover:border-primary/20 hover:text-primary transition-all"
-                  >
-                    <BookmarkPlus size={16} />
-                    {t("add_favorite")}
-                  </button>
+                      <button
+                        onClick={handleAddFavorite}
+                        className="flex items-center justify-center gap-2 w-full py-4 px-6
+                                   border-2 border-gray-100 text-gray-400 rounded-2xl font-black text-xs uppercase tracking-widest
+                                   hover:border-primary/20 hover:text-primary transition-all"
+                      >
+                        <BookmarkPlus size={16} />
+                        {t("add_favorite")}
+                      </button>
+                    </>
+                  )}
 
                   <div className="grid grid-cols-2 gap-3 pt-4 border-t border-gray-100">
                     <Link href={content.prev_id ? `/academy/masterclass/${content.prev_id}` : "#"}>
@@ -176,6 +194,19 @@ export default function MasterclassPlayerPage({ params }: PageProps) {
           </div>
         </div>
       </main>
+    </div>
+  );
+}
+
+function LockedVideoOverlay() {
+  return (
+    <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-950/90 backdrop-blur-sm gap-4">
+      <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center border border-primary/20">
+        <Lock className="w-7 h-7 text-primary" />
+      </div>
+      <p className="text-white text-xs font-black uppercase tracking-widest text-center px-6">
+        Partner üyelere özel
+      </p>
     </div>
   );
 }
