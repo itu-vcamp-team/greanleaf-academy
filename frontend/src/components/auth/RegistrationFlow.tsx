@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { Turnstile, TurnstileInstance } from "@marsidev/react-turnstile";
 
 // Pydantic v2 + FastAPI 422 validation hatalarını düz string'e çevirir.
 function extractErrorMessage(err: unknown, fallback: string): string {
@@ -60,6 +61,9 @@ export function RegistrationFlow() {
   const [otpCode, setOtpCode] = useState("");
   const [regStatus, setRegStatus] = useState<"pending_approval" | null>(null);
 
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const turnstileRef = useRef<TurnstileInstance>(null);
+
   const router = useRouter();
 
   const handleStep1Submit = async (e: React.FormEvent) => {
@@ -67,11 +71,17 @@ export function RegistrationFlow() {
     setLoading(true);
     setError("");
     try {
-      const res = await apiClient.post("/auth/register/step1", glData);
+      const res = await apiClient.post("/auth/register/step1", {
+        ...glData,
+        captcha_token: turnstileToken,
+      });
       setSessionId(res.data.session_id);
       setStep(2);
     } catch (err: unknown) {
       setError(extractErrorMessage(err, "Global hesap doğrulanamadı."));
+      // Reset Turnstile so the next attempt uses a fresh token
+      turnstileRef.current?.reset();
+      setTurnstileToken(null);
     } finally {
       setLoading(false);
     }
@@ -200,11 +210,20 @@ export function RegistrationFlow() {
                   required
                 />
                 {error && <p className="text-red-400 text-xs italic">{error}</p>}
+                <div className="flex justify-center py-1">
+                  <Turnstile
+                    ref={turnstileRef}
+                    siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "0x4AAAAAADDnJNGyXUKu4w1k"}
+                    onSuccess={(token) => setTurnstileToken(token)}
+                    onExpire={() => setTurnstileToken(null)}
+                    options={{ theme: "light" }}
+                  />
+                </div>
                 <Button
                   type="submit"
                   className="w-full h-14 rounded-xl font-black text-xs uppercase tracking-widest"
                   size="lg"
-                  disabled={loading}
+                  disabled={loading || !turnstileToken}
                 >
                   {loading ? "Doğrulanıyor..." : "Doğrula ve Devam Et"}
                 </Button>

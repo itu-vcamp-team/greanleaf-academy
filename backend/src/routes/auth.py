@@ -15,7 +15,8 @@ from src.datalayer.model.dto.auth_dto import (
     RegisterStep1Schema, RegisterStep2Schema, RegisterStep3Schema, RegisterVerifyOTPSchema,
     LoginSchema, LoginResponseSchema, TokenResponseSchema,
     Verify2FASchema, ResetPasswordSchema, ProfileUpdateSchema,
-    RefreshTokenSchema, PasswordChangeRequestSchema, PasswordChangeVerifySchema
+    RefreshTokenSchema, PasswordChangeRequestSchema, PasswordChangeVerifySchema,
+    ForgotPasswordSchema
 )
 from src.services import (
     OTPService, GreenleafGlobalService, SessionService,
@@ -74,6 +75,10 @@ async def register_step1(
     """
     Step 1: External Greenleaf Global verification.
     """
+    # 0. Verify CAPTCHA — prevents bots from hammering the external GL API
+    if not await CaptchaService.verify_turnstile_token(data.captcha_token):
+        raise HTTPException(status_code=400, detail="Güvenlik doğrulaması başarısız.")
+
     # 1. Check if this Global account is already registered (using hash)
     gl_hash = hash_gl_username(data.gl_username)
     stmt = select(User).where(User.gl_username == gl_hash)
@@ -451,12 +456,16 @@ async def verify_2fa(
 
 @router.post("/forgot-password")
 async def forgot_password(
-    email: str,
+    data: ForgotPasswordSchema,
     background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db_session)
 ):
     """Triggers password reset OTP via email."""
-    stmt = select(User).where(User.email == email)
+    # Verify CAPTCHA — prevents email enumeration spam
+    if not await CaptchaService.verify_turnstile_token(data.captcha_token):
+        raise HTTPException(status_code=400, detail="Güvenlik doğrulaması başarısız.")
+
+    stmt = select(User).where(User.email == data.email)
     res = await db.execute(stmt)
     user = res.scalar_one_or_none()
 

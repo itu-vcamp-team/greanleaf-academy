@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { GlassCard } from "@/components/ui/GlassCard";
@@ -11,7 +11,7 @@ import apiClient from "@/lib/api-client";
 import { useAuthStore } from "@/store/auth.store";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { Turnstile } from "@marsidev/react-turnstile";
+import { Turnstile, TurnstileInstance } from "@marsidev/react-turnstile";
 
 export function LoginForm() {
   const t = useTranslations("auth");
@@ -23,6 +23,11 @@ export function LoginForm() {
   const [maskedEmail, setMaskedEmail] = useState("");
   
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const turnstileRef = useRef<TurnstileInstance>(null);
+
+  // Separate Turnstile state for the forgot-password form
+  const [forgotTurnstileToken, setForgotTurnstileToken] = useState<string | null>(null);
+  const forgotTurnstileRef = useRef<TurnstileInstance>(null);
 
   const [formData, setFormData] = useState({
     username: "",
@@ -68,8 +73,13 @@ export function LoginForm() {
         const isAdmin = ["ADMIN", "EDITOR"].includes(profileRes.data.role);
         router.push(isAdmin ? "/admin" : "/dashboard");
       }
-    } catch (err: any) {
-      setError(err.response?.data?.detail || "Giriş başarısız. Bilgilerinizi kontrol edin.");
+    } catch (err) {
+      const e = err as { response?: { data?: { detail?: string } } };
+      setError(e.response?.data?.detail || "Giriş başarısız. Bilgilerinizi kontrol edin.");
+      // Reset Turnstile so the next attempt gets a fresh, valid token.
+      // Turnstile tokens are single-use; reusing a consumed token causes a 400.
+      turnstileRef.current?.reset();
+      setTurnstileToken(null);
     } finally {
       setLoading(false);
     }
@@ -94,8 +104,9 @@ export function LoginForm() {
       setAuth(profileRes.data, access_token, refresh_token);
       const isAdmin = ["ADMIN", "EDITOR"].includes(profileRes.data.role);
       router.push(isAdmin ? "/admin" : "/dashboard");
-    } catch (err: any) {
-      setError(err.response?.data?.detail || "Doğrulama kodu hatalı.");
+    } catch (err) {
+      const e = err as { response?: { data?: { detail?: string } } };
+      setError(e.response?.data?.detail || "Doğrulama kodu hatalı.");
     } finally {
       setLoading(false);
     }
@@ -106,11 +117,17 @@ export function LoginForm() {
     setLoading(true);
     setError("");
     try {
-      await apiClient.post("/auth/forgot-password", null, { params: { email: forgotData.email } });
+      await apiClient.post("/auth/forgot-password", {
+        email: forgotData.email,
+        captcha_token: forgotTurnstileToken,
+      });
       setForgotStep(2);
       toast.success("Sıfırlama kodu e-postanıza gönderildi.");
-    } catch (err: any) {
-      setError(err.response?.data?.detail || "Hata oluştu.");
+    } catch (err) {
+      const e = err as { response?: { data?: { detail?: string } } };
+      setError(e.response?.data?.detail || "Hata oluştu.");
+      forgotTurnstileRef.current?.reset();
+      setForgotTurnstileToken(null);
     } finally {
       setLoading(false);
     }
@@ -133,8 +150,9 @@ export function LoginForm() {
       toast.success("Şifreniz başarıyla sıfırlandı.");
       setShowForgot(false);
       setForgotStep(1);
-    } catch (err: any) {
-      setError(err.response?.data?.detail || "Sıfırlama başarısız.");
+    } catch (err) {
+      const e = err as { response?: { data?: { detail?: string } } };
+      setError(e.response?.data?.detail || "Sıfırlama başarısız.");
     } finally {
       setLoading(false);
     }
@@ -170,7 +188,16 @@ export function LoginForm() {
                     onChange={(e) => setForgotData({ ...forgotData, email: e.target.value })}
                     required
                   />
-                  <Button type="submit" className="w-full h-14 font-black" disabled={loading}>
+                  <div className="flex justify-center py-1">
+                    <Turnstile
+                      ref={forgotTurnstileRef}
+                      siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "0x4AAAAAADDnJNGyXUKu4w1k"}
+                      onSuccess={(token) => setForgotTurnstileToken(token)}
+                      onExpire={() => setForgotTurnstileToken(null)}
+                      options={{ theme: "light" }}
+                    />
+                  </div>
+                  <Button type="submit" className="w-full h-14 font-black" disabled={loading || !forgotTurnstileToken}>
                     {loading ? "GÖNDERİLİYOR..." : "SIFIRLAMA KODU GÖNDER"}
                   </Button>
                   <button type="button" onClick={() => setShowForgot(false)} className="w-full text-xs text-foreground/40 hover:text-foreground transition-colors">Vazgeç</button>
@@ -270,8 +297,10 @@ export function LoginForm() {
 
                 <div className="flex justify-center py-2">
                     <Turnstile
+                      ref={turnstileRef}
                       siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "0x4AAAAAADDnJNGyXUKu4w1k"}
                       onSuccess={(token) => setTurnstileToken(token)}
+                      onExpire={() => setTurnstileToken(null)}
                       options={{
                         theme: 'light',
                       }}

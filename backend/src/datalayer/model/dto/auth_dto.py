@@ -8,6 +8,7 @@ class RegisterStep1Schema(BaseModel):
     """Step 1: Global Office Verification"""
     gl_username: str
     gl_password: str
+    captcha_token: str  # Cloudflare Turnstile token
 
 
 class RegisterStep2Schema(BaseModel):
@@ -114,6 +115,7 @@ class LoginResponseSchema(BaseModel):
 
 class ForgotPasswordSchema(BaseModel):
     email: EmailStr
+    captcha_token: str  # Cloudflare Turnstile token
 
 
 # --- PROFILE UPDATE & SECURE PASSWORD CHANGE ---
