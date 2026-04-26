@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.datalayer.database import get_db_session
-from src.datalayer.model.db.user import UserRole
+from src.datalayer.model.db.user import User, UserRole
 from src.datalayer.model.db.academy_content import ContentType
 from src.datalayer.model.dto.academy_schemas import (
     ContentCreate,
