@@ -240,3 +240,28 @@ Geri sayım artık hardcoded değil:
 - **API:** `/academy/contents/{id}` endpoint'i artık `next_id` ve `prev_id` bilgilerini de dönüyor.
 - **Frontend:** Shorts ve Masterclass player sayfalarına dinamik navigasyon butonları eklendi.
 - **Admin UI:** Sıra numarası girişi kaldırıldı, bunun yerine "Yukarı/Aşağı Taşı" butonları ile otomatik reorder desteği getirildi.
+
+### 22. Calendar & Event System Fix (2026-04-26)
+**Problem:** Takvim sayfasında etkinlik oluşturma ve görüntüleme birden fazla kritik hata içeriyordu.
+
+**Root Cause Analysis:**
+1. `calendar/page.tsx` içindeki `AddEventModal`, backend `Form()` parametresi beklerken JSON gönderiyordu → 422 hata
+2. `CalendarEvent` interface yanlış alanlara (`speaker`, `date`, `time`, `link`) bakıyordu; backend `start_time`, `meeting_link` dönüyordu
+3. `EventResponse` DTO'sunda `from_attributes=True` eksikti → `is_published` DB'den okunamıyor, hep default `True` dönüyordu
+4. `_sanitize_event` helper manuel dict döndürüyor, `cover_image_path` yanlış isimle gidiyordu
+
+**Fixes:**
+- `event_dto.py`: `ConfigDict(from_attributes=True, populate_by_name=True)` + `cover_image_path` alias eklendi
+- `events.py`: `_sanitize_event` artık `model_validate` ile typed response döndürüyor
+- `calendar/page.tsx`: Tamamen yeniden yazıldı — interface, AddEventModal (multipart/form-data), EventCard (start_time parse) düzeltildi
+
+### 23. Admin Panel Kapsamlı Düzeltme (2026-04-26)
+**Etkilenen 4 dosya:**
+
+1. **`backend/src/datalayer/repository/user_repository.py`** — `get_pending_users()` sorgusu genişletildi. `is_verified=True` koşulu kaldırıldı, `role.notin_([ADMIN, EDITOR])` eklendi. Artık is_verified durumundan bağımsız olarak tüm pasif kullanıcılar admin onayı listesinde görünüyor. Response'a `role` ve `is_verified` alanları da eklendi.
+
+2. **`frontend/src/app/[locale]/admin/page.tsx`** — Hızlı Eylemler GlassCard: `bg-foreground/5`/`text-foreground` → `bg-gray-50`/`text-gray-900`. Admin layout'ta foreground token siyah çözümleniyor ve dark mode görünümüne yol açıyordu; sabit light-mode değerleriyle çözüldü.
+
+3. **`frontend/src/app/[locale]/admin/academy-content/page.tsx`** — locale=tr filtresi kaldırıldı. DB'deki kayıtlar `locale="tr-TR"` formatında saklanıyor; `locale=tr` filtresi sıfır sonuç döndürüyordu.
+
+4. **`frontend/src/app/[locale]/admin/waitlist/page.tsx`** — "Bekleyenler / Tümü" toggle eklendi; `include_processed=true` parametresiyle işlenmiş kayıtlar da görüntülenebiliyor.

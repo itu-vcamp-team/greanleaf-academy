@@ -59,7 +59,7 @@ export default function AdminAcademyContentPage() {
   const fetchContents = async () => {
     setLoading(true);
     try {
-      const res = await apiClient.get(`/academy/admin/contents?type=${activeTab}&locale=tr`);
+      const res = await apiClient.get(`/academy/admin/contents?type=${activeTab}`);
       setContents(res.data);
     } catch {
       console.error("Failed to fetch contents");

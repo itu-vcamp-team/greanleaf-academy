@@ -30,7 +30,7 @@ class UserRepository(AsyncBaseRepository[User]):
         return result.scalars().all()
 
     async def get_pending_users(self) -> List[dict]:
-        """Get inactive users with their inviter details for admin approval."""
+        """Get inactive users (regardless of verification) for admin approval."""
         from sqlalchemy.orm import aliased
         Inviter = aliased(User)
         
@@ -39,7 +39,7 @@ class UserRepository(AsyncBaseRepository[User]):
             .outerjoin(Inviter, User.inviter_id == Inviter.id)
             .where(
                 User.is_active == False,
-                User.is_verified == True
+                User.role.notin_([UserRole.ADMIN, UserRole.EDITOR])
             )
             .order_by(User.created_at.desc())
         )
@@ -56,6 +56,8 @@ class UserRepository(AsyncBaseRepository[User]):
                 "email": u.email,
                 "full_name": u.full_name,
                 "phone": u.phone,
+                "role": u.role.value if u.role else "GUEST",
+                "is_verified": u.is_verified,
                 "created_at": u.created_at.isoformat() if u.created_at else None,
                 "inviter_name": row.inviter_name,
                 "inviter_username": row.inviter_username,

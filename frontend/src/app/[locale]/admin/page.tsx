@@ -126,20 +126,20 @@ export default function AdminDashboardPage({ params }: PageProps) {
         </GlassCard>
 
         {/* Hızlı Eylemler */}
-        <GlassCard className="p-10 border-gray-100 shadow-sm">
-          <h3 className="text-xl font-black mb-6 italic">Hızlı Eylemler</h3>
+        <GlassCard className="p-10 border-gray-100 shadow-sm bg-white">
+          <h3 className="text-xl font-black mb-6 italic text-gray-900">Hızlı Eylemler</h3>
           <div className="grid grid-cols-2 gap-4">
-            <Link href={`/${locale}/admin/content`} className="p-4 rounded-2xl bg-foreground/5 border border-foreground/10 hover:bg-foreground/10 transition-all text-left group">
-              <p className="text-[10px] font-black text-foreground/40 uppercase tracking-widest mb-1 flex items-center gap-1">
+            <Link href={`/${locale}/admin/content`} className="p-4 rounded-2xl bg-gray-50 border border-gray-100 hover:bg-gray-100 transition-all text-left group">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 flex items-center gap-1">
                 <MessageSquare size={10} /> Yeni
               </p>
-              <p className="text-sm font-bold text-foreground">Duyuru Ekle</p>
+              <p className="text-sm font-bold text-gray-900">Duyuru Ekle</p>
             </Link>
-            <Link href={`/${locale}/admin/content`} className="p-4 rounded-2xl bg-foreground/5 border border-foreground/10 hover:bg-foreground/10 transition-all text-left group">
-              <p className="text-[10px] font-black text-foreground/40 uppercase tracking-widest mb-1 flex items-center gap-1">
+            <Link href={`/${locale}/admin/content`} className="p-4 rounded-2xl bg-gray-50 border border-gray-100 hover:bg-gray-100 transition-all text-left group">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 flex items-center gap-1">
                 <Link2 size={10} /> Yönet
               </p>
-              <p className="text-sm font-bold text-foreground">Kaynaklar</p>
+              <p className="text-sm font-bold text-gray-900">Kaynaklar</p>
             </Link>
             <Link href={`/${locale}/admin/users?action=create`} className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20 transition-all text-left group">
               <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1 flex items-center gap-1">
@@ -147,17 +147,17 @@ export default function AdminDashboardPage({ params }: PageProps) {
               </p>
               <p className="text-sm font-bold text-emerald-900">Kullanıcı Oluştur</p>
             </Link>
-            <Link href={`/${locale}/admin/users`} className="p-4 rounded-2xl bg-foreground/5 border border-foreground/10 hover:bg-foreground/10 transition-all text-left group">
-              <p className="text-[10px] font-black text-foreground/40 uppercase tracking-widest mb-1 flex items-center gap-1">
+            <Link href={`/${locale}/admin/users`} className="p-4 rounded-2xl bg-gray-50 border border-gray-100 hover:bg-gray-100 transition-all text-left group">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 flex items-center gap-1">
                 <Users size={10} /> Yönet
               </p>
-              <p className="text-sm font-bold text-foreground">Kullanıcı Yönetimi</p>
+              <p className="text-sm font-bold text-gray-900">Kullanıcı Yönetimi</p>
             </Link>
-            <Link href={`/${locale}/admin/waitlist`} className="p-4 rounded-2xl bg-foreground/5 border border-foreground/10 hover:bg-foreground/10 transition-all text-left group text-primary">
+            <Link href={`/${locale}/admin/waitlist`} className="p-4 rounded-2xl bg-gray-50 border border-gray-100 hover:bg-primary/5 transition-all text-left group">
               <p className="text-[10px] font-black text-primary/60 uppercase tracking-widest mb-1 flex items-center gap-1">
                 <Clock size={10} /> Bekleyenler
               </p>
-              <p className="text-sm font-bold text-foreground">Waitlist</p>
+              <p className="text-sm font-bold text-gray-900">Waitlist</p>
             </Link>
           </div>
         </GlassCard>

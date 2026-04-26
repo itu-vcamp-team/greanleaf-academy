@@ -26,15 +26,17 @@ export default function AdminWaitlistPage() {
   const [entries, setEntries] = useState<WaitlistEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
     fetchWaitlist();
-  }, []);
+  }, [showAll]);
 
   const fetchWaitlist = async () => {
     setLoading(true);
     try {
-      const res = await apiClient.get("/waitlist/admin");
+      const url = showAll ? "/waitlist/admin?include_processed=true" : "/waitlist/admin";
+      const res = await apiClient.get(url);
       setEntries(res.data);
     } catch (err) {
       console.error("Fetch waitlist error:", err);
@@ -64,6 +66,24 @@ export default function AdminWaitlistPage() {
               <span className="text-xs font-black uppercase tracking-[0.3em]">Talep Yönetimi</span>
           </div>
           <h1 className="text-4xl font-black text-gray-900 tracking-tight">Bekleme <span className="text-purple-500 italic">Listesi</span></h1>
+        </div>
+        <div className="flex items-center gap-3 p-1.5 bg-gray-100 rounded-2xl">
+          <button
+            onClick={() => setShowAll(false)}
+            className={`px-5 py-2 rounded-xl text-sm font-black transition-all ${
+              !showAll ? "bg-white text-gray-900 shadow-sm" : "text-gray-400 hover:text-gray-700"
+            }`}
+          >
+            Bekleyenler
+          </button>
+          <button
+            onClick={() => setShowAll(true)}
+            className={`px-5 py-2 rounded-xl text-sm font-black transition-all ${
+              showAll ? "bg-white text-gray-900 shadow-sm" : "text-gray-400 hover:text-gray-700"
+            }`}
+          >
+            Tümü
+          </button>
         </div>
       </header>
 
