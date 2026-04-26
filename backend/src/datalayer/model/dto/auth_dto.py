@@ -27,6 +27,8 @@ class RegisterStep3Schema(BaseModel):
     phone: Optional[str] = None
     password: str
     confirm_password: str
+    kvkk_accepted: bool = False
+    aydinlatma_accepted: bool = False
 
     @field_validator("phone", mode="before")
     @classmethod
@@ -56,6 +58,13 @@ class RegisterStep3Schema(BaseModel):
     def passwords_match(cls, v: str, info) -> str:
         if "password" in info.data and v != info.data["password"]:
             raise ValueError("Passwords do not match.")
+        return v
+    
+    @field_validator("kvkk_accepted", "aydinlatma_accepted")
+    @classmethod
+    def validate_legal(cls, v: bool) -> bool:
+        if not v:
+            raise ValueError("Devam etmek için yasal metinleri onaylamanız gerekmektedir.")
         return v
 
 
@@ -107,13 +116,11 @@ class ForgotPasswordSchema(BaseModel):
     email: EmailStr
 
 
-# --- PROFILE UPDATE SCHEMA ---
+# --- PROFILE UPDATE & SECURE PASSWORD CHANGE ---
 
 class ProfileUpdateSchema(BaseModel):
     full_name: Optional[str] = None
     phone: Optional[str] = None
-    current_password: Optional[str] = None
-    new_password: Optional[str] = None
 
     @field_validator("phone", mode="before")
     @classmethod
@@ -126,6 +133,36 @@ class ProfileUpdateSchema(BaseModel):
                 "Telefon numarası +90XXXXXXXXXX formatında olmalıdır. Örnek: +905551234567"
             )
         return cleaned
+
+
+class PasswordChangeRequestSchema(BaseModel):
+    """Initial request to change password, triggers OTP."""
+    current_password: str
+
+
+class PasswordChangeVerifySchema(BaseModel):
+    """Finalizing password change with OTP."""
+    otp_code: str
+    new_password: str
+    confirm_new_password: str
+
+    @field_validator("new_password")
+    @classmethod
+    def password_strength(cls, v: str) -> str:
+        if len(v) < 8:
+            raise ValueError("Şifre en az 8 karakter olmalıdır.")
+        if not re.search(r"[A-Z]", v):
+            raise ValueError("Şifre en az bir büyük harf içermelidir.")
+        if not re.search(r"[0-9]", v):
+            raise ValueError("Şifre en az bir rakam içermelidir.")
+        return v
+    
+    @field_validator("confirm_new_password")
+    @classmethod
+    def passwords_match(cls, v: str, info) -> str:
+        if "new_password" in info.data and v != info.data["new_password"]:
+            raise ValueError("Yeni şifreler birbiriyle eşleşmiyor.")
+        return v
 
 
 class ResetPasswordSchema(BaseModel):

@@ -3,9 +3,9 @@ import json
 from datetime import datetime, timezone, timedelta
 from typing import Dict, Any
 
-from fastapi import APIRouter, Depends, HTTPException, status, Request, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, status, Request, BackgroundTasks, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, update
 import redis.asyncio as aioredis
 
 from src.datalayer.database import get_db_session
@@ -16,7 +16,7 @@ from src.datalayer.model.dto.auth_dto import (
     RegisterStep1Schema, RegisterStep2Schema, RegisterStep3Schema, RegisterVerifyOTPSchema,
     LoginSchema, LoginResponseSchema, TokenResponseSchema,
     Verify2FASchema, ResetPasswordSchema, ProfileUpdateSchema,
-    RefreshTokenSchema,
+    RefreshTokenSchema, PasswordChangeRequestSchema, PasswordChangeVerifySchema
 )
 from src.services import (
     PasswordService, TokenService, CaptchaService,
@@ -28,6 +28,7 @@ from src.logger import logger
 
 from src.utils.auth_deps import get_current_user, oauth2_scheme_strict
 from src.utils.hash_utils import hash_gl_username
+from src.utils.image_utils import process_and_save_avatar
 
 
 def mask_email(email: str) -> str:
@@ -163,7 +164,8 @@ async def register_step3(
         "email": data.email,
         "full_name": data.full_name,
         "phone": data.phone,
-        "password_hash": PasswordService.hash_password(data.password)
+        "password_hash": PasswordService.hash_password(data.password),
+        "legal_accepted": True # DTO validates this
     })
 
     # Generate OTP
@@ -540,14 +542,10 @@ async def update_profile(
     db: AsyncSession = Depends(get_db_session),
     current_user: User = Depends(get_current_user),
 ):
-    """Updates the current user's profile (name, phone, password)."""
-    if data.new_password:
-        if not data.current_password:
-            raise HTTPException(status_code=400, detail="Current password is required.")
-        if not PasswordService.verify_password(data.current_password, current_user.password_hash):
-            raise HTTPException(status_code=400, detail="Current password is incorrect.")
-        current_user.password_hash = PasswordService.hash_password(data.new_password)
-
+    """
+    Updates the current user's profile (name, phone).
+    Password change is now handled via a separate secure OTP flow.
+    """
     if data.full_name is not None:
         current_user.full_name = data.full_name
 
@@ -555,7 +553,78 @@ async def update_profile(
         current_user.phone = data.phone
 
     await db.commit()
-    return {"message": "Profile updated successfully."}
+    return {"message": "Profil bilgileri güncellendi."}
+
+
+@router.post("/profile/avatar")
+async def upload_avatar(
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db_session),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Uploads and optimizes a profile picture.
+    Converts to WebP and resizes to 400x400.
+    """
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Sadece görsel dosyaları yüklenebilir.")
+    
+    try:
+        path = await process_and_save_avatar(file, current_user.id)
+        current_user.profile_image_path = path
+        await db.commit()
+        return {"profile_image_path": path}
+    except Exception as e:
+        logger.error(f"Avatar upload error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Görsel işlenirken bir hata oluştu.")
+
+
+@router.post("/profile/password-reset/request")
+async def request_password_change(
+    data: PasswordChangeRequestSchema,
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Triggers a secure password change by sending an OTP to the user's email.
+    Current password must be verified first.
+    """
+    if not PasswordService.verify_password(data.current_password, current_user.password_hash):
+        raise HTTPException(status_code=400, detail="Mevcut şifreniz hatalı.")
+
+    otp = await OTPService.generate_otp(f"pwd_change:{current_user.id}", purpose="password_change")
+    
+    background_tasks.add_task(
+        MailingService.send_password_reset_email, # Reusing reset template or could use a specific one
+        to_email=current_user.email,
+        code=otp,
+        full_name=current_user.full_name
+    )
+
+    return {"message": "Doğrulama kodu e-postanıza gönderildi."}
+
+
+@router.post("/profile/password-reset/verify")
+async def verify_password_change(
+    data: PasswordChangeVerifySchema,
+    db: AsyncSession = Depends(get_db_session),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Verifies OTP and updates the password.
+    Logs out the user from ALL devices for security.
+    """
+    if not await OTPService.verify_otp(f"pwd_change:{current_user.id}", data.otp_code, purpose="password_change"):
+        raise HTTPException(status_code=400, detail="Geçersiz veya süresi dolmuş doğrulama kodu.")
+
+    # 1. Update Password
+    current_user.password_hash = PasswordService.hash_password(data.new_password)
+    
+    # 2. Deactivate ALL sessions for this user (Global Logout)
+    await SessionService.deactivate_all_user_sessions(db, current_user.id)
+    
+    await db.commit()
+    return {"message": "Şifreniz başarıyla güncellendi. Güvenliğiniz için tüm oturumlar sonlandırıldı. Lütfen tekrar giriş yapın."}
 
 
 # --- LOGOUT ---
@@ -573,3 +642,14 @@ async def logout(
         await SessionService.deactivate_session(db, jti)
         await db.commit()
     return {"message": "Logged out successfully."}
+
+
+@router.post("/logout-all")
+async def logout_all(
+    db: AsyncSession = Depends(get_db_session),
+    current_user: User = Depends(get_current_user),
+):
+    """Invalidates all active sessions for the current user."""
+    await SessionService.deactivate_all_user_sessions(db, current_user.id)
+    await db.commit()
+    return {"message": "Tüm oturumlar başarıyla sonlandırıldı."}

@@ -33,7 +33,7 @@ export function Navbar() {
     { href: "/academy", label: t("academy"), icon: null },
     ...(!isGuest ? [{ href: "/dashboard", label: t("dashboard"), icon: <LayoutDashboard className="w-4 h-4" /> }] : []),
     ...(isGuest ? [{ href: "/#imkanlar", label: "İmkanlar", icon: null }] : []),
-    ...(role === "ADMIN" ? [{ href: "/settings", label: t("settings"), icon: <Settings className="w-4 h-4" /> }] : []),
+    ...(!isGuest ? [{ href: "/dashboard/settings", label: t("settings"), icon: <Settings className="w-4 h-4" /> }] : []),
   ];
 
   return (

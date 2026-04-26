@@ -8,6 +8,9 @@ from src.middleware.rate_limit_middleware import RateLimitMiddleware
 from src.middleware.security_headers_middleware import SecurityHeadersMiddleware
 
 # Router imports
+from fastapi.staticfiles import StaticFiles
+import os
+
 from src.routes.auth import router as auth_router
 from src.routes.admin_maintenance import router as admin_maintenance_router
 from src.routes.academy import router as academy_router
@@ -50,6 +53,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+# --- Static Files ---
+if not os.path.exists("uploads"):
+    os.makedirs("uploads")
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 # --- Router Registration ---
 

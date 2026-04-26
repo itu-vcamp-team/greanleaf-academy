@@ -24,7 +24,7 @@ import {
   ShieldCheck, UserPlus, CheckCircle2, Globe, Key, Mail, ArrowRight,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useRouter } from "@/i18n/navigation";
+import { useRouter, Link } from "@/i18n/navigation";
 import apiClient from "@/lib/api-client";
 
 export function RegistrationFlow() {
