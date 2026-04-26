@@ -11,13 +11,24 @@ settings = get_settings()
 
 # Rate limit configurations: (max_requests, window_seconds, block_seconds)
 RATE_LIMIT_CONFIGS = {
-    "/api/auth/login": (5, 900, 900),           # 5 attempts in 15m -> 15m block                                                  
-    "/api/auth/register": (10, 3600, 1800),     # 10 attempts in 1h -> 30m block
-    "/api/auth/forgot-password": (3, 3600, 3600),# 3 attempts in 1h -> 1h block
-    "default": (100, 60, 0),                    # Default: 100 requests per minute
+    "/api/auth/login": (5, 900, 900),            # 5 attempts in 15m -> 15m block
+    "/api/auth/register": (10, 3600, 1800),      # 10 attempts in 1h -> 30m block
+    "/api/auth/forgot-password": (3, 3600, 3600), # 3 attempts in 1h -> 1h block
+    "default": (300, 60, 0),                     # Default: 300 requests per minute
 }
 
+# Exact-match paths — always pass through rate limiting
 WHITELIST_PATHS = ["/api/health", "/docs", "/openapi.json"]
+
+# Prefix-match paths — JWT-protected routes don't need IP rate limiting
+# because authentication already gates access.
+WHITELIST_PREFIXES = [
+    "/api/admin",          # All admin/* routes (require ADMIN/EDITOR JWT)
+    "/api/academy/admin",  # Academy admin routes (require ADMIN/EDITOR JWT)
+    "/api/auth/profile",   # Authenticated profile endpoint
+    "/api/auth/logout",    # Authenticated logout
+    "/api/auth/refresh",   # Token refresh (already secured by refresh token)
+]
 
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
@@ -40,7 +51,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         path = request.url.path
 
         # 1. Whitelist check
-        if path in WHITELIST_PATHS:
+        if path in WHITELIST_PATHS or any(path.startswith(p) for p in WHITELIST_PREFIXES):
             return await call_next(request)
 
         # 2. Get client IP (handle Render proxy headers)
