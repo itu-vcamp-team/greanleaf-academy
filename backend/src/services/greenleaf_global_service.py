@@ -19,12 +19,12 @@ class GreenleafGlobalService:
         # Note: External API URL should be in settings.
         # mockup for now as per requirements.
         if settings.APP_ENV == "development":
-            # Test account: test_gl / secret123
-            if username == "test_gl" and password == "secret123":
-                return True
-            # Always return true for development if not specified? 
-            # No, let's keep it strict for better testing.
-            return True if username.startswith("gl_") else False
+            # For testing purposes, we might want a specific failure case
+            if username == "fail_gl":
+                return False
+            
+            logger.info(f"Development Mode: Mocking Greenleaf Global verification for {username}")
+            return True
 
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
