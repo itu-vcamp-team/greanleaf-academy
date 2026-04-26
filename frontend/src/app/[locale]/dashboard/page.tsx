@@ -185,7 +185,7 @@ export default function DashboardPage({ params }: PageProps) {
                         <div 
                           key={child.id}
                           onClick={() => handleChildClick(child.id, child.full_name)}
-                          className="group p-4 rounded-2xl border border-foreground/5 bg-foreground/5 hover:border-primary/30 hover:bg-foreground/10 transition-all cursor-pointer"
+                          className="group p-4 rounded-2xl border border-foreground/5 bg-foreground/5 hover:border-primary/30 hover:bg-foreground/10 transition-all cursor-pointer relative"
                         >
                           <div className="flex justify-between items-start mb-4">
                             <div className="flex items-center gap-3">
@@ -194,15 +194,22 @@ export default function DashboardPage({ params }: PageProps) {
                               </div>
                               <div>
                                 <p className="font-bold text-foreground group-hover:text-primary transition-colors">{child.full_name}</p>
-                                <p className="text-[10px] text-foreground/30 font-medium tracking-widest">#{child.partner_id || "GUEST"}</p>
+                                <div className="flex items-center gap-2">
+                                   <p className="text-[10px] text-foreground/30 font-medium tracking-widest">#{child.partner_id || "GUEST"}</p>
+                                   {!child.is_active && (
+                                     <span className="text-[8px] bg-amber-500/10 text-amber-500 px-1.5 py-0.5 rounded border border-amber-500/20 font-black uppercase">
+                                       Onay Bekliyor
+                                     </span>
+                                   )}
+                                </div>
                               </div>
                             </div>
                             <Info size={16} className="text-foreground/10 group-hover:text-primary/30 transition-colors" />
                           </div>
                           
-                          <div className="space-y-3">
-                            <MiniProgress label="Shorts" percentage={child.shorts_percentage} color="blue" />
-                            <MiniProgress label="Masterclass" percentage={child.masterclass_percentage} color="emerald" />
+                          <div className="grid grid-cols-2 gap-4">
+                            <MiniProgress label="Shorts" percentage={child.shorts_percentage || 0} color="blue" />
+                            <MiniProgress label="Masterclass" percentage={child.masterclass_percentage || 0} color="emerald" />
                           </div>
                         </div>
                       ))}

@@ -100,8 +100,9 @@ async def get_my_children(
     db: AsyncSession = Depends(get_db_session),
     current_user: User = Depends(get_current_partner),
 ):
-    """Partner'ın davet ettiği kişilerin listesi ve temel ilerlemeleri."""
+    """Partner'ın davet ettiği kişilerin listesi ve detaylı ilerlemeleri."""
     user_repo = UserRepository(db)
+    # This now gets all users with inviter_id = current_user.id
     children = await user_repo.get_children(current_user.id)
 
     results = []
@@ -109,6 +110,7 @@ async def get_my_children(
         progress_repo = ProgressRepository(db, child.id)
         progress_service = ProgressService(progress_repo)
 
+        # Get detailed stats
         shorts_stats = await progress_service.get_stats(ContentType.SHORT)
         masterclass_stats = await progress_service.get_stats(ContentType.MASTERCLASS)
 
@@ -117,9 +119,14 @@ async def get_my_children(
             "username": child.username,
             "full_name": child.full_name,
             "email": child.email,
+            "phone": child.phone,
             "is_active": child.is_active,
+            "is_verified": child.is_verified,
             "partner_id": child.partner_id,
             "joined_at": child.created_at.isoformat() if child.created_at else None,
+            "status": "ACTIVE" if child.is_active else "PENDING_APPROVAL",
+            "shorts_percentage": shorts_stats["completion_rate"],
+            "masterclass_percentage": masterclass_stats["completion_rate"],
             "progress": {
                 "shorts": shorts_stats,
                 "masterclass": masterclass_stats,
@@ -127,3 +134,22 @@ async def get_my_children(
         })
 
     return results
+
+
+@router.get("/child/{user_id}/progress", dependencies=[Depends(get_current_partner)])
+async def get_child_progress_detail(
+    user_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db_session),
+    current_partner: User = Depends(get_current_partner)
+):
+    """Partner'ın kendi adayı olan birinin detaylı izleme geçmişini getirir."""
+    user_repo = UserRepository(db)
+    child = await user_repo.get_by_id(user_id)
+    
+    if not child or child.inviter_id != current_partner.id:
+        raise HTTPException(status_code=403, detail="Bu adayın bilgilerine erişim yetkiniz yok.")
+
+    progress_repo = ProgressRepository(db, user_id)
+    progress_service = ProgressService(progress_repo)
+    
+    return await progress_service.get_detailed_history()
