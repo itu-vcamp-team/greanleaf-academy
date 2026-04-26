@@ -56,8 +56,17 @@ class AcademyService:
             data["thumbnail_url"] = self.get_youtube_thumbnail_url(data["video_url"])
 
         repo = AcademyRepository(db)
-        content = AcademyContent(**data)
 
+        # Handle automatic ordering and prerequisites
+        if not data.get("order") or data.get("order") == "000000":
+            from src.utils.lexorank import get_next_rank
+            last_item = await repo.get_last_item(data["type"], data["locale"])
+            data["order"] = get_next_rank(last_item.order if last_item else None)
+            
+            if not data.get("prerequisite_id") and last_item:
+                data["prerequisite_id"] = last_item.id
+
+        content = AcademyContent(**data)
         # Save entity
         saved_content = await repo.save(content)
         await db.commit()

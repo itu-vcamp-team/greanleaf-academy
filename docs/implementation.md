@@ -219,3 +219,24 @@ Geri sayım artık hardcoded değil:
 - `src/store/auth.store.ts`: `isTokenExpired` helper'ı eklendi, `isAuthenticated` bu kontrolü yapacak şekilde güncellendi.
 - `src/context/UserRoleContext.tsx`: `setInterval` ile dakikada bir token kontrolü yapılıp süresi dolmuşsa `clearAuth` çağrılarak UI'ın "Guest" moduna geçmesi sağlandı.
 - `messages/tr-TR.json` & `en-US.json`: Eksik olan `auth.profile` çeviri anahtarı eklendi.
+
+---
+
+## LexoRank Ordering & Flow Navigation (April 2026)
+
+### 20. LexoRank & Auto-Chain Management
+**Problem:** İçeriklerin manuel sıra numarası (integer) ve `prerequisite_id` ile yönetilmesi zahmetli ve hataya açıktı. Admin'in her sıralama değişikliğinde tüm zinciri manuel kurması gerekiyordu.
+**Action:** `order` alanı `String` (LexoRank) tipine çevrildi ve sıralama/önkoşul zinciri tamamen otomatikleştirildi.
+**Changes:**
+- **DB Migration:** `order` kolonu `VARCHAR`'a çevrildi ve mevcut veriler convert edildi.
+- **LexoRank Utility:** `src/utils/lexorank.py` ile alfabetik sıralama desteği eklendi.
+- **Repository:** `reorder_contents` metodu, her sıralama işleminde `order` string'lerini ve `prerequisite_id` zincirini (linear chain) otomatik olarak yeniden kuracak şekilde güncellendi.
+- **Service:** `create_content` metodu yeni içerikleri otomatik olarak en sona ekleyip zincire bağlayacak şekilde geliştirildi.
+
+### 21. Partner Navigation (Next/Prev Buttons)
+**Problem:** Kullanıcılar bir eğitimi izlerken bir sonrakine veya bir öncekine kolayca geçemiyordu; sürekli listeye geri dönmeleri gerekiyordu.
+**Action:** Eğitim izleme sayfalarına "Önceki" ve "Sonraki" butonları eklendi.
+**Changes:**
+- **API:** `/academy/contents/{id}` endpoint'i artık `next_id` ve `prev_id` bilgilerini de dönüyor.
+- **Frontend:** Shorts ve Masterclass player sayfalarına dinamik navigasyon butonları eklendi.
+- **Admin UI:** Sıra numarası girişi kaldırıldı, bunun yerine "Yukarı/Aşağı Taşı" butonları ile otomatik reorder desteği getirildi.

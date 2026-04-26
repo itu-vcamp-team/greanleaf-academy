@@ -30,7 +30,7 @@ class AcademyContent(BaseModel):
     resource_link: Mapped[Optional[str]] = mapped_column(String(500), default=None)
     resource_link_label: Mapped[Optional[str]] = mapped_column(String(100), default=None)
 
-    order: Mapped[int] = mapped_column(default=0, index=True)
+    order: Mapped[str] = mapped_column(String(255), default="000000", index=True)
     status: Mapped[ContentStatus] = mapped_column(SQLEnum(ContentStatus), default=ContentStatus.DRAFT)
 
     prerequisite_id: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey("academy_contents.id"), default=None)

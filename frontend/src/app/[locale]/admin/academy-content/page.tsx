@@ -22,7 +22,7 @@ interface AcademyContent {
   video_url: string | null;
   resource_link: string | null;
   resource_link_label: string | null;
-  order: number;
+  order: string;
   status: ContentStatus;
   is_new: boolean;
   thumbnail_url: string | null;
@@ -36,7 +36,7 @@ const emptyForm = {
   video_url: "",
   resource_link: "",
   resource_link_label: "",
-  order: 1,
+  order: "000000",
   status: "PUBLISHED" as ContentStatus,
   is_new: false,
   prerequisite_id: "",
@@ -133,6 +133,25 @@ export default function AdminAcademyContentPage() {
     }
   };
 
+  const handleMove = async (index: number, direction: "up" | "down") => {
+    const newContents = [...contents];
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    
+    if (targetIndex < 0 || targetIndex >= newContents.length) return;
+    
+    // Swap
+    [newContents[index], newContents[targetIndex]] = [newContents[targetIndex], newContents[index]];
+    
+    setContents(newContents);
+    
+    try {
+      await apiClient.post("/academy/contents/reorder", newContents.map(c => c.id));
+    } catch {
+      alert("Sıralama güncellenemedi.");
+      fetchContents();
+    }
+  };
+
   return (
     <div className="space-y-10">
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
@@ -200,7 +219,6 @@ export default function AdminAcademyContentPage() {
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <p className="font-black text-gray-900 text-sm line-clamp-2">{item.title}</p>
-                      <p className="text-xs text-gray-400 mt-1">Sıra: {item.order}</p>
                     </div>
                     <span className={`flex-shrink-0 text-[10px] font-black px-2 py-1 rounded-lg ${
                       item.status === "PUBLISHED"
@@ -229,6 +247,26 @@ export default function AdminAcademyContentPage() {
                     >
                       <Pencil size={13} /> Düzenle
                     </Button>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-xl px-2 border-gray-200 disabled:opacity-30"
+                        onClick={() => handleMove(contents.indexOf(item), "up")}
+                        disabled={contents.indexOf(item) === 0}
+                      >
+                        ↑
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-xl px-2 border-gray-200 disabled:opacity-30"
+                        onClick={() => handleMove(contents.indexOf(item), "down")}
+                        disabled={contents.indexOf(item) === contents.length - 1}
+                      >
+                        ↓
+                      </Button>
+                    </div>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -347,17 +385,8 @@ export default function AdminAcademyContentPage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 mb-2">Sıra</label>
-                      <Input
-                        type="number"
-                        value={form.order}
-                        onChange={(e) => setForm({ ...form, order: parseInt(e.target.value) || 1 })}
-                        min={1}
-                      />
-                    </div>
-                    <div className="flex items-center gap-3 pt-7">
+                  <div className="grid grid-cols-1 gap-4">
+                    <div className="flex items-center gap-3">
                       <input
                         type="checkbox"
                         id="is_new"

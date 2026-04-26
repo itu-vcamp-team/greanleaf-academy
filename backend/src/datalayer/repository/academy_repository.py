@@ -112,11 +112,65 @@ class AcademyRepository(AsyncBaseRepository[AcademyContent]):
         return results
 
     async def reorder_contents(self, ordered_ids: List[uuid.UUID]) -> None:
-        """Update display order based on the position in the provided list."""
+        """
+        Update display order and prerequisite chain based on the provided list.
+        Auto-links each item to the previous one in the list.
+        """
+        from src.utils.lexorank import generate_sequence
+        ranks = generate_sequence(len(ordered_ids))
+
+        prev_id = None
         for idx, content_id in enumerate(ordered_ids):
             stmt = (
                 update(AcademyContent)
                 .where(AcademyContent.id == content_id)
-                .values(order=idx + 1)
+                .values(
+                    order=ranks[idx],
+                    prerequisite_id=prev_id
+                )
             )
             await self.session.execute(stmt)
+            prev_id = content_id
+
+    async def get_with_neighbors(self, content_id: uuid.UUID) -> dict:
+        """
+        Fetches content along with its next and previous IDs in the sequence.
+        """
+        content = await self.get_by_id(content_id)
+        if not content:
+            return None
+
+        # Find neighbors within the same type and locale
+        stmt = select(AcademyContent).where(
+            AcademyContent.type == content.type,
+            AcademyContent.locale == content.locale,
+            AcademyContent.status == ContentStatus.PUBLISHED
+        ).order_by(AcademyContent.order.asc())
+        
+        result = await self.session.execute(stmt)
+        all_contents = result.scalars().all()
+        
+        content_list = list(all_contents)
+        try:
+            idx = next(i for i, c in enumerate(content_list) if c.id == content_id)
+            prev_id = content_list[idx - 1].id if idx > 0 else None
+            next_id = content_list[idx + 1].id if idx < len(content_list) - 1 else None
+        except StopIteration:
+            prev_id = None
+            next_id = None
+
+        return {
+            "content": content,
+            "prev_id": prev_id,
+            "next_id": next_id
+        }
+
+    async def get_last_item(self, content_type: ContentType, locale: str) -> Optional[AcademyContent]:
+        """Fetches the last item in the sequence for a given type/locale."""
+        stmt = select(AcademyContent).where(
+            AcademyContent.type == content_type,
+            AcademyContent.locale == locale
+        ).order_by(AcademyContent.order.desc()).limit(1)
+        
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()

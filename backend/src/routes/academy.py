@@ -102,13 +102,20 @@ async def get_content(
     Enforces prerequisite locking for non-guest users.
     """
     repo = AcademyRepository(db)
-    content = await repo.get_by_id(content_id)
+    result = await repo.get_with_neighbors(content_id)
 
-    if not content:
+    if not result:
         raise NotFoundError("İçerik bulunamadı.")
+    
+    content = result["content"]
+    next_id = result["next_id"]
+    prev_id = result["prev_id"]
 
     if current_user.role == UserRole.GUEST:
-        return GuestContentResponse.model_validate(content)
+        resp = GuestContentResponse.model_validate(content)
+        resp.next_id = next_id
+        resp.prev_id = prev_id
+        return resp
 
     # Partner Lock Check
     is_locked = False
@@ -141,6 +148,8 @@ async def get_content(
     resp = ContentResponse.model_validate(content)
     resp.is_locked = is_locked
     resp.progress = UserProgressSchema.model_validate(progress) if progress else None
+    resp.next_id = next_id
+    resp.prev_id = prev_id
 
     if is_locked:
         resp.video_url = None

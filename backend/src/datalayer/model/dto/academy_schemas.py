@@ -12,7 +12,7 @@ class ContentBase(BaseModel):
     video_url: str
     resource_link: Optional[str] = None
     resource_link_label: Optional[str] = None
-    order: int = 0
+    order: str = "000000"
     prerequisite_id: Optional[uuid.UUID] = None
     status: ContentStatus = ContentStatus.PUBLISHED
 
@@ -29,7 +29,7 @@ class ContentUpdate(BaseModel):
     video_url: Optional[str] = None
     resource_link: Optional[str] = None
     resource_link_label: Optional[str] = None
-    order: Optional[int] = None
+    order: Optional[str] = None
     prerequisite_id: Optional[uuid.UUID] = None
     status: Optional[ContentStatus] = None
     is_new: Optional[bool] = None
@@ -53,10 +53,12 @@ class ContentResponse(BaseModel):
     video_url: Optional[str] = None
     resource_link: Optional[str] = None
     resource_link_label: Optional[str] = None
-    order: int
+    order: str
     is_new: bool
     is_locked: bool = False
     progress: Optional[UserProgressSchema] = None
+    next_id: Optional[uuid.UUID] = None
+    prev_id: Optional[uuid.UUID] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -68,8 +70,10 @@ class GuestContentResponse(BaseModel):
     title: str
     description: Optional[str] = None
     thumbnail_url: Optional[str] = None
-    order: int
+    order: str
     is_new: bool
     is_locked: bool = True
+    next_id: Optional[uuid.UUID] = None
+    prev_id: Optional[uuid.UUID] = None
 
     model_config = ConfigDict(from_attributes=True)

@@ -23,6 +23,8 @@ interface ContentDetail {
     status: string;
     last_position_seconds: number | null;
   } | null;
+  next_id: string | null;
+  prev_id: string | null;
 }
 
 interface PageProps {
@@ -142,6 +144,26 @@ export default function MasterclassPlayerPage({ params }: PageProps) {
                     <BookmarkPlus size={16} />
                     {t("add_favorite")}
                   </button>
+
+                  <div className="grid grid-cols-2 gap-3 pt-4 border-t border-gray-100">
+                    <Link href={content.prev_id ? `/academy/masterclass/${content.prev_id}` : "#"}>
+                      <Button 
+                        variant="outline" 
+                        className="w-full rounded-2xl text-[10px] font-black h-12"
+                        disabled={!content.prev_id}
+                      >
+                        ← ÖNCEKİ
+                      </Button>
+                    </Link>
+                    <Link href={content.next_id ? `/academy/masterclass/${content.next_id}` : "#"}>
+                      <Button 
+                        className="w-full rounded-2xl text-[10px] font-black h-12 shadow-lg shadow-primary/20"
+                        disabled={!content.next_id}
+                      >
+                        SONRAKİ →
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
 
                 <div className="bg-gray-50/50 p-4 rounded-2xl border border-gray-100">

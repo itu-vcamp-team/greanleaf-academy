@@ -23,6 +23,8 @@ interface ContentDetail {
     status: string;
     last_position_seconds: number | null;
   } | null;
+  next_id: string | null;
+  prev_id: string | null;
 }
 
 interface PageProps {
@@ -121,15 +123,27 @@ export default function ShortsPlayerPage({ params }: PageProps) {
             {isCompleted ? t("completed") + " ✓" : t("watching")}
           </div>
 
-          {/* Utility Buttons */}
-          <div className="flex justify-center mt-4 border-t border-gray-100 pt-4">
-            <button
-              onClick={handleAddFavorite}
-              className="flex items-center gap-2 text-gray-400 hover:text-primary transition-colors text-[10px] font-black uppercase tracking-widest"
-            >
-              <BookmarkPlus size={14} />
-              {t("add_favorite")}
-            </button>
+          </div>
+          
+          {/* Navigation Area */}
+          <div className="grid grid-cols-2 gap-4 mt-6 border-t border-gray-100 pt-6">
+            <Link href={content.prev_id ? `/academy/shorts/${content.prev_id}` : "#"}>
+              <Button 
+                variant="outline" 
+                className="w-full rounded-2xl gap-2 text-xs font-black"
+                disabled={!content.prev_id}
+              >
+                ← Önceki
+              </Button>
+            </Link>
+            <Link href={content.next_id ? `/academy/shorts/${content.next_id}` : "#"}>
+              <Button 
+                className="w-full rounded-2xl gap-2 text-xs font-black shadow-lg shadow-primary/20"
+                disabled={!content.next_id}
+              >
+                Sonraki →
+              </Button>
+            </Link>
           </div>
         </div>
       </main>
