@@ -5,8 +5,8 @@ import { Navbar } from "@/components/ui/Navbar";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { 
-  User, Mail, Phone, Camera, Shield, Lock, 
+import {
+  User, Mail, Phone, Camera, Shield, Lock,
   ChevronRight, CheckCircle2, AlertCircle, FileText,
   LogOut
 } from "lucide-react";
@@ -15,6 +15,17 @@ import apiClient from "@/lib/api-client";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useRouter } from "@/i18n/navigation";
+import { RankBadge, type RankKey } from "@/components/ui/RankBadge";
+
+interface RankData {
+  rank: RankKey;
+  rank_label: string;
+  rank_emoji: string;
+  rank_color: string;
+  earned_points: number;
+  max_points: number;
+  rank_percentage: number;
+}
 
 export default function SettingsPage() {
   const { user, refreshUser, logout } = useAuth();
@@ -27,6 +38,7 @@ export default function SettingsPage() {
     full_name: "",
     phone: ""
   });
+  const [rankData, setRankData] = useState<RankData | null>(null);
 
   // Password Change State
   const [pwdStep, setPwdStep] = useState(0); // 0: Idle, 1: Verify Current, 2: OTP, 3: New Password
@@ -45,6 +57,12 @@ export default function SettingsPage() {
       });
     }
   }, [user]);
+
+  useEffect(() => {
+    apiClient.get("/progress/my-rank")
+      .then(res => setRankData(res.data))
+      .catch(() => {/* ignore */});
+  }, []);
 
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -167,7 +185,21 @@ export default function SettingsPage() {
               </div>
 
               <h2 className="text-xl font-black text-gray-900">{user.full_name}</h2>
-              <p className="text-sm text-gray-500 font-medium mb-6">@{user.username}</p>
+              <p className="text-sm text-gray-500 font-medium mb-3">@{user.username}</p>
+
+              {/* Rank badge */}
+              {rankData && (
+                <div className="flex justify-center mb-5">
+                  <RankBadge
+                    rank={rankData.rank}
+                    rankLabel={rankData.rank_label}
+                    rankEmoji={rankData.rank_emoji}
+                    earnedPoints={rankData.earned_points}
+                    size="md"
+                    showPoints
+                  />
+                </div>
+              )}
 
               <div className="pt-6 border-t border-gray-100 flex flex-col gap-2">
                 <Link href="/legal/kvkk" className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 text-gray-600 transition-all group">

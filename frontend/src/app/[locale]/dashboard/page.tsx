@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
-import { motion, AnimatePresence } from "framer-motion";
-import { 
-  TrendingUp, Users, Target, Award, Clock, ArrowUpRight, 
+import { motion } from "framer-motion";
+import {
+  TrendingUp, Users, Target, Award, Clock, ArrowUpRight,
   Shield, Zap, Lock, ChevronRight, UserPlus, Info
 } from "lucide-react";
 
@@ -15,9 +15,18 @@ import { Link } from "@/i18n/navigation";
 import MyProgressStats from "@/components/academy/MyProgressStats";
 import ReferenceCodeGenerator from "@/components/academy/ReferenceCodeGenerator";
 import ChildDetailModal from "@/components/academy/ChildDetailModal";
+import { RankBadge, type RankKey } from "@/components/ui/RankBadge";
 import apiClient from "@/lib/api-client";
 import { useUserRole } from "@/context/UserRoleContext";
 import { NextMeetingCounter } from "@/components/dashboard/NextMeetingCounter";
+
+interface ProgressDetail {
+  content_id: string;
+  title: string;
+  type: "SHORT" | "MASTERCLASS";
+  status: "not_started" | "in_progress" | "completed";
+  percentage: number;
+}
 
 interface ChildUser {
   id: string;
@@ -27,6 +36,24 @@ interface ChildUser {
   shorts_percentage: number;
   masterclass_percentage: number;
   is_active: boolean;
+  // Rank fields
+  rank: RankKey;
+  rank_label: string;
+  rank_emoji: string;
+  rank_color: string;
+  earned_points: number;
+  max_points: number;
+  rank_percentage: number;
+}
+
+interface RankData {
+  rank: RankKey;
+  rank_label: string;
+  rank_emoji: string;
+  rank_color: string;
+  earned_points: number;
+  max_points: number;
+  rank_percentage: number;
 }
 
 interface PageProps {
@@ -42,23 +69,28 @@ export default function DashboardPage({ params }: PageProps) {
   const [children, setChildren] = useState<ChildUser[]>([]);
   const [loadingChildren, setLoadingChildren] = useState(!isGuest);
   const [selectedChild, setSelectedChild] = useState<{ id: string, name: string } | null>(null);
-  const [childProgress, setChildProgress] = useState<any[]>([]);
+  const [childProgress, setChildProgress] = useState<ProgressDetail[]>([]);
   const [loadingDetail, setLoadingDetail] = useState(false);
   
-  const [announcements, setAnnouncements] = useState<any[]>([]);
-  const [resources, setResources] = useState<any[]>([]);
+  const [announcements, setAnnouncements] = useState<{ id: string; title: string; created_at: string }[]>([]);
+  const [resources, setResources] = useState<{ id: string; title: string; url: string }[]>([]);
   const [loadingStats, setLoadingStats] = useState(true);
+
+  // Rank / points state
+  const [rankData, setRankData] = useState<RankData | null>(null);
 
   useEffect(() => {
     if (!isGuest) {
       Promise.all([
         apiClient.get("/admin/users/my-children"),
         apiClient.get("/announcements"),
-        apiClient.get("/resource-links")
-      ]).then(([childrenRes, announcementsRes, resourcesRes]) => {
+        apiClient.get("/resource-links"),
+        apiClient.get("/progress/my-rank"),
+      ]).then(([childrenRes, announcementsRes, resourcesRes, rankRes]) => {
         setChildren(childrenRes.data);
         setAnnouncements(announcementsRes.data);
         setResources(resourcesRes.data);
+        setRankData(rankRes.data);
       }).catch(err => {
         console.error("Dashboard data fetch error:", err);
       }).finally(() => {
@@ -67,6 +99,7 @@ export default function DashboardPage({ params }: PageProps) {
       });
     } else {
        apiClient.get("/announcements").then(res => setAnnouncements(res.data)).catch(() => {});
+       // Guests get UYE rank by default from API, but we can skip for guests
        setLoadingChildren(false);
        setLoadingStats(false);
     }
@@ -141,17 +174,12 @@ export default function DashboardPage({ params }: PageProps) {
           <MomentumStat 
             icon={<Target />} 
             label="Eğitim Puanı" 
-            value={isGuest ? "XXX" : "850"} 
-            trend="Lvl 4" 
+            value={isGuest ? "XXX" : (rankData ? rankData.earned_points.toLocaleString("tr-TR") : "—")} 
+            trend={rankData ? `${rankData.rank_percentage.toFixed(1)}% Tamamlandı` : "—"}
             isGuest={isGuest}
           />
-          <MomentumStat 
-            icon={<Award />} 
-            label="Rütbe" 
-            value={role} 
-            trend="Prestige" 
-            isGuest={isGuest}
-          />
+          {/* Rank stat — special render */}
+          <RankStat rankData={rankData} isGuest={isGuest} />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -191,7 +219,7 @@ export default function DashboardPage({ params }: PageProps) {
                           onClick={() => handleChildClick(child.id, child.full_name)}
                           className="group p-4 rounded-2xl border border-foreground/5 bg-foreground/5 hover:border-primary/30 hover:bg-foreground/10 transition-all cursor-pointer relative"
                         >
-                          <div className="flex justify-between items-start mb-4">
+                          <div className="flex justify-between items-start mb-3">
                             <div className="flex items-center gap-3">
                               <div className="w-10 h-10 rounded-xl bg-foreground/5 flex items-center justify-center font-black text-foreground/20 border border-foreground/5 group-hover:bg-primary/5 group-hover:text-primary transition-colors uppercase">
                                 {child.full_name.charAt(0)}
@@ -210,6 +238,20 @@ export default function DashboardPage({ params }: PageProps) {
                             </div>
                             <Info size={16} className="text-foreground/10 group-hover:text-primary/30 transition-colors" />
                           </div>
+
+                          {/* Rank badge */}
+                          {child.rank && (
+                            <div className="mb-3">
+                              <RankBadge
+                                rank={child.rank}
+                                rankLabel={child.rank_label}
+                                rankEmoji={child.rank_emoji}
+                                earnedPoints={child.earned_points}
+                                size="sm"
+                                showPoints={false}
+                              />
+                            </div>
+                          )}
                           
                           <div className="grid grid-cols-2 gap-4">
                             <MiniProgress label="Shorts" percentage={child.shorts_percentage || 0} color="blue" />
@@ -245,6 +287,21 @@ export default function DashboardPage({ params }: PageProps) {
                   </div>
                   <div className="absolute -bottom-12 -right-12 w-32 h-32 bg-white/10 rounded-full blur-2xl" />
                </GlassCard>
+             )}
+
+             {/* Rank card for non-guest partners */}
+             {!isGuest && rankData && (
+               <RankBadge
+                 rank={rankData.rank}
+                 rankLabel={rankData.rank_label}
+                 rankEmoji={rankData.rank_emoji}
+                 earnedPoints={rankData.earned_points}
+                 maxPoints={rankData.max_points}
+                 rankPercentage={rankData.rank_percentage}
+                 size="lg"
+                 showPoints
+                 showProgress
+               />
              )}
 
              <GlassCard className="p-8 border-foreground/5 shadow-sm">
@@ -288,7 +345,51 @@ export default function DashboardPage({ params }: PageProps) {
   );
 }
 
-function MomentumStat({ icon, label, value, trend, isGuest }: any) {
+// ─── Rank Stat Card ───────────────────────────────────────────────────────────
+function RankStat({ rankData, isGuest }: { rankData: RankData | null; isGuest: boolean }) {
+  return (
+    <GlassCard className="p-6 border-foreground/5 hover:border-primary/20 transition-all group overflow-hidden relative">
+      <div className={`flex items-center justify-between mb-4 ${isGuest ? "blur-[2px]" : ""}`}>
+        <div className="p-3 bg-primary/5 rounded-xl text-primary group-hover:bg-primary group-hover:text-white transition-colors duration-500">
+          <Award />
+        </div>
+        {!isGuest && rankData && (
+          <span className="text-lg leading-none">{rankData.rank_emoji}</span>
+        )}
+      </div>
+      <div className={`${isGuest ? "blur-[2px]" : ""}`}>
+        <p className="text-[10px] font-black text-foreground/30 uppercase tracking-[0.2em] mb-1">Rütbe</p>
+        {isGuest ? (
+          <p className="text-2xl font-black text-foreground">—</p>
+        ) : rankData ? (
+          <p className="text-xl font-black text-foreground">{rankData.rank_label}</p>
+        ) : (
+          <p className="text-xl font-black text-foreground/20">—</p>
+        )}
+      </div>
+      {isGuest && (
+        <div className="absolute inset-0 flex items-center justify-center bg-foreground/5 opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-[1px]">
+           <Lock size={16} className="text-primary/40" />
+        </div>
+      )}
+    </GlassCard>
+  );
+}
+
+// ─── Generic stat card ────────────────────────────────────────────────────────
+function MomentumStat({
+  icon,
+  label,
+  value,
+  trend,
+  isGuest,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  trend: string;
+  isGuest: boolean;
+}) {
   return (
     <GlassCard className="p-6 border-foreground/5 hover:border-primary/20 transition-all group overflow-hidden relative">
       <div className={`flex items-center justify-between mb-4 ${isGuest ? 'blur-[2px]' : ''}`}>
@@ -310,8 +411,16 @@ function MomentumStat({ icon, label, value, trend, isGuest }: any) {
   );
 }
 
-function MiniProgress({ label, percentage, color }: any) {
-  const colorClasses: any = {
+function MiniProgress({
+  label,
+  percentage,
+  color,
+}: {
+  label: string;
+  percentage: number;
+  color: "blue" | "emerald";
+}) {
+  const colorClasses: Record<string, string> = {
     blue: "bg-blue-500",
     emerald: "bg-emerald-500"
   };
@@ -331,7 +440,7 @@ function MiniProgress({ label, percentage, color }: any) {
   );
 }
 
-function QuickLink({ label, url, isGuest }: any) {
+function QuickLink({ label, url, isGuest }: { label: string; url: string; isGuest: boolean }) {
   return (
     <a 
       href={isGuest ? "#" : url} 

@@ -59,3 +59,23 @@ async def get_my_stats(
         "shorts": shorts_stats,
         "masterclass": masterclass_stats
     }
+
+
+@router.get("/my-rank")
+async def get_my_rank(
+    db: AsyncSession = Depends(get_db_session),
+    current_user: User = Depends(get_optional_user),
+):
+    """
+    Returns current user's partner rank, earned points, and rank percentage.
+    GUEST users always get Üye rank with 0 points.
+    """
+    from src.datalayer.model.db.user import UserRole
+    from src.utils.rank_utils import compute_rank, rank_response, PartnerRank
+
+    if current_user.role == UserRole.GUEST:
+        return rank_response(PartnerRank.UYE, 0, 0, 0.0)
+
+    repo = ProgressRepository(db, current_user.id)
+    service = ProgressService(repo)
+    return await service.get_rank()

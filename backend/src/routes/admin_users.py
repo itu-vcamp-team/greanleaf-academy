@@ -113,6 +113,7 @@ async def get_my_children(
         # Get detailed stats
         shorts_stats = await progress_service.get_stats(ContentType.SHORT)
         masterclass_stats = await progress_service.get_stats(ContentType.MASTERCLASS)
+        rank_data = await progress_service.get_rank()
 
         results.append({
             "id": str(child.id),
@@ -130,7 +131,15 @@ async def get_my_children(
             "progress": {
                 "shorts": shorts_stats,
                 "masterclass": masterclass_stats,
-            }
+            },
+            # Rank / points info
+            "rank": rank_data["rank"],
+            "rank_label": rank_data["rank_label"],
+            "rank_emoji": rank_data["rank_emoji"],
+            "rank_color": rank_data["rank_color"],
+            "earned_points": rank_data["earned_points"],
+            "max_points": rank_data["max_points"],
+            "rank_percentage": rank_data["rank_percentage"],
         })
 
     return results

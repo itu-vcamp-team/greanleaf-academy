@@ -5,7 +5,7 @@ from typing import Optional, List
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.datalayer.model.db.user_progress import UserProgress
-from src.datalayer.model.db.academy_content import AcademyContent, ContentStatus
+from src.datalayer.model.db.academy_content import AcademyContent, ContentStatus, ContentType
 
 
 class ProgressRepository:
@@ -143,3 +143,51 @@ class ProgressRepository:
             })
 
         return results
+
+    async def get_points_and_rank(self) -> dict:
+        """
+        Calculates total earned/max points and partner rank.
+
+        Shorts      → 1 000 pts each (when completed)
+        Masterclass → 4 000 pts each (when completed)
+
+        rank_pct = earned / max × 100  (0 if max == 0)
+        Rank threshold:
+          Üye       0-9%  | Temsilci 10-24% | Danışman 25-49%
+          Elit    50-74%  | Efsane   75-89% | Diamond    90%+
+        """
+        from src.utils.rank_utils import (
+            compute_rank,
+            rank_response,
+            POINTS_PER_SHORT,
+            POINTS_PER_MASTERCLASS,
+        )
+
+        def _completed_count_stmt(content_type: ContentType):
+            return (
+                select(func.count(UserProgress.id))
+                .join(AcademyContent, AcademyContent.id == UserProgress.content_id)
+                .where(
+                    UserProgress.user_id == self.user_id,
+                    UserProgress.status == "completed",
+                    AcademyContent.status == ContentStatus.PUBLISHED,
+                    AcademyContent.type == content_type,
+                )
+            )
+
+        def _total_count_stmt(content_type: ContentType):
+            return select(func.count(AcademyContent.id)).where(
+                AcademyContent.status == ContentStatus.PUBLISHED,
+                AcademyContent.type == content_type,
+            )
+
+        completed_shorts = (await self.session.execute(_completed_count_stmt(ContentType.SHORT))).scalar() or 0
+        completed_mc = (await self.session.execute(_completed_count_stmt(ContentType.MASTERCLASS))).scalar() or 0
+        total_shorts = (await self.session.execute(_total_count_stmt(ContentType.SHORT))).scalar() or 0
+        total_mc = (await self.session.execute(_total_count_stmt(ContentType.MASTERCLASS))).scalar() or 0
+
+        earned = (completed_shorts * POINTS_PER_SHORT) + (completed_mc * POINTS_PER_MASTERCLASS)
+        maximum = (total_shorts * POINTS_PER_SHORT) + (total_mc * POINTS_PER_MASTERCLASS)
+        pct = round((earned / maximum) * 100, 1) if maximum > 0 else 0.0
+
+        return rank_response(compute_rank(pct), earned, maximum, pct)

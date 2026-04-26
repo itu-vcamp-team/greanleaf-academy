@@ -46,3 +46,11 @@ class ProgressService:
     async def get_detailed_stats(self) -> List[dict]:
         """Retrieves detailed per-content statistics for child drill-down."""
         return await self.repo.get_detailed_progress()
+
+    async def get_rank(self) -> dict:
+        """Returns earned points, max points and computed partner rank."""
+        return await self.repo.get_points_and_rank()
+
+    async def get_detailed_history(self) -> List[dict]:
+        """Alias kept for backward-compat with admin_users route."""
+        return await self.repo.get_detailed_progress()

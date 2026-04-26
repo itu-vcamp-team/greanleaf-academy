@@ -52,6 +52,10 @@ export function RegistrationFlow() {
     phone: "",
   });
 
+  // Step 3: Consent checkboxes (must both be checked)
+  const [kvkkChecked, setKvkkChecked] = useState(false);
+  const [aydinlatmaChecked, setAydinlatmaChecked] = useState(false);
+
   // Step 4: OTP
   const [otpCode, setOtpCode] = useState("");
   const [regStatus, setRegStatus] = useState<"pending_approval" | null>(null);
@@ -96,6 +100,14 @@ export function RegistrationFlow() {
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) {
       setError("Şifreler eşleşmiyor.");
+      return;
+    }
+    if (!kvkkChecked) {
+      setError("KVKK Aydınlatma Metni'ni okuduğunuzu onaylamanız gerekmektedir.");
+      return;
+    }
+    if (!aydinlatmaChecked) {
+      setError("Aydınlatma Metni'ni okuduğunuzu onaylamanız gerekmektedir.");
       return;
     }
     setLoading(true);
@@ -327,12 +339,47 @@ export function RegistrationFlow() {
                     />
                   </div>
                 </div>
-                <div className="p-4 bg-foreground/5 rounded-xl border border-foreground/10">
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <input type="checkbox" required className="mt-1 accent-primary" />
-                    <span className="text-[11px] text-foreground/50 leading-relaxed">
-                      <span className="text-primary underline">KVKK Aydınlatma Metni</span> ve Kullanım
-                      Şartları&apos;nı okudum, kabul ediyorum.
+                {/* KVKK — separate tick */}
+                <div className="p-4 bg-foreground/5 rounded-xl border border-foreground/10 space-y-3">
+                  <label className="flex items-start gap-3 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={kvkkChecked}
+                      onChange={(e) => setKvkkChecked(e.target.checked)}
+                      className="mt-0.5 accent-primary w-4 h-4 shrink-0 cursor-pointer"
+                    />
+                    <span className="text-[11px] text-foreground/50 leading-relaxed select-none">
+                      <Link
+                        href="/legal/kvkk"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary underline underline-offset-2 hover:text-primary/80 transition-colors"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        KVKK Aydınlatma Metni
+                      </Link>
+                      &apos;ni okudum ve anladım.
+                    </span>
+                  </label>
+
+                  <label className="flex items-start gap-3 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={aydinlatmaChecked}
+                      onChange={(e) => setAydinlatmaChecked(e.target.checked)}
+                      className="mt-0.5 accent-primary w-4 h-4 shrink-0 cursor-pointer"
+                    />
+                    <span className="text-[11px] text-foreground/50 leading-relaxed select-none">
+                      <Link
+                        href="/legal/aydinlatma"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary underline underline-offset-2 hover:text-primary/80 transition-colors"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        Kişisel Verilerin İşlenmesine İlişkin Aydınlatma Metni
+                      </Link>
+                      &apos;ni okudum ve kabul ediyorum.
                     </span>
                   </label>
                 </div>
