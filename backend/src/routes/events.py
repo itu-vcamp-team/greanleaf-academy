@@ -17,7 +17,7 @@ from src.datalayer.model.dto.event_dto import EventResponse, GuestEventResponse
 
 router = APIRouter(prefix="/events", tags=["Events"])
 
-@router.get("/", response_model=list[EventResponse | GuestEventResponse])
+@router.get("", response_model=list[EventResponse | GuestEventResponse])
 async def list_events(
     limit: int = Query(default=20, le=100),
     db: AsyncSession = Depends(get_db_session),
@@ -81,7 +81,7 @@ async def add_to_calendar(
         }
     )
 
-@router.post("/", status_code=status.HTTP_201_CREATED)
+@router.post("", status_code=status.HTTP_201_CREATED)
 async def create_event(
     title: str = Form(...),
     description: Optional[str] = Form(None),

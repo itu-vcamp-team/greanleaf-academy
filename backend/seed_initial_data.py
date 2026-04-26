@@ -69,19 +69,19 @@ async def seed_initial_data():
                 "title": "Greenleaf Vizyonu: Neden Buradayız?",
                 "description": "3 dakikada Greenleaf Akademi'nin kuruluş felsefesi.",
                 "video_url": "https://youtube.com/shorts/hJTW3WMxAhc",
-                "order": 1
+                "order": "000100"
             },
             {
                 "title": "Başarı İçin İlk 3 Kritik Adım",
                 "description": "Eğitime başlarken dikkat etmeniz gereken en önemli 3 kural.",
                 "video_url": "https://youtube.com/shorts/hJTW3WMxAhc",
-                "order": 2
+                "order": "000200"
             },
             {
                 "title": "Partnerlik Süreci ve Yol Haritası",
                 "description": "Kayıt işleminden sonra sizi neler bekliyor?",
                 "video_url": "https://youtube.com/shorts/hJTW3WMxAhc",
-                "order": 3
+                "order": "000300"
             }
         ]
 
@@ -119,7 +119,7 @@ async def seed_initial_data():
             title="Satışın Temelleri ve İtiraz Yönetimi",
             description="Müşteri adaylarıyla ilk temas eğitimi.",
             video_url="https://youtu.be/A8sze3bezaM",
-            order=1,
+            order="000100",
             status=ContentStatus.PUBLISHED,
             thumbnail_url=service.get_youtube_thumbnail_url("https://youtu.be/A8sze3bezaM")
         )

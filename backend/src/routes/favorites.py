@@ -10,7 +10,7 @@ from src.utils.auth_deps import get_current_partner
 
 router = APIRouter(prefix="/favorites", tags=["Favorites"])
 
-@router.get("/", response_model=list[FavoriteResponseSchema])
+@router.get("", response_model=list[FavoriteResponseSchema])
 async def list_favorites(
     db: AsyncSession = Depends(get_db_session),
     current_user: User = Depends(get_current_partner)
@@ -20,7 +20,7 @@ async def list_favorites(
     favorites = await repo.get_all()
     return [FavoriteResponseSchema(content_id=f.content_id) for f in favorites]
 
-@router.post("/", status_code=status.HTTP_201_CREATED)
+@router.post("", status_code=status.HTTP_201_CREATED)
 async def add_favorite(
     data: FavoriteCreateSchema,
     db: AsyncSession = Depends(get_db_session),

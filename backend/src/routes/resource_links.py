@@ -11,7 +11,7 @@ from src.datalayer.model.db.user import User
 
 router = APIRouter(prefix="/resource-links", tags=["Resource Links"])
 
-@router.get("/")
+@router.get("")
 async def list_resources(
     category: Optional[str] = Query(None),
     db: AsyncSession = Depends(get_db_session),
@@ -31,7 +31,7 @@ async def list_all_resources(
     service = ResourceLinkService(repo)
     return await service.list_all()
 
-@router.post("/", dependencies=[Depends(get_current_admin)])
+@router.post("", dependencies=[Depends(get_current_admin)])
 async def create_resource(
     title: str = Body(...),
     url: str = Body(...),

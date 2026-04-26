@@ -11,7 +11,7 @@ from src.datalayer.model.db.user import User
 
 router = APIRouter(prefix="/announcements", tags=["Announcements"])
 
-@router.get("/")
+@router.get("")
 async def list_announcements(
     db: AsyncSession = Depends(get_db_session),
     _=Depends(get_current_user),
@@ -30,7 +30,7 @@ async def list_all_announcements(
     service = AnnouncementService(repo)
     return await service.list_all()
 
-@router.post("/", dependencies=[Depends(get_current_admin)])
+@router.post("", dependencies=[Depends(get_current_admin)])
 async def create_announcement(
     title: str = Body(...),
     body: str = Body(...),
