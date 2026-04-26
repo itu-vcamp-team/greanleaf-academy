@@ -4,9 +4,7 @@ import { useAuthStore } from "@/store/auth.store";
 const apiClient = axios.create({
   // Use relative path for proxying through Next.js
   baseURL: typeof window !== "undefined" ? "/api/backend/api" : (process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000") + "/api",
-  headers: {
-    "Content-Type": "application/json",
-  },
+  headers: {},
   timeout: 15000,
 });
 

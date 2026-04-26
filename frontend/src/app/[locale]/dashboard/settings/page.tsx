@@ -69,7 +69,11 @@ export default function SettingsPage() {
 
     setProfileLoading(true);
     try {
-      await apiClient.post("/auth/profile/avatar", formData);
+      await apiClient.post("/auth/profile/avatar", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
       toast.success("Profil fotoğrafınız güncellendi.");
       await refreshUser();
     } catch (error: any) {

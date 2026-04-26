@@ -125,8 +125,8 @@ async def get_my_children(
             "partner_id": child.partner_id,
             "joined_at": child.created_at.isoformat() if child.created_at else None,
             "status": "ACTIVE" if child.is_active else "PENDING_APPROVAL",
-            "shorts_percentage": shorts_stats["completion_rate"],
-            "masterclass_percentage": masterclass_stats["completion_rate"],
+            "shorts_percentage": shorts_stats["percentage"],
+            "masterclass_percentage": masterclass_stats["percentage"],
             "progress": {
                 "shorts": shorts_stats,
                 "masterclass": masterclass_stats,

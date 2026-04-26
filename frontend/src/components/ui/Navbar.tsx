@@ -35,7 +35,6 @@ export function Navbar() {
     { href: "/academy", label: t("academy"), icon: null },
     ...(!isGuest ? [{ href: "/dashboard", label: t("dashboard"), icon: <LayoutDashboard className="w-4 h-4" /> }] : []),
     ...(isGuest ? [{ href: "/#imkanlar", label: "İmkanlar", icon: null }] : []),
-    ...(!isGuest ? [{ href: "/dashboard/settings", label: t("settings"), icon: <Settings className="w-4 h-4" /> }] : []),
   ];
 
   return (
@@ -83,7 +82,7 @@ export function Navbar() {
                 </>
               ) : (
                 <div className="flex items-center gap-2">
-                  <Link href="/dashboard">
+                  <Link href="/dashboard/settings">
                     <Button size="sm" className="gap-2 rounded-full px-6 shadow-lg shadow-primary/20">
                       <User className="w-4 h-4" />
                       <span className="max-w-[100px] truncate">{authT("profile") || "Profilim"}</span>
@@ -147,7 +146,7 @@ export function Navbar() {
                 </div>
               ) : (
                 <div className="flex flex-col gap-4">
-                  <Link href="/dashboard" className="w-full" onClick={() => setIsMobileMenuOpen(false)}>
+                  <Link href="/dashboard/settings" className="w-full" onClick={() => setIsMobileMenuOpen(false)}>
                     <Button className="w-full py-7 rounded-3xl gap-3 text-sm font-bold shadow-xl shadow-primary/20">
                        <User className="w-5 h-5" /> {authT("profile") || "Profilim"}
                     </Button>
