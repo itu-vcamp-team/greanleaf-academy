@@ -72,10 +72,23 @@ async def get_captcha():
 # --- REGISTRATION (3 STEPS) ---
 
 @router.post("/register/step1")
-async def register_step1(data: RegisterStep1Schema):
+async def register_step1(
+    data: RegisterStep1Schema,
+    db: AsyncSession = Depends(get_db_session)
+):
     """
     Step 1: External Greenleaf Global verification.
     """
+    # 1. Check if this Global account is already registered
+    stmt = select(User).where(User.gl_username == data.gl_username)
+    res = await db.execute(stmt)
+    if res.scalar_one_or_none():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Bu Greenleaf Global hesabı ile zaten bir üyelik oluşturulmuş."
+        )
+
+    # 2. Verify with External Service
     verified = await GreenleafGlobalService.verify_greenleaf_global_credentials(
         data.gl_username, data.gl_password
     )
@@ -236,6 +249,7 @@ async def register_verify_otp(
         full_name=temp_data["full_name"],
         phone=temp_data.get("phone"),
         password_hash=temp_data["password_hash"],
+        gl_username=temp_data.get("gl_username"), # Save the verified GL username
         role=UserRole.PARTNER,
         is_active=is_active,
         is_verified=True, # Email is now verified via Step 4

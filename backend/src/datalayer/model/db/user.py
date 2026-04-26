@@ -20,6 +20,7 @@ class User(BaseModel):
     role: Mapped[UserRole] = mapped_column(SQLEnum(UserRole), default=UserRole.GUEST)
 
     username: Mapped[str] = mapped_column(String(50), unique=True, index=True)
+    gl_username: Mapped[Optional[str]] = mapped_column(String(100), unique=True, index=True, default=None)
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
     password_hash: Mapped[str] = mapped_column(String(255))
     full_name: Mapped[str] = mapped_column(String(150))
