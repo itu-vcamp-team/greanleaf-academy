@@ -28,6 +28,10 @@ WHITELIST_PREFIXES = [
     "/api/auth/profile",   # Authenticated profile endpoint
     "/api/auth/logout",    # Authenticated logout
     "/api/auth/refresh",   # Token refresh (already secured by refresh token)
+    "/api/academy/contents",  # Academy content listing & detail (read-only, public)
+    "/api/academy/progress",  # Progress tracking (JWT-protected)
+    "/api/events",            # Events listing (read-only, public)
+    "/api/contact-info",      # Contact info (read-only, public)
 ]
 
 
