@@ -37,9 +37,17 @@ export default function Home({ params }: PageProps) {
   const { locale } = React.use(params);
   const t = useTranslations();
   const { role } = useUserRole();
+  const router = useRouter();
 
   const [nextEvent, setNextEvent] = useState<UpcomingEvent | null>(null);
   const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 });
+
+  // Redirect if logged in
+  useEffect(() => {
+    if (role !== "GUEST") {
+      router.replace("/dashboard");
+    }
+  }, [role, router]);
 
   // Fetch next upcoming event (public — guests can see title/time)
   useEffect(() => {

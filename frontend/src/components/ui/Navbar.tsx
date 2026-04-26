@@ -28,7 +28,7 @@ export function Navbar() {
   };
 
   const navLinks = [
-    { href: "/", label: t("home"), icon: <User className="w-4 h-4" /> },
+    { href: isGuest ? "/" : "/dashboard", label: t("home"), icon: <User className="w-4 h-4" /> },
     { href: "/calendar", label: t("calendar"), icon: <Calendar className="w-4 h-4" /> },
     { href: "/academy", label: t("academy"), icon: null },
     ...(!isGuest ? [{ href: "/dashboard", label: t("dashboard"), icon: <LayoutDashboard className="w-4 h-4" /> }] : []),
@@ -50,7 +50,7 @@ export function Navbar() {
           
           <div className="hidden md:flex items-center gap-8 text-foreground/80">
             {navLinks.map((link) => (
-              <NavLink key={link.href} href={link.href} icon={link.icon}>
+              <NavLink key={`${link.href}-${link.label}`} href={link.href} icon={link.icon}>
                 {link.label}
               </NavLink>
             ))}
@@ -115,7 +115,7 @@ export function Navbar() {
             <div className="flex flex-col gap-6">
               {navLinks.map((link) => (
                 <Link 
-                  key={link.href} 
+                  key={`${link.href}-${link.label}`} 
                   href={link.href} 
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="text-2xl font-black italic tracking-tighter hover:text-primary transition-colors flex items-center gap-4"

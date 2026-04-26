@@ -17,6 +17,7 @@ import ReferenceCodeGenerator from "@/components/academy/ReferenceCodeGenerator"
 import ChildDetailModal from "@/components/academy/ChildDetailModal";
 import apiClient from "@/lib/api-client";
 import { useUserRole } from "@/context/UserRoleContext";
+import { NextMeetingCounter } from "@/components/dashboard/NextMeetingCounter";
 
 interface ChildUser {
   id: string;
@@ -89,6 +90,9 @@ export default function DashboardPage({ params }: PageProps) {
       <Navbar />
       
       <main className="max-w-7xl mx-auto pt-32 px-6">
+        {/* Next Meeting Countdown */}
+        <NextMeetingCounter />
+
         {/* Header Section */}
         <header className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
           <motion.div 
