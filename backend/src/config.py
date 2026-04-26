@@ -49,6 +49,9 @@ class Settings(BaseSettings):
     FRONTEND_URL: str = "http://localhost:3000"
     CORS_ALLOWED_ORIGIN_REGEX: str | None = None  # Production'da tüm subdomain'leri kapsar
 
+    # Captcha (Cloudflare Turnstile)
+    TURNSTILE_SECRET_KEY: str = "1x0000000000000000000000000000000AA" # Default to testing key
+
 
 @lru_cache()
 def get_settings() -> Settings:

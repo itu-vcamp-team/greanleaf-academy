@@ -11,6 +11,7 @@ import apiClient from "@/lib/api-client";
 import { useAuthStore } from "@/store/auth.store";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { Turnstile } from "@marsidev/react-turnstile";
 
 export function LoginForm() {
   const t = useTranslations("auth");
@@ -21,8 +22,7 @@ export function LoginForm() {
   const [userId, setUserId] = useState("");
   const [maskedEmail, setMaskedEmail] = useState("");
   
-  const [captcha, setCaptcha] = useState<{ session_key: string; numbers: number[] } | null>(null);
-  const [captchaAnswer, setCaptchaAnswer] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     username: "",
@@ -39,18 +39,8 @@ export function LoginForm() {
   const router = useRouter();
   const setAuth = useAuthStore((state) => state.setAuth);
 
-  const fetchCaptcha = async () => {
-    try {
-      const res = await apiClient.get("/auth/captcha");
-      setCaptcha(res.data);
-      setCaptchaAnswer("");
-    } catch (err) {
-      console.error("Captcha fetch failed", err);
-    }
-  };
-
   useEffect(() => {
-    fetchCaptcha();
+    // Math captcha removed
   }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -60,8 +50,7 @@ export function LoginForm() {
     try {
       const res = await apiClient.post("/auth/login", {
         ...formData,
-        session_key: captcha?.session_key,
-        captcha_answer: parseInt(captchaAnswer),
+        captcha_token: turnstileToken,
       });
 
       if (res.data.requires_2fa) {
@@ -81,7 +70,6 @@ export function LoginForm() {
       }
     } catch (err: any) {
       setError(err.response?.data?.detail || "Giriş başarısız. Bilgilerinizi kontrol edin.");
-      fetchCaptcha();
     } finally {
       setLoading(false);
     }
@@ -280,33 +268,16 @@ export function LoginForm() {
                   </button>
                 </div>
 
-                {captcha && (
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                       <label className="text-xs font-black uppercase tracking-widest text-foreground/40 italic">
-                         {t("captcha_hint")}
-                       </label>
-                       <button type="button" onClick={fetchCaptcha} className="text-primary hover:rotate-180 transition-transform">
-                         <RefreshCcw className="w-4 h-4" />
-                       </button>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="flex-1 h-14 bg-foreground/5 rounded-xl border border-foreground/10 flex items-center justify-center text-xl font-black tracking-[0.5em] text-primary select-none">
-                        {captcha.numbers.join(" + ")}
-                      </div>
-                      <div className="w-24">
-                        <Input
-                          placeholder="?"
-                          type="number"
-                          value={captchaAnswer}
-                          onChange={(e) => setCaptchaAnswer(e.target.value)}
-                          className="text-center h-14 text-xl"
-                          required
-                        />
-                      </div>
-                    </div>
+                <div className="flex justify-center py-2">
+                    <Turnstile
+                      siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "0x4AAAAAADDnJNGyXUKu4w1k"}
+                      onSuccess={(token) => setTurnstileToken(token)}
+                      options={{
+                        theme: 'light',
+                      }}
+                    />
                   </div>
-                )}
+
 
                 {error && (
                   <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-xs italic">

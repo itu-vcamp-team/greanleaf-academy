@@ -78,8 +78,7 @@ class RegisterVerifyOTPSchema(BaseModel):
 class LoginSchema(BaseModel):
     username: str
     password: str
-    session_key: str    # CAPTCHA session key
-    captcha_answer: int # Sum of numbers displayed
+    captcha_token: str # Cloudflare Turnstile Token
 
 
 class VerifyEmailSchema(BaseModel):

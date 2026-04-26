@@ -23,18 +23,21 @@ class CaptchaService:
         return numbers
 
     @staticmethod
-    async def verify_login_captcha(session_key: str, answer: int) -> bool:
-        """Verifies the user's captcha answer against the stored total."""
-        r = aioredis.from_url(settings.REDIS_URL, decode_responses=True)
-        stored_sum = await r.get(f"captcha:{session_key}")
-        
-        if stored_sum is None:
-            await r.aclose()
+    async def verify_turnstile_token(token: str) -> bool:
+        """Verifies Cloudflare Turnstile token."""
+        import httpx
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+                    data={
+                        "secret": settings.TURNSTILE_SECRET_KEY,
+                        "response": token,
+                    },
+                    timeout=5.0
+                )
+                res_data = response.json()
+                return res_data.get("success", False)
+        except Exception as e:
+            print(f"Turnstile verification failed: {e}")
             return False
-            
-        is_valid = int(stored_sum) == answer
-        if is_valid:
-            await r.delete(f"captcha:{session_key}")
-            
-        await r.aclose()
-        return is_valid

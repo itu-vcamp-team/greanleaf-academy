@@ -63,14 +63,7 @@ async def verify_token_and_get_user(current_user: User = Depends(get_current_use
 
 # --- CAPTCHA ---
 
-@router.get("/captcha")
-async def get_captcha():
-    """
-    Returns 4 random numbers and a session_key for login captcha.
-    """
-    session_key = str(uuid.uuid4())
-    numbers = await CaptchaService.generate_login_captcha(session_key)
-    return {"session_key": session_key, "numbers": numbers}
+
 
 
 # --- REGISTRATION (3 STEPS) ---
@@ -352,8 +345,9 @@ async def login(
 ):
     try:
         # 1. Verify CAPTCHA
-        if not await CaptchaService.verify_login_captcha(data.session_key, data.captcha_answer):
-            raise HTTPException(status_code=400, detail="Invalid CAPTCHA answer.")
+        # Captcha Verification (Cloudflare Turnstile)
+        if not await CaptchaService.verify_turnstile_token(data.captcha_token):
+            raise HTTPException(status_code=400, detail="Güvenlik doğrulaması başarısız.")
 
         # 2. Find User
         stmt = select(User).where(User.username == data.username)
