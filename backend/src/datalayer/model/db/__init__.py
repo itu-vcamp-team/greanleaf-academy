@@ -9,7 +9,7 @@ from .event import Event, EventCategory, EventVisibility
 from .announcement import Announcement
 from .resource_link import ResourceLink
 from .waitlist import Waitlist
-from .audit_log import AuditLog
+from .user_device import UserDevice
 
 __all__ = [
     "BaseModel",
@@ -17,6 +17,7 @@ __all__ = [
     "UserRole",
     "ReferenceCode",
     "UserSession",
+    "UserDevice",
     "AcademyContent",
     "ContentType",
     "ContentStatus",

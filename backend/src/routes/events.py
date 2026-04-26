@@ -177,24 +177,8 @@ async def delete_event(
 
 
 # Helpers
-def _sanitize_event(event: any, role: UserRole) -> dict:
-    """Hides sensitive info (meeting_link) from GUESTS."""
-    data = {
-        "id": event.id,
-        "title": event.title,
-        "description": event.description,
-        "category": event.category,
-        "start_time": event.start_time,
-        "end_time": event.end_time,
-        "cover_image_url": event.cover_image_path,
-        "location": event.location,
-        "contact_info": event.contact_info,
-        "visibility": event.visibility,
-    }
-
+def _sanitize_event(event: any, role: UserRole) -> EventResponse | GuestEventResponse:
+    """Returns a typed response, hiding sensitive info (meeting_link) from GUESTS."""
     if role == UserRole.GUEST:
-        data["meeting_link"] = None
-    else:
-        data["meeting_link"] = event.meeting_link
-
-    return data
+        return GuestEventResponse.model_validate(event)
+    return EventResponse.model_validate(event)

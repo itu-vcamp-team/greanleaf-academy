@@ -2,10 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "@/i18n/navigation";
 import {
   Calendar as CalendarIcon, Clock, Link as LinkIcon, Plus, Trash2,
-  ChevronLeft, ChevronRight, Video, Shield, X
+  ChevronLeft, ChevronRight, Video, Shield, X, MapPin, Phone,
 } from "lucide-react";
 
 import { Navbar } from "@/components/ui/Navbar";
@@ -15,15 +14,20 @@ import { Input } from "@/components/ui/Input";
 import { useUserRole } from "@/context/UserRoleContext";
 import apiClient from "@/lib/api-client";
 
+// Matches the backend EventResponse schema exactly
 interface CalendarEvent {
   id: string;
   title: string;
-  time: string;
-  date: string;
-  speaker: string;
-  link?: string;
-  description: string;
-  event_date?: string;
+  description: string | null;
+  category: "WEBINAR" | "TRAINING" | "CORPORATE" | "MEETUP";
+  start_time: string;
+  end_time: string | null;
+  meeting_link: string | null;
+  location: string | null;
+  cover_image_url: string | null;
+  contact_info: string | null;
+  visibility: "ALL" | "PARTNER_ONLY";
+  is_published?: boolean;
 }
 
 export default function CalendarPage() {
@@ -32,18 +36,24 @@ export default function CalendarPage() {
   const [loading, setLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
 
-  useEffect(() => {
-    apiClient.get("/events/calendar")
-      .then(res => setEvents(res.data))
-      .catch(err => console.error("Failed to fetch events:", err))
+  const fetchEvents = () => {
+    const now = new Date();
+    apiClient
+      .get(`/events/calendar?year=${now.getFullYear()}&month=${now.getMonth() + 1}`)
+      .then((res) => setEvents(res.data))
+      .catch((err) => console.error("Failed to fetch events:", err))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchEvents();
   }, []);
 
   const handleDelete = async (id: string) => {
     if (!confirm("Bu etkinliği silmek istediğinize emin misiniz?")) return;
     try {
       await apiClient.delete(`/events/${id}`);
-      setEvents(prev => prev.filter(e => e.id !== id));
+      setEvents((prev) => prev.filter((e) => e.id !== id));
     } catch (err) {
       console.error("Delete event failed:", err);
     }
@@ -65,7 +75,7 @@ export default function CalendarPage() {
             </h1>
           </div>
 
-          {(role === "ADMIN") && (
+          {role === "ADMIN" && (
             <Button onClick={() => setIsAdding(true)} className="gap-2 rounded-2xl px-8 shadow-lg shadow-primary/20">
               <Plus className="w-5 h-5" /> Yeni Etkinlik Ekle
             </Button>
@@ -90,7 +100,7 @@ export default function CalendarPage() {
                 </div>
               </div>
               <div className="grid grid-cols-7 gap-1 text-center mb-4">
-                {["Pt", "Sa", "Ça", "Pe", "Cu", "Ct", "Pz"].map(d => (
+                {["Pt", "Sa", "Ça", "Pe", "Cu", "Ct", "Pz"].map((d) => (
                   <span key={d} className="text-[10px] font-black text-foreground/20 uppercase">{d}</span>
                 ))}
               </div>
@@ -118,7 +128,7 @@ export default function CalendarPage() {
               </div>
             ) : (
               <AnimatePresence mode="popLayout">
-                {events.map(event => (
+                {events.map((event) => (
                   <EventCard
                     key={event.id}
                     event={event}
@@ -135,7 +145,10 @@ export default function CalendarPage() {
       <AddEventModal
         isOpen={isAdding}
         onClose={() => setIsAdding(false)}
-        onCreated={(newEvent) => setEvents(prev => [newEvent, ...prev])}
+        onCreated={() => {
+          setIsAdding(false);
+          fetchEvents();
+        }}
       />
     </div>
   );
@@ -150,9 +163,7 @@ function MiniCalendarDays({ events }: { events: CalendarEvent[] }) {
   const offset = (firstDay + 6) % 7;
 
   const eventDays = new Set(
-    events
-      .map(e => e.event_date ? new Date(e.event_date).getDate() : null)
-      .filter(Boolean)
+    events.map((e) => new Date(e.start_time).getDate())
   );
 
   return (
@@ -189,22 +200,26 @@ function EventCard({
   role: string;
   onDelete: (id: string) => void;
 }) {
-  const isUpcoming = isEventUpcoming(event.event_date ?? "", event.date, event.time);
-  const canJoin = role !== "GUEST" && isUpcoming && !!event.link;
+  const startTime = new Date(event.start_time);
+  const isUpcoming = startTime > new Date();
+  const canJoin = role !== "GUEST" && isUpcoming && !!event.meeting_link;
+
+  const dateStr = startTime.toLocaleDateString("tr-TR", { day: "2-digit", month: "short" });
+  const timeStr = startTime.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
 
   return (
     <motion.div layout initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, scale: 0.95 }}>
       <GlassCard className="p-8 group border-foreground/5 hover:border-primary/20 transition-all duration-300">
         <div className="flex flex-col md:flex-row gap-8 items-start">
           <div className="flex flex-col items-center justify-center min-w-[80px] py-4 bg-foreground/5 rounded-2xl border border-foreground/5">
-            <span className="text-sm font-black text-primary">{event.date}</span>
-            <span className="text-lg font-bold text-foreground">{event.time}</span>
+            <span className="text-sm font-black text-primary">{dateStr}</span>
+            <span className="text-lg font-bold text-foreground">{timeStr}</span>
           </div>
 
           <div className="flex-1">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-xl font-bold text-foreground">{event.title}</h3>
-              {(role === "ADMIN") && (
+              {role === "ADMIN" && (
                 <button
                   onClick={() => onDelete(event.id)}
                   className="p-2 text-foreground/20 hover:text-red-500 transition-colors"
@@ -213,20 +228,30 @@ function EventCard({
                 </button>
               )}
             </div>
-            <p className="text-sm text-foreground/40 mb-4 italic leading-relaxed">{event.description}</p>
-            <div className="flex flex-wrap items-center gap-6">
-              {event.speaker && (
+
+            {event.description && (
+              <p className="text-sm text-foreground/40 mb-4 italic leading-relaxed">{event.description}</p>
+            )}
+
+            <div className="flex flex-wrap items-center gap-4 mt-2">
+              {event.location && (
                 <div className="flex items-center gap-2 text-xs font-bold text-foreground/60">
-                  <Video className="w-4 h-4 text-primary" /> {event.speaker}
+                  <MapPin className="w-4 h-4 text-primary" /> {event.location}
                 </div>
               )}
+              {event.contact_info && (
+                <div className="flex items-center gap-2 text-xs font-bold text-foreground/60">
+                  <Phone className="w-4 h-4 text-primary" /> {event.contact_info}
+                </div>
+              )}
+
               {role === "GUEST" ? (
                 <div className="flex items-center gap-2 text-xs font-bold text-foreground/20 italic">
                   <Shield className="w-4 h-4" /> Sadece Partnerlere Özel
                 </div>
               ) : canJoin ? (
                 <a
-                  href={event.link!}
+                  href={event.meeting_link!}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 text-xs font-black text-white bg-primary px-4 py-2 rounded-xl hover:bg-primary/90 transition-all shadow-md shadow-primary/20"
@@ -238,22 +263,18 @@ function EventCard({
                   <Clock className="w-4 h-4" /> Yayın Sona Erdi
                 </span>
               )}
+
+              {event.end_time && (
+                <span className="text-xs text-foreground/30">
+                  Bitiş: {new Date(event.end_time).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}
+                </span>
+              )}
             </div>
           </div>
         </div>
       </GlassCard>
     </motion.div>
   );
-}
-
-function isEventUpcoming(isoDate: string, dateStr?: string, timeStr?: string): boolean {
-  if (isoDate) return new Date(isoDate) > new Date();
-  if (dateStr === "Bugün" || dateStr === "Yarın") return true;
-  try {
-    return new Date(`${dateStr} ${timeStr}`) > new Date();
-  } catch {
-    return true;
-  }
 }
 
 function AddEventModal({
@@ -263,30 +284,55 @@ function AddEventModal({
 }: {
   isOpen: boolean;
   onClose: () => void;
-  onCreated: (event: CalendarEvent) => void;
+  onCreated: () => void;
 }) {
-  const [form, setForm] = useState({ title: "", speaker: "", date: "", time: "", description: "", link: "" });
+  const [form, setForm] = useState({
+    title: "",
+    description: "",
+    category: "WEBINAR" as const,
+    start_time: "",
+    end_time: "",
+    meeting_link: "",
+    location: "",
+    contact_info: "",
+    visibility: "PARTNER_ONLY" as const,
+  });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
   const handleSubmit = async () => {
-    if (!form.title || !form.date || !form.time) {
-      setError("Başlık, tarih ve saat zorunludur.");
+    if (!form.title || !form.start_time) {
+      setError("Başlık ve başlangıç zamanı zorunludur.");
       return;
     }
     setSaving(true);
     setError("");
+
     try {
-      const res = await apiClient.post("/events", {
-        ...form,
-        event_date: `${form.date}T${form.time}:00`,
+      const formData = new FormData();
+      formData.append("title", form.title);
+      formData.append("category", form.category);
+      formData.append("start_time", form.start_time);
+      formData.append("visibility", form.visibility);
+      if (form.description) formData.append("description", form.description);
+      if (form.end_time) formData.append("end_time", form.end_time);
+      if (form.meeting_link) formData.append("meeting_link", form.meeting_link);
+      if (form.location) formData.append("location", form.location);
+      if (form.contact_info) formData.append("contact_info", form.contact_info);
+
+      await apiClient.post("/events", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
-      onCreated(res.data);
-      onClose();
-      setForm({ title: "", speaker: "", date: "", time: "", description: "", link: "" });
+
+      onCreated();
+      setForm({
+        title: "", description: "", category: "WEBINAR",
+        start_time: "", end_time: "", meeting_link: "",
+        location: "", contact_info: "", visibility: "PARTNER_ONLY",
+      });
     } catch (err) {
-      console.error("Create event failed:", err);
-      setError("Etkinlik oluşturulamadı. Lütfen tekrar deneyin.");
+      const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      setError(detail ?? "Etkinlik oluşturulamadı. Lütfen tekrar deneyin.");
     } finally {
       setSaving(false);
     }
@@ -299,7 +345,7 @@ function AddEventModal({
       <motion.div
         initial={{ scale: 0.9, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
-        className="w-full max-w-md bg-surface p-8 rounded-[2.5rem] border border-foreground/5 shadow-2xl relative overflow-hidden"
+        className="w-full max-w-lg bg-surface p-8 rounded-[2.5rem] border border-foreground/5 shadow-2xl relative overflow-hidden max-h-[90vh] overflow-y-auto"
       >
         <div className="absolute top-0 right-0 p-6">
           <button onClick={onClose} className="text-foreground/20 hover:text-foreground transition-colors">
@@ -308,61 +354,107 @@ function AddEventModal({
         </div>
 
         <h2 className="text-2xl font-bold mb-6 text-foreground italic flex items-center gap-2">
-            <CalendarIcon className="w-6 h-6 text-primary" /> Yeni Etkinlik
+          <CalendarIcon className="w-6 h-6 text-primary" /> Yeni Etkinlik
         </h2>
+
         <div className="space-y-4">
           <Input
-            label="Eğitim Başlığı"
-            placeholder="Kanca Tekniği Eğitimi"
+            label="Başlık *"
+            placeholder="Etkinlik başlığı"
             value={form.title}
-            onChange={e => setForm(p => ({ ...p, title: e.target.value }))}
+            onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))}
             required
           />
-          <Input
-            label="Konuşmacı"
-            placeholder="Lider Adı"
-            icon={<Video size={14}/>}
-            value={form.speaker}
-            onChange={e => setForm(p => ({ ...p, speaker: e.target.value }))}
-          />
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black uppercase tracking-widest text-foreground/40 italic pl-1">Kategori *</label>
+              <select
+                value={form.category}
+                onChange={(e) => setForm((p) => ({ ...p, category: e.target.value as typeof form.category }))}
+                className="w-full bg-foreground/5 border border-foreground/10 rounded-xl px-4 py-2.5 outline-none focus:border-primary/50 text-sm transition-all"
+              >
+                <option value="WEBINAR">Webinar</option>
+                <option value="TRAINING">Eğitim</option>
+                <option value="CORPORATE">Kurumsal</option>
+                <option value="MEETUP">Buluşma</option>
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black uppercase tracking-widest text-foreground/40 italic pl-1">Görünürlük</label>
+              <select
+                value={form.visibility}
+                onChange={(e) => setForm((p) => ({ ...p, visibility: e.target.value as typeof form.visibility }))}
+                className="w-full bg-foreground/5 border border-foreground/10 rounded-xl px-4 py-2.5 outline-none focus:border-primary/50 text-sm transition-all"
+              >
+                <option value="PARTNER_ONLY">Sadece Partnerler</option>
+                <option value="ALL">Herkese Açık</option>
+              </select>
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <Input
-              label="Tarih"
-              type="date"
-              value={form.date}
-              onChange={e => setForm(p => ({ ...p, date: e.target.value }))}
+              label="Başlangıç *"
+              type="datetime-local"
+              value={form.start_time}
+              onChange={(e) => setForm((p) => ({ ...p, start_time: e.target.value }))}
               required
             />
             <Input
-              label="Saat"
-              type="time"
-              value={form.time}
-              onChange={e => setForm(p => ({ ...p, time: e.target.value }))}
-              required
+              label="Bitiş"
+              type="datetime-local"
+              value={form.end_time}
+              onChange={(e) => setForm((p) => ({ ...p, end_time: e.target.value }))}
             />
           </div>
+
           <Input
-            label="Link"
-            placeholder="Zoom/Meet Linki"
-            icon={<LinkIcon size={14}/>}
-            value={form.link}
-            onChange={e => setForm(p => ({ ...p, link: e.target.value }))}
+            label="Meeting Linki"
+            placeholder="https://zoom.us/..."
+            icon={<LinkIcon size={14} />}
+            value={form.meeting_link}
+            onChange={(e) => setForm((p) => ({ ...p, meeting_link: e.target.value }))}
           />
+
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="Konum"
+              placeholder="Online / İstanbul"
+              value={form.location}
+              onChange={(e) => setForm((p) => ({ ...p, location: e.target.value }))}
+            />
+            <Input
+              label="İletişim"
+              placeholder="+90 555..."
+              value={form.contact_info}
+              onChange={(e) => setForm((p) => ({ ...p, contact_info: e.target.value }))}
+            />
+          </div>
+
           <div className="space-y-1.5">
             <label className="text-[10px] font-black uppercase tracking-widest text-foreground/40 italic pl-1">Açıklama</label>
             <textarea
-                placeholder="Eğitim detayları..."
-                value={form.description}
-                onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
-                className="w-full bg-foreground/5 border border-foreground/10 rounded-xl px-4 py-3 outline-none focus:border-primary/50 text-sm h-24 resize-none transition-all"
+              placeholder="Etkinlik detayları..."
+              value={form.description}
+              onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
+              className="w-full bg-foreground/5 border border-foreground/10 rounded-xl px-4 py-3 outline-none focus:border-primary/50 text-sm h-24 resize-none transition-all"
             />
           </div>
+
+          <p className="text-xs text-foreground/40 italic bg-amber-50 border border-amber-100 rounded-xl px-4 py-2">
+            💡 Etkinlik taslak olarak kaydedilir. Admin panelinden yayınlayabilirsiniz.
+          </p>
+
           {error && <p className="text-red-500 text-xs font-bold italic">{error}</p>}
         </div>
+
         <div className="flex gap-4 mt-8">
-          <Button variant="ghost" className="flex-1 rounded-xl" onClick={onClose} disabled={saving}>Vazgeç</Button>
+          <Button variant="ghost" className="flex-1 rounded-xl" onClick={onClose} disabled={saving}>
+            Vazgeç
+          </Button>
           <Button className="flex-1 rounded-xl" onClick={handleSubmit} disabled={saving}>
-            {saving ? "Kaydediliyor..." : "Kaydet"}
+            {saving ? "Kaydediliyor..." : "Oluştur"}
           </Button>
         </div>
       </motion.div>

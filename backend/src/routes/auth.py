@@ -19,9 +19,8 @@ from src.datalayer.model.dto.auth_dto import (
     RefreshTokenSchema, PasswordChangeRequestSchema, PasswordChangeVerifySchema
 )
 from src.services import (
-    PasswordService, TokenService, CaptchaService,
     OTPService, GreenleafGlobalService, SessionService,
-    MailingService, WaitlistService
+    MailingService, WaitlistService, DeviceService
 )
 from src.config import get_settings
 from src.logger import logger
@@ -360,11 +359,18 @@ async def login(
         if not user.is_active:
             raise HTTPException(status_code=403, detail="Account is not active. Please contact admin.")
 
-        # 3. Check for 30-day 2FA
+        # 3. Check for 30-day 2FA OR New Device
         now = datetime.now(timezone.utc)
         requires_2fa = False
 
-        if not user.last_2fa_at:
+        # Device Identification
+        fingerprint = DeviceService.get_device_fingerprint(request)
+        is_recognized = await DeviceService.is_device_recognized(db, user.id, fingerprint)
+
+        if not is_recognized:
+            logger.info(f"New device detected for user {user.username}. Triggering 2FA.")
+            requires_2fa = True
+        elif not user.last_2fa_at:
             requires_2fa = True
         else:
             last_dt = user.last_2fa_at.replace(tzinfo=timezone.utc) if user.last_2fa_at.tzinfo is None else user.last_2fa_at
@@ -443,6 +449,10 @@ async def verify_2fa(
         res = await db.execute(stmt)
         user = res.scalar_one()
         user.last_2fa_at = datetime.now(timezone.utc)
+
+        # Register/Update recognized device
+        fingerprint = DeviceService.get_device_fingerprint(request)
+        await DeviceService.register_device(db, user.id, fingerprint)
 
         jti = await SessionService.create_session(
             db, user.id,

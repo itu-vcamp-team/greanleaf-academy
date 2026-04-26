@@ -25,32 +25,52 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-      const refresh_token = useAuthStore.getState().refresh_token;
-      if (refresh_token) {
-        try {
-          const isBrowser = typeof window !== "undefined";
-          const res = await axios.post(
-            isBrowser
-              ? "/api/backend/api/auth/refresh"
-              : `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000"}/api/auth/refresh`,
-            { refresh_token }
-          );
-          const { access_token } = res.data;
-          useAuthStore.getState().setAuth(
-            useAuthStore.getState().user!,
-            access_token,
-            refresh_token
-          );
-          originalRequest.headers.Authorization = `Bearer ${access_token}`;
-          return apiClient(originalRequest);
-        } catch {
+    const detail = error.response?.data?.detail;
+
+    if (error.response?.status === 401) {
+      // Special check for kick-out
+      if (detail === "Session expired or kicked out") {
+        const isBrowser = typeof window !== "undefined";
+        if (isBrowser) {
+          // Import toast dynamically or use a custom event if needed
+          // For now, we'll use a direct message logic
+          alert("Hesabınıza başka bir cihazdan giriş yapıldı. Güvenliğiniz için bu oturum sonlandırıldı.");
           useAuthStore.getState().clearAuth();
           const validLocales = ["tr-TR", "en-US"];
           const segment = window.location.pathname.split("/")[1];
           const locale = validLocales.includes(segment) ? segment : "tr-TR";
           window.location.href = `/${locale}/auth/login`;
+          return Promise.reject(error);
+        }
+      }
+
+      if (!originalRequest._retry) {
+        originalRequest._retry = true;
+        const refresh_token = useAuthStore.getState().refresh_token;
+        if (refresh_token) {
+          try {
+            const isBrowser = typeof window !== "undefined";
+            const res = await axios.post(
+              isBrowser
+                ? "/api/backend/api/auth/refresh"
+                : `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000"}/api/auth/refresh`,
+              { refresh_token }
+            );
+            const { access_token } = res.data;
+            useAuthStore.getState().setAuth(
+              useAuthStore.getState().user!,
+              access_token,
+              refresh_token
+            );
+            originalRequest.headers.Authorization = `Bearer ${access_token}`;
+            return apiClient(originalRequest);
+          } catch {
+            useAuthStore.getState().clearAuth();
+            const validLocales = ["tr-TR", "en-US"];
+            const segment = window.location.pathname.split("/")[1];
+            const locale = validLocales.includes(segment) ? segment : "tr-TR";
+            window.location.href = `/${locale}/auth/login`;
+          }
         }
       }
     }
