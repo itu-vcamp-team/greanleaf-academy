@@ -306,6 +306,87 @@ class MailingService:
         return success
 
     @staticmethod
+    async def send_event_cancellation_email(
+        recipient_emails: list[str],
+        event_title: str,
+        start_time: datetime,
+        ics_content: str | None = None,
+    ) -> bool:
+        """
+        RSVP yapmış tüm kullanıcılara etkinlik iptal bildirim e-postası toplu gönderir.
+        ics_content sağlanırsa .ics eki olarak eklenir.
+        """
+        date_str = start_time.strftime("%d.%m.%Y %H:%M")
+
+        html = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;
+                    color: #333; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden;">
+          <div style="background: #4AA435; color: white; padding: 30px; text-align: center;">
+            <h1 style="margin: 0; font-size: 22px;">🌿 Greenleaf Akademi</h1>
+            <p style="margin: 8px 0 0; opacity: 0.9; font-size: 14px;">Etkinlik Bildirimi</p>
+          </div>
+          <div style="padding: 28px;">
+            <h2 style="color: #c0392b; margin-top: 0;">❌ Etkinlik İptal Edildi</h2>
+            <p style="font-size: 16px; line-height: 1.6; color: #555;">
+              Üzgünüz, daha önce takvime eklediğiniz
+              <strong style="color: #333;">{event_title}</strong> etkinliği
+              <strong style="color: #c0392b;">iptal edilmiştir</strong>.
+            </p>
+            <div style="background: #fdf3f2; border: 1px solid #f5c6c2; border-radius: 8px;
+                        padding: 16px; margin: 24px 0;">
+              <p style="margin: 4px 0; font-size: 14px; color: #666;">
+                <strong>📅 Planlanan Tarih:</strong> {date_str}
+              </p>
+              <p style="margin: 4px 0; font-size: 14px; color: #c0392b;">
+                <strong>Durum:</strong> İptal Edildi
+              </p>
+            </div>
+            <p style="font-size: 14px; color: #555; line-height: 1.6;">
+              Bu durumun yarattığı aksaklık için özür dileriz. Yeni etkinlik duyurularından
+              haberdar olmak için platformu takip etmeye devam edebilirsiniz.
+            </p>
+            <div style="text-align: center; margin-top: 28px;">
+              <a href="{settings.FRONTEND_URL}/calendar"
+                 style="background: #4AA435; color: white; padding: 14px 32px;
+                        text-decoration: none; border-radius: 8px; font-weight: bold;
+                        font-size: 14px; display: inline-block;">
+                Diğer Etkinlikleri Gör
+              </a>
+            </div>
+          </div>
+          <div style="background: #f9f9f9; padding: 15px; text-align: center;
+                      font-size: 12px; color: #999;">
+            © 2026 Greenleaf Akademi. Tüm hakları saklıdır.
+          </div>
+        </div>
+        """
+
+        attachments = None
+        if ics_content:
+            ics_b64 = base64.b64encode(ics_content.encode("utf-8")).decode("utf-8")
+            attachments = [
+                {
+                    "filename": f"{event_title}_iptal.ics",
+                    "content": ics_b64,
+                    "content_type": "text/calendar",
+                }
+            ]
+
+        BATCH_SIZE = 50
+        success = True
+        for i in range(0, len(recipient_emails), BATCH_SIZE):
+            batch = recipient_emails[i : i + BATCH_SIZE]
+            res = await MailingService._send_email(
+                batch,
+                f"❌ Etkinlik İptal Edildi: {event_title}",
+                html,
+                attachments,
+            )
+            if not res:
+                success = False
+        return success
+
+    @staticmethod
     async def send_waitlist_notification_to_admin(
         admin_emails: list[str],
         applicant_name: str,

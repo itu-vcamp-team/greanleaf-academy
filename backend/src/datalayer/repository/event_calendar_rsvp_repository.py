@@ -47,6 +47,14 @@ class EventCalendarRsvpRepository(AsyncBaseRepository[EventCalendarRsvp]):
         )
         return set(result.scalars().all())
 
+    async def get_rsvp_emails_by_event(self, event_id: uuid.UUID) -> List[str]:
+        """Returns all email addresses that have RSVPed for the given event."""
+        result = await self.session.execute(
+            select(EventCalendarRsvp.email)
+            .where(EventCalendarRsvp.event_id == event_id)
+        )
+        return list(result.scalars().all())
+
     async def record_rsvp(
         self,
         event_id: uuid.UUID,

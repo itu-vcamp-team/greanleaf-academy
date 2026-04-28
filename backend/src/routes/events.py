@@ -15,7 +15,7 @@ from src.datalayer.repository.event_calendar_rsvp_repository import EventCalenda
 from src.services.event_service import EventService
 from src.services.mailing_service import MailingService
 from src.utils.auth_deps import get_current_admin, get_current_partner, get_optional_user
-from src.utils.ical_generator import generate_ics
+from src.utils.ical_generator import generate_ics, generate_cancellation_ics
 from src.datalayer.model.dto.event_dto import EventResponse, GuestEventResponse, GuestCalendarRequest, RsvpResponse
 
 router = APIRouter(prefix="/events", tags=["Events"])
@@ -301,18 +301,51 @@ async def publish_event(
 @router.delete("/{event_id}")
 async def delete_event(
     event_id: uuid.UUID,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db_session),
     admin_user: User = Depends(get_current_admin),
 ):
-    """Admin deletes event (cascades to calendar RSVPs)."""
+    """
+    Admin deletes event (cascades to calendar RSVPs).
+    All users who RSVPed receive a cancellation email in the background.
+    """
     repo = EventRepository(db)
-    service = EventService(repo)
 
+    # Fetch event details BEFORE deletion so we have title/start_time for the email
+    event = await repo.get_by_id(event_id)
+    if not event:
+        raise HTTPException(status_code=404, detail="Etkinlik bulunamadı")
+
+    # Collect RSVP emails BEFORE deletion (CASCADE will remove them from DB)
+    rsvp_repo = EventCalendarRsvpRepository(db)
+    recipient_emails = await rsvp_repo.get_rsvp_emails_by_event(event_id)
+
+    # Generate a CANCELLED iCal so recipients' calendar apps remove the event
+    cancellation_ics = generate_cancellation_ics(
+        title=event.title,
+        start_time=event.start_time,
+        end_time=event.end_time,
+    )
+
+    service = EventService(repo)
     deleted = await service.delete_event(event_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Etkinlik bulunamadı")
 
-    return {"message": "Etkinlik silindi"}
+    # Non-blocking: send cancellation notices to everyone who had RSVPed
+    if recipient_emails:
+        background_tasks.add_task(
+            MailingService.send_event_cancellation_email,
+            recipient_emails=recipient_emails,
+            event_title=event.title,
+            start_time=event.start_time,
+            ics_content=cancellation_ics,
+        )
+
+    return {
+        "message": "Etkinlik silindi",
+        "notified_count": len(recipient_emails),
+    }
 
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
