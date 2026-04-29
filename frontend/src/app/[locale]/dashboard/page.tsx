@@ -157,25 +157,25 @@ export default function DashboardPage({ params }: PageProps) {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          <MomentumStat 
-            icon={<TrendingUp />} 
-            label="Genel Bakış" 
-            value={isGuest ? "XXX" : "Aktif"} 
-            trend="+12%" 
+          <MomentumStat
+            icon={<TrendingUp />}
+            label="Eğitim İlerlemesi"
+            value={isGuest ? "—" : (rankData ? `${rankData.rank_percentage.toFixed(1)}%` : "—")}
+            trend={rankData ? `${children.length} kişilik ağ` : "Yükleniyor…"}
             isGuest={isGuest}
           />
-          <MomentumStat 
-            icon={<Users />} 
-            label="Aday Listesi" 
-            value={isGuest ? "XX" : children.length.toString()} 
-            trend={`+${children.filter(c => !c.is_active).length} Yeni`} 
+          <MomentumStat
+            icon={<Users />}
+            label="Aday Listesi"
+            value={isGuest ? "—" : children.length.toString()}
+            trend={children.filter(c => !c.is_active).length > 0 ? `${children.filter(c => !c.is_active).length} onay bekliyor` : "Tümü aktif"}
             isGuest={isGuest}
           />
-          <MomentumStat 
-            icon={<Target />} 
-            label="Eğitim Puanı" 
-            value={isGuest ? "XXX" : (rankData ? rankData.earned_points.toLocaleString("tr-TR") : "—")} 
-            trend={rankData ? `${rankData.rank_percentage.toFixed(1)}% Tamamlandı` : "—"}
+          <MomentumStat
+            icon={<Target />}
+            label="Eğitim Puanı"
+            value={isGuest ? "—" : (rankData ? rankData.earned_points.toLocaleString("tr-TR") : "—")}
+            trend={rankData ? `${rankData.rank_percentage.toFixed(1)}% tamamlandı` : "—"}
             isGuest={isGuest}
           />
           {/* Rank stat — special render */}

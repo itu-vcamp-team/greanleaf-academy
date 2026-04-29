@@ -8,7 +8,7 @@ import { useUserRole } from "@/context/UserRoleContext";
 import { useAuthStore } from "@/store/auth.store";
 import { useThemeStore } from "@/store/theme.store";
 import {
-  Sun, Moon, Calendar, LayoutDashboard, User, LogOut, Menu, X,
+  Sun, Moon, Calendar, User, LogOut, Menu, X,
   Mail, Phone, Globe, Link2, MessageSquare, Play, ShieldCheck,
 } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
@@ -106,12 +106,11 @@ export function Navbar() {
     router.push("/");
   };
 
-  // Task 4: "İmkanlar" link removed from guest nav
+  // "home" for partners already points to /dashboard — no duplicate dashboard link needed
   const navLinks = [
     { href: isGuest ? "/" : "/dashboard", label: t("home"), icon: <User className="w-4 h-4" /> },
     { href: "/calendar", label: t("calendar"), icon: <Calendar className="w-4 h-4" /> },
     { href: "/academy", label: t("academy"), icon: null },
-    ...(!isGuest ? [{ href: "/dashboard", label: t("dashboard"), icon: <LayoutDashboard className="w-4 h-4" /> }] : []),
   ];
 
   return (
