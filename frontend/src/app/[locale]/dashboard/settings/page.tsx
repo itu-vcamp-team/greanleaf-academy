@@ -222,8 +222,12 @@ export default function SettingsPage() {
 
   if (!user) return null;
 
+  // Route avatar images through the Next.js proxy (/api/backend → backend host).
+  // This keeps the request same-origin, satisfying the CSP img-src 'self' rule
+  // and avoiding CORS issues across all environments (dev / Docker / Render).
+  // profile_image_path is stored as "/uploads/profile_images/<uuid>.webp"
   const profileImageUrl = user.profile_image_path
-    ? `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}${user.profile_image_path}`
+    ? `/api/backend${user.profile_image_path}`
     : null;
 
   return (
