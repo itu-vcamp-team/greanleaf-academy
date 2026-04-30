@@ -125,7 +125,14 @@ export function RegistrationFlow() {
     try {
       await apiClient.post("/auth/register/step3", {
         session_id: sessionId,
-        ...formData,
+        full_name: formData.full_name,
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+        confirm_password: formData.confirmPassword,
+        phone: formData.phone,
+        kvkk_accepted: kvkkChecked,
+        aydinlatma_accepted: aydinlatmaChecked,
       });
       setStep(4);
     } catch (err: unknown) {
