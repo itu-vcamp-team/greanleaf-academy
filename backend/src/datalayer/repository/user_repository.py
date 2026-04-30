@@ -1,6 +1,7 @@
 import uuid
-from typing import Optional, List
-from sqlalchemy import select
+from typing import Optional, List, Tuple
+from sqlalchemy import select, func, or_
+from sqlalchemy.orm import aliased
 from src.datalayer.model.db.user import User, UserRole
 from src.datalayer.repository._base_repository import AsyncBaseRepository
 
@@ -29,20 +30,51 @@ class UserRepository(AsyncBaseRepository[User]):
         result = await self.session.execute(stmt)
         return result.scalars().all()
 
-    async def get_pending_users(self) -> List[dict]:
-        """Get inactive users (regardless of verification) for admin approval."""
-        from sqlalchemy.orm import aliased
+    async def get_pending_users(
+        self,
+        search: Optional[str] = None,
+        sort_by: str = "created_at",
+        sort_dir: str = "desc",
+        page: int = 1,
+        size: int = 50
+    ) -> Tuple[List[dict], int]:
+        """Get inactive users (regardless of verification) for admin approval, with pagination."""
         Inviter = aliased(User)
         
-        stmt = (
+        base_stmt = (
             select(User, Inviter.full_name.label("inviter_name"), Inviter.username.label("inviter_username"))
             .outerjoin(Inviter, User.inviter_id == Inviter.id)
             .where(
                 User.is_active == False,
                 User.role.notin_([UserRole.ADMIN, UserRole.EDITOR])
             )
-            .order_by(User.created_at.desc())
         )
+
+        if search:
+            search_term = f"%{search}%"
+            base_stmt = base_stmt.where(
+                or_(
+                    User.full_name.ilike(search_term),
+                    User.email.ilike(search_term),
+                    User.username.ilike(search_term),
+                    User.partner_id.ilike(search_term)
+                )
+            )
+            
+        # Count total
+        count_stmt = select(func.count()).select_from(base_stmt.subquery())
+        total_result = await self.session.execute(count_stmt)
+        total = total_result.scalar() or 0
+        
+        # Sorting
+        sort_col = getattr(User, sort_by, User.created_at)
+        if sort_dir.lower() == "asc":
+            base_stmt = base_stmt.order_by(sort_col.asc())
+        else:
+            base_stmt = base_stmt.order_by(sort_col.desc())
+            
+        # Pagination
+        stmt = base_stmt.offset((page - 1) * size).limit(size)
         
         result = await self.session.execute(stmt)
         rows = result.all()
@@ -61,17 +93,23 @@ class UserRepository(AsyncBaseRepository[User]):
                 "created_at": u.created_at.isoformat() if u.created_at else None,
                 "inviter_name": row.inviter_name,
                 "inviter_username": row.inviter_username,
-                "supervisor_note": u.supervisor_note
+                "supervisor_note": u.supervisor_note,
+                "partner_id": u.partner_id,
+                "is_active": u.is_active
             })
-        return pending
+        return pending, total
 
-    async def get_users(
+    async def get_users_paginated(
         self,
+        search: Optional[str] = None,
         role: Optional[UserRole] = None,
         is_active: Optional[bool] = None,
-        limit: int = 100
-    ) -> List[User]:
-        """Get users with optional filtering."""
+        sort_by: str = "created_at",
+        sort_dir: str = "desc",
+        page: int = 1,
+        size: int = 50
+    ) -> Tuple[List[User], int]:
+        """Get users with filtering, search, and pagination."""
         stmt = select(self.model_class)
 
         if role:
@@ -79,7 +117,32 @@ class UserRepository(AsyncBaseRepository[User]):
         if is_active is not None:
             stmt = stmt.where(self.model_class.is_active == is_active)
 
-        stmt = stmt.order_by(self.model_class.created_at.desc()).limit(limit)
+        if search:
+            search_term = f"%{search}%"
+            stmt = stmt.where(
+                or_(
+                    self.model_class.full_name.ilike(search_term),
+                    self.model_class.email.ilike(search_term),
+                    self.model_class.username.ilike(search_term),
+                    self.model_class.partner_id.ilike(search_term)
+                )
+            )
+
+        # Count total
+        count_stmt = select(func.count()).select_from(stmt.subquery())
+        total_result = await self.session.execute(count_stmt)
+        total = total_result.scalar() or 0
+        
+        # Sorting
+        sort_col = getattr(self.model_class, sort_by, self.model_class.created_at)
+        if sort_dir.lower() == "asc":
+            stmt = stmt.order_by(sort_col.asc())
+        else:
+            stmt = stmt.order_by(sort_col.desc())
+
+        # Pagination
+        stmt = stmt.offset((page - 1) * size).limit(size)
 
         result = await self.session.execute(stmt)
-        return result.scalars().all()
+        items = result.scalars().all()
+        return list(items), total

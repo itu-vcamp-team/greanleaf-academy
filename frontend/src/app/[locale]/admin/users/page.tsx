@@ -6,7 +6,7 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import {
   UserCheck, UserX, Shield, Mail, Calendar,
   Loader2, BadgeCheck, Users, ToggleLeft, ToggleRight,
-  UserPlus, X, Eye, EyeOff,
+  UserPlus, X, Eye, EyeOff, Search, ArrowUpDown, ArrowUp, ArrowDown
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import apiClient from "@/lib/api-client";
@@ -37,12 +37,40 @@ interface CreateUserForm {
   role: "ADMIN" | "PARTNER";
 }
 
+interface PaginatedData<T> {
+  items: T[];
+  total: number;
+  page: number;
+  size: number;
+  pages: number;
+}
+
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+  return debouncedValue;
+}
+
 export default function AdminUsersPage() {
   const [activeTab, setActiveTab] = useState<Tab>("pending");
-  const [pendingUsers, setPendingUsers] = useState<UserRow[]>([]);
-  const [allUsers, setAllUsers] = useState<UserRow[]>([]);
+  const [pendingData, setPendingData] = useState<PaginatedData<UserRow>>({ items: [], total: 0, page: 1, size: 50, pages: 0 });
+  const [allData, setAllData] = useState<PaginatedData<UserRow>>({ items: [], total: 0, page: 1, size: 50, pages: 0 });
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
+  const [sortConfig, setSortConfig] = useState<{ key: keyof UserRow; direction: "asc" | "desc" }>({
+    key: "created_at",
+    direction: "desc",
+  });
+  const [page, setPage] = useState(1);
+  const size = 50;
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -66,19 +94,31 @@ export default function AdminUsersPage() {
     role: "PARTNER",
   });
 
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearchTerm, statusFilter, sortConfig, activeTab]);
+
   useEffect(() => {
     if (activeTab === "pending") {
       fetchPending();
     } else {
       fetchAll();
     }
-  }, [activeTab]);
+  }, [activeTab, debouncedSearchTerm, statusFilter, sortConfig, page]);
 
   const fetchPending = async () => {
     setLoading(true);
     try {
-      const res = await apiClient.get("/admin/users/pending");
-      setPendingUsers(res.data);
+      const params = new URLSearchParams();
+      if (debouncedSearchTerm) params.append("search", debouncedSearchTerm);
+      params.append("sort_by", sortConfig.key);
+      params.append("sort_dir", sortConfig.direction);
+      params.append("page", String(page));
+      params.append("size", String(size));
+
+      const res = await apiClient.get(`/admin/users/pending?${params.toString()}`);
+      setPendingData(res.data);
     } catch {
       console.error("Fetch pending error");
     } finally {
@@ -86,19 +126,20 @@ export default function AdminUsersPage() {
     }
   };
 
-  const fetchAll = async (role?: string, isActive?: boolean) => {
+  const fetchAll = async () => {
     setLoading(true);
     try {
-      let url = "/admin/users/all";
       const params = new URLSearchParams();
-      if (role) params.append("role", role);
-      if (isActive !== undefined) params.append("is_active", String(isActive));
-      
-      const queryString = params.toString();
-      if (queryString) url += `?${queryString}`;
+      if (debouncedSearchTerm) params.append("search", debouncedSearchTerm);
+      if (statusFilter === "active") params.append("is_active", "true");
+      if (statusFilter === "inactive") params.append("is_active", "false");
+      params.append("sort_by", sortConfig.key);
+      params.append("sort_dir", sortConfig.direction);
+      params.append("page", String(page));
+      params.append("size", String(size));
 
-      const res = await apiClient.get(url);
-      setAllUsers(res.data);
+      const res = await apiClient.get(`/admin/users/all?${params.toString()}`);
+      setAllData(res.data);
     } catch {
       console.error("Fetch all users error");
     } finally {
@@ -139,9 +180,10 @@ export default function AdminUsersPage() {
     setActionLoading(userId);
     try {
       const res = await apiClient.post(`/admin/users/${userId}/toggle-active`);
-      setAllUsers((prev) =>
-        prev.map((u) => (u.id === userId ? { ...u, is_active: res.data.is_active } : u))
-      );
+      setAllData((prev) => ({
+        ...prev,
+        items: prev.items.map((u) => (u.id === userId ? { ...u, is_active: res.data.is_active } : u))
+      }));
     } catch (err) {
       console.error("Durum değiştirme hatası:", err);
       alert("Kullanıcı durumu değiştirilirken bir hata oluştu.");
@@ -187,6 +229,17 @@ export default function AdminUsersPage() {
     setCreateSuccess("");
   };
 
+  const handleSort = (key: keyof UserRow) => {
+    let direction: "asc" | "desc" = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const currentData = activeTab === "pending" ? pendingData : allData;
+  const currentProcessedUsers = currentData.items;
+
   return (
     <div className="space-y-10">
       <header className="flex items-start justify-between">
@@ -215,7 +268,7 @@ export default function AdminUsersPage() {
           active={activeTab === "pending"}
           onClick={() => setActiveTab("pending")}
           icon={<UserCheck size={14} />}
-          label={`Onay Bekleyenler (${pendingUsers.length})`}
+          label={`Onay Bekleyenler (${pendingData.total})`}
         />
         <TabButton
           active={activeTab === "all"}
@@ -225,43 +278,51 @@ export default function AdminUsersPage() {
         />
       </div>
 
-      {activeTab === "all" && (
-        <div className="flex gap-4 mb-6 px-2">
-          <button 
-            onClick={() => fetchAll()} 
-            className="text-xs font-bold text-foreground/50 hover:text-primary transition-colors underline underline-offset-4 decoration-foreground/20"
-          >
-            Tümünü Göster
-          </button>
-          <button 
-            onClick={() => fetchAll(undefined, true)} 
-            className="text-xs font-bold text-emerald-600 hover:text-emerald-700 transition-colors"
-          >
-            Sadece Aktifler
-          </button>
-          <button 
-            onClick={() => fetchAll(undefined, false)} 
-            className="text-xs font-bold text-red-500 hover:text-red-600 transition-colors"
-          >
-            Sadece Pasifler
-          </button>
+      {/* Filters & Search Toolbar */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 bg-surface p-3 rounded-2xl border border-border">
+        <div className="relative w-full sm:w-80">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40" />
+          <input
+            type="text"
+            placeholder="İsim, e-posta, username ara..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full h-10 pl-9 pr-4 bg-background border border-border rounded-xl text-sm outline-none focus:border-primary transition-colors"
+          />
         </div>
-      )}
+
+        {activeTab === "all" && (
+          <div className="flex gap-1.5 p-1 bg-background rounded-xl border border-border">
+            <FilterButton active={statusFilter === "all"} onClick={() => setStatusFilter("all")} label="Tümü" />
+            <FilterButton active={statusFilter === "active"} onClick={() => setStatusFilter("active")} label="Aktifler" color="emerald" />
+            <FilterButton active={statusFilter === "inactive"} onClick={() => setStatusFilter("inactive")} label="Pasifler" color="red" />
+          </div>
+        )}
+      </div>
 
       <GlassCard className="border-border shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-surface/60 border-b border-border">
-                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-foreground/40">
-                  Kullanıcı
-                </th>
-                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-foreground/40">
-                  Rol / Durum
-                </th>
-                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-foreground/40">
-                  Kayıt Tarihi
-                </th>
+                <SortableHeader
+                  label="Kullanıcı"
+                  sortKey="full_name"
+                  currentSort={sortConfig}
+                  onSort={handleSort}
+                />
+                <SortableHeader
+                  label="Rol / Durum"
+                  sortKey="role"
+                  currentSort={sortConfig}
+                  onSort={handleSort}
+                />
+                <SortableHeader
+                  label="Kayıt Tarihi"
+                  sortKey="created_at"
+                  currentSort={sortConfig}
+                  onSort={handleSort}
+                />
                 <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-foreground/40 text-right">
                   Eylemler
                 </th>
@@ -275,38 +336,21 @@ export default function AdminUsersPage() {
                       <Loader2 className="w-8 h-8 text-emerald-500 animate-spin mx-auto opacity-30" />
                     </td>
                   </tr>
-                ) : activeTab === "pending" ? (
-                  pendingUsers.length === 0 ? (
-                    <tr key="empty">
-                      <td colSpan={4} className="px-6 py-20 text-center text-foreground/40 font-medium italic">
-                        Onay bekleyen kullanıcı yok.
-                      </td>
-                    </tr>
-                  ) : (
-                    pendingUsers.map((user) => (
-                      <UserRow
-                        key={user.id}
-                        user={user}
-                        mode="pending"
-                        isActing={actionLoading === user.id}
-                        onApprove={() => handleApprove(user.id)}
-                        onReject={() => handleReject(user.id)}
-                      />
-                    ))
-                  )
-                ) : allUsers.length === 0 ? (
+                ) : currentProcessedUsers.length === 0 ? (
                   <tr key="empty">
                     <td colSpan={4} className="px-6 py-20 text-center text-foreground/40 font-medium italic">
-                      Kullanıcı bulunamadı.
+                      {searchTerm ? "Aramanıza uygun kullanıcı bulunamadı." : activeTab === "pending" ? "Onay bekleyen kullanıcı yok." : "Kullanıcı bulunamadı."}
                     </td>
                   </tr>
                 ) : (
-                  allUsers.map((user) => (
+                  currentProcessedUsers.map((user) => (
                     <UserRow
                       key={user.id}
                       user={user}
-                      mode="all"
+                      mode={activeTab}
                       isActing={actionLoading === user.id}
+                      onApprove={() => handleApprove(user.id)}
+                      onReject={() => handleReject(user.id)}
                       onToggleActive={() => handleToggleActive(user.id)}
                     />
                   ))
@@ -315,6 +359,38 @@ export default function AdminUsersPage() {
             </tbody>
           </table>
         </div>
+        
+        {/* Pagination Controls */}
+        {currentData.pages > 1 && (
+          <div className="flex items-center justify-between px-6 py-4 border-t border-border bg-surface/30">
+            <span className="text-xs font-bold tracking-widest text-foreground/40 uppercase">
+              Toplam {currentData.total} Kayıt
+            </span>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={currentData.page === 1}
+                className="rounded-xl"
+              >
+                Önceki
+              </Button>
+              <span className="text-sm font-bold text-foreground">
+                {currentData.page} <span className="text-foreground/40 font-normal">/ {currentData.pages}</span>
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage((p) => Math.min(currentData.pages, p + 1))}
+                disabled={currentData.page === currentData.pages}
+                className="rounded-xl"
+              >
+                Sonraki
+              </Button>
+            </div>
+          </div>
+        )}
       </GlassCard>
 
       {/* ── Create User Modal ── */}
@@ -548,6 +624,66 @@ interface UserRowProps {
   onApprove?: () => void;
   onReject?: () => void;
   onToggleActive?: () => void;
+}
+
+interface FilterButtonProps {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+  color?: "emerald" | "red" | "default";
+}
+
+function FilterButton({ active, onClick, label, color = "default" }: FilterButtonProps) {
+  let colorClasses = "text-foreground/50 hover:text-foreground";
+  if (active) {
+    if (color === "emerald") colorClasses = "bg-emerald-50 text-emerald-600 font-bold shadow-sm";
+    else if (color === "red") colorClasses = "bg-red-50 text-red-500 font-bold shadow-sm";
+    else colorClasses = "bg-surface text-foreground font-bold shadow-sm";
+  } else {
+    if (color === "emerald") colorClasses += " hover:text-emerald-600";
+    if (color === "red") colorClasses += " hover:text-red-500";
+  }
+
+  return (
+    <button
+      onClick={onClick}
+      className={`px-3 py-1.5 rounded-lg text-xs transition-all ${colorClasses}`}
+    >
+      {label}
+    </button>
+  );
+}
+
+interface SortableHeaderProps {
+  label: string;
+  sortKey: keyof UserRow;
+  currentSort: { key: keyof UserRow; direction: "asc" | "desc" };
+  onSort: (key: keyof UserRow) => void;
+}
+
+function SortableHeader({ label, sortKey, currentSort, onSort }: SortableHeaderProps) {
+  const isActive = currentSort.key === sortKey;
+  return (
+    <th
+      onClick={() => onSort(sortKey)}
+      className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-foreground/40 cursor-pointer hover:text-foreground/70 transition-colors select-none group"
+    >
+      <div className="flex items-center gap-1.5">
+        {label}
+        <div className="flex flex-col text-[8px] opacity-40 group-hover:opacity-100 transition-opacity">
+          {isActive ? (
+            currentSort.direction === "asc" ? (
+              <ArrowUp className="w-3 h-3 text-primary" />
+            ) : (
+              <ArrowDown className="w-3 h-3 text-primary" />
+            )
+          ) : (
+            <ArrowUpDown className="w-3 h-3" />
+          )}
+        </div>
+      </div>
+    </th>
+  );
 }
 
 function UserRow({ user, mode, isActing, onApprove, onReject, onToggleActive }: UserRowProps) {

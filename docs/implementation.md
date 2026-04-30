@@ -269,3 +269,16 @@ Geri sayım artık hardcoded değil:
 ### Admin Panel State Refresh Fix
 - **Frontend**: Fixed a UI issue in `admin/users/page.tsx` where the state wasn't updating properly after a user was approved, rejected, or their active status toggled. 
 - Replaced the manual React state filter (`setPendingUsers`) with `await fetchPending()` and `if (activeTab === "all") await fetchAll()` directly after API operations to guarantee UI synchronization with backend state. Added simple error handling `alert` blocks.
+
+### Admin Users List Advanced Search & Filtering
+- **Frontend (`admin/users/page.tsx`)**: Added advanced frontend data processing capabilities.
+- Implemented a global **Search Bar** filtering users by name, email, username, and partner ID.
+- Added dynamic **Column Sorting** (asc/desc) for Name, Role/Status, and Registration Date columns.
+- Replaced raw backend filter buttons with a unified **Status Filter Toolbar** (All, Active, Inactive) that applies instantly on the frontend.
+- Consolidated array rendering to map through a unified `getProcessedUsers()` function, keeping the user interface fast and reactive.
+
+### Server-Side Pagination & Filtering (Admin Users)
+- **Backend DTO:** Created `PaginatedResponse` in `src/datalayer/model/dto/pagination_dto.py`.
+- **Repository:** Updated `UserRepository.get_users_paginated` and `get_pending_users` to accept pagination variables (`page`, `size`), sorting (`sort_by`, `sort_dir`), and global search (`search`) using SQLAlchemy's `offset/limit` and `ilike`.
+- **Service & Router:** Wrapped the repository response in the `PaginatedResponse` dictionary and integrated FastAPI `Query` dependencies in `admin_users.py`.
+- **Frontend:** Completely refactored `admin/users/page.tsx` to rely on the server for data processing. Removed frontend state filtering. Added a `useDebounce` hook to the search input to limit API calls, and added a pagination control bar (`Önceki/Sonraki` buttons) to the table footer.

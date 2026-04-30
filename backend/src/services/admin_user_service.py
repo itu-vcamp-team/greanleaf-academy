@@ -1,5 +1,6 @@
 import uuid
 import secrets
+import math
 from typing import List, Optional
 from src.datalayer.model.db.user import User, UserRole
 from src.datalayer.repository.user_repository import UserRepository
@@ -9,9 +10,25 @@ class AdminUserService:
     def __init__(self, repo: UserRepository):
         self.repo = repo
 
-    async def get_pending_approvals(self) -> List[dict]:
+    async def get_pending_approvals(
+        self,
+        search: Optional[str] = None,
+        sort_by: str = "created_at",
+        sort_dir: str = "desc",
+        page: int = 1,
+        size: int = 50
+    ) -> dict:
         """List verified but inactive users with inviter details."""
-        return await self.repo.get_pending_users()
+        items, total = await self.repo.get_pending_users(
+            search=search, sort_by=sort_by, sort_dir=sort_dir, page=page, size=size
+        )
+        return {
+            "items": items,
+            "total": total,
+            "page": page,
+            "size": size,
+            "pages": math.ceil(total / size) if size > 0 else 0
+        }
 
     async def approve_partner(self, user_id: uuid.UUID) -> User:
         """
@@ -57,11 +74,26 @@ class AdminUserService:
 
     async def list_users(
         self,
+        search: Optional[str] = None,
         role: Optional[UserRole] = None,
-        is_active: Optional[bool] = None
-    ) -> List[User]:
+        is_active: Optional[bool] = None,
+        sort_by: str = "created_at",
+        sort_dir: str = "desc",
+        page: int = 1,
+        size: int = 50
+    ) -> dict:
         """List all users with optional filtering."""
-        return await self.repo.get_users(role=role, is_active=is_active)
+        items, total = await self.repo.get_users_paginated(
+            search=search, role=role, is_active=is_active,
+            sort_by=sort_by, sort_dir=sort_dir, page=page, size=size
+        )
+        return {
+            "items": items,
+            "total": total,
+            "page": page,
+            "size": size,
+            "pages": math.ceil(total / size) if size > 0 else 0
+        }
 
     async def toggle_user_active(self, user_id: uuid.UUID) -> User:
         """Toggle a user's active status."""

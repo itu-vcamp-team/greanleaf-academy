@@ -35,11 +35,18 @@ async def create_user(
 @router.get("/pending", dependencies=[Depends(get_current_admin)])
 async def get_pending_users(
     db: AsyncSession = Depends(get_db_session),
+    search: Optional[str] = Query(None),
+    sort_by: str = Query("created_at"),
+    sort_dir: str = Query("desc"),
+    page: int = Query(1, ge=1),
+    size: int = Query(50, ge=1, le=100)
 ):
     """Admin onayı bekleyen kullanıcıları listeler."""
     repo = UserRepository(db)
     service = AdminUserService(repo)
-    return await service.get_pending_approvals()
+    return await service.get_pending_approvals(
+        search=search, sort_by=sort_by, sort_dir=sort_dir, page=page, size=size
+    )
 
 @router.post("/{user_id}/approve", dependencies=[Depends(get_current_admin)])
 async def approve_user(
@@ -72,13 +79,21 @@ async def reject_user(
 @router.get("/all", dependencies=[Depends(get_current_admin)])
 async def list_all_users(
     db: AsyncSession = Depends(get_db_session),
+    search: Optional[str] = Query(None),
     role: Optional[UserRole] = Query(None),
     is_active: Optional[bool] = Query(None),
+    sort_by: str = Query("created_at"),
+    sort_dir: str = Query("desc"),
+    page: int = Query(1, ge=1),
+    size: int = Query(50, ge=1, le=100)
 ):
     """Admin görünümü: Tüm kullanıcıları listele."""
     repo = UserRepository(db)
     service = AdminUserService(repo)
-    return await service.list_users(role, is_active)
+    return await service.list_users(
+        search=search, role=role, is_active=is_active,
+        sort_by=sort_by, sort_dir=sort_dir, page=page, size=size
+    )
 
 @router.post("/{user_id}/toggle-active", dependencies=[Depends(get_current_admin)])
 async def toggle_user_active(
