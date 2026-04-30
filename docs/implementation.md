@@ -265,3 +265,7 @@ Geri sayım artık hardcoded değil:
 3. **`frontend/src/app/[locale]/admin/academy-content/page.tsx`** — locale=tr filtresi kaldırıldı. DB'deki kayıtlar `locale="tr-TR"` formatında saklanıyor; `locale=tr` filtresi sıfır sonuç döndürüyordu.
 
 4. **`frontend/src/app/[locale]/admin/waitlist/page.tsx`** — "Bekleyenler / Tümü" toggle eklendi; `include_processed=true` parametresiyle işlenmiş kayıtlar da görüntülenebiliyor.
+
+### Admin Panel State Refresh Fix
+- **Frontend**: Fixed a UI issue in `admin/users/page.tsx` where the state wasn't updating properly after a user was approved, rejected, or their active status toggled. 
+- Replaced the manual React state filter (`setPendingUsers`) with `await fetchPending()` and `if (activeTab === "all") await fetchAll()` directly after API operations to guarantee UI synchronization with backend state. Added simple error handling `alert` blocks.

@@ -110,7 +110,11 @@ export default function AdminUsersPage() {
     setActionLoading(userId);
     try {
       await apiClient.post(`/admin/users/${userId}/approve`);
-      setPendingUsers((prev) => prev.filter((u) => u.id !== userId));
+      await fetchPending();
+      if (activeTab === "all") await fetchAll();
+    } catch (err) {
+      console.error("Onaylama hatası:", err);
+      alert("Kullanıcı onaylanırken bir hata oluştu.");
     } finally {
       setActionLoading(null);
     }
@@ -121,7 +125,11 @@ export default function AdminUsersPage() {
     setActionLoading(userId);
     try {
       await apiClient.post(`/admin/users/${userId}/reject`);
-      setPendingUsers((prev) => prev.filter((u) => u.id !== userId));
+      await fetchPending();
+      if (activeTab === "all") await fetchAll();
+    } catch (err) {
+      console.error("Reddetme hatası:", err);
+      alert("Kullanıcı reddedilirken bir hata oluştu.");
     } finally {
       setActionLoading(null);
     }
@@ -134,6 +142,9 @@ export default function AdminUsersPage() {
       setAllUsers((prev) =>
         prev.map((u) => (u.id === userId ? { ...u, is_active: res.data.is_active } : u))
       );
+    } catch (err) {
+      console.error("Durum değiştirme hatası:", err);
+      alert("Kullanıcı durumu değiştirilirken bir hata oluştu.");
     } finally {
       setActionLoading(null);
     }
