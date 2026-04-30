@@ -6,10 +6,9 @@ import "plyr/dist/plyr.css";
 import plyrStyles from "./YouTubePlayer.module.css"; // eslint-disable-line @typescript-eslint/no-unused-vars
 import apiClient from "@/lib/api-client";
 
-// Plyr doesn't ship a proper TS default-export declaration; use require to keep
-// TypeScript happy while still getting the actual Plyr constructor at runtime.
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
-const Plyr: any = require("plyr");
+// NOTE: Plyr is a browser-only library. We import it dynamically inside useEffect
+// to prevent Next.js SSR from evaluating it on the server (which would cause
+// "TypeError: r is not a constructor" because Plyr's ESM bundle has no SSR constructor).
 
 interface YouTubePlayerProps {
   videoUrl: string;
@@ -90,41 +89,56 @@ export default function YouTubePlayer({
   useEffect(() => {
     if (!videoId || !videoRef.current) return;
 
-    const player = new Plyr(videoRef.current, {
-      autoplay: false,
-      controls: [
-        "play-large", "play", "progress", "current-time", 
-        "mute", "volume", "captions", "settings", "fullscreen"
-      ],
-      youtube: {
-        noCookie: true,
-        rel: 0,
-        showinfo: 0,
-        iv_load_policy: 3,
-        modestbranding: 1,
-        origin: window.location.origin
-      }
-    });
+    let destroyed = false;
 
-    playerRef.current = player;
+    // Dynamic import keeps Plyr out of the SSR bundle entirely.
+    // This is the correct pattern for browser-only libraries in Next.js.
+    import("plyr").then((PlyrModule) => {
+      if (destroyed || !videoRef.current) return;
 
-    player.on("ready", () => {
-      if (initialPosition > 0) {
-        player.currentTime = initialPosition;
-      }
-    });
+      // plyr publishes both CJS and ESM; the constructor may be the default export
+      // or the module itself depending on the bundler resolution.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const PlyrConstructor = (PlyrModule as any).default ?? PlyrModule;
 
-    player.on("play", () => startPolling(player));
-    player.on("pause", () => stopPolling());
-    player.on("ended", () => {
-      stopPolling();
-      syncProgress(player, true);
+      const player = new PlyrConstructor(videoRef.current, {
+        autoplay: false,
+        controls: [
+          "play-large", "play", "progress", "current-time",
+          "mute", "volume", "captions", "settings", "fullscreen"
+        ],
+        youtube: {
+          noCookie: true,
+          rel: 0,
+          showinfo: 0,
+          iv_load_policy: 3,
+          modestbranding: 1,
+          origin: window.location.origin
+        }
+      });
+
+      playerRef.current = player;
+
+      player.on("ready", () => {
+        if (initialPosition > 0) {
+          player.currentTime = initialPosition;
+        }
+      });
+
+      player.on("play", () => startPolling(player));
+      player.on("pause", () => stopPolling());
+      player.on("ended", () => {
+        stopPolling();
+        syncProgress(player, true);
+      });
     });
 
     return () => {
+      destroyed = true;
       stopPolling();
       if (playerRef.current) {
         playerRef.current.destroy();
+        playerRef.current = null;
       }
     };
   }, [videoId]); // Re-init if videoId changes

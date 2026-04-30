@@ -22,10 +22,12 @@ export default function middleware(request: NextRequest) {
 
   // 2. Define route categories
   const isAuthPage = pathname.includes("/auth/login") || pathname.includes("/auth/register");
+  // Use segment-level matching so /dashboard-preview is NOT treated as private
+  const segments = pathname.split("/");
   const isPrivatePage =
-    pathname.includes("/dashboard") ||
-    pathname.includes("/admin") ||
-    pathname.includes("/settings");
+    segments.includes("dashboard") ||
+    segments.includes("admin") ||
+    segments.includes("settings");
   const isAdminPage = pathname.includes("/admin");
 
   const locale = getLocale(pathname);

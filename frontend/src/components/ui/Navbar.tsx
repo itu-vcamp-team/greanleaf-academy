@@ -194,9 +194,9 @@ export function Navbar() {
   // For partners/admins: home link already points to /dashboard, no duplicate needed.
   const navLinks = [
     { href: isGuest ? "/" : "/dashboard", label: t("home"), icon: <User className="w-4 h-4" /> },
-    // Task 3: Dashboard link shown only for guests (partners' home IS dashboard)
+    // Guests see Dashboard as a preview page (not the private /dashboard)
     ...(isGuest
-      ? [{ href: "/dashboard", label: "Dashboard", icon: <LayoutDashboard className="w-4 h-4" /> }]
+      ? [{ href: "/dashboard-preview", label: "Dashboard", icon: <LayoutDashboard className="w-4 h-4" /> }]
       : []),
     { href: "/calendar", label: t("calendar"), icon: <Calendar className="w-4 h-4" /> },
     { href: "/academy", label: t("academy"), icon: null },
