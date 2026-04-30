@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   TrendingUp, Users, Target, Award, ArrowUpRight,
-  Shield, Zap, Lock, ChevronRight, UserPlus, Info, Bell, Megaphone,
+  Shield, Zap, Lock, ChevronRight, UserPlus, Info, Bell, Megaphone, X,
 } from "lucide-react";
 
 import { Navbar } from "@/components/ui/Navbar";
@@ -95,6 +95,8 @@ export default function DashboardPage({ params }: PageProps) {
   const [resources, setResources] = useState<{ id: string; title: string; url: string }[]>([]);
   const [loadingStats, setLoadingStats] = useState(true);
   const [rankData, setRankData] = useState<RankData | null>(null);
+  // Task 1: Announcement detail modal
+  const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null);
 
   useEffect(() => {
     const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
@@ -187,29 +189,31 @@ export default function DashboardPage({ params }: PageProps) {
           <MomentumStat
             icon={<TrendingUp />}
             label="Eğitim İlerlemesi"
-            value={isGuest ? "—" : rankData ? `${rankData.rank_percentage.toFixed(1)}%` : "—"}
-            trend={rankData ? `${children.length} kişilik ağ` : "Yükleniyor…"}
+            value={isGuest ? "—" : loadingStats ? "…" : rankData ? `${rankData.rank_percentage.toFixed(1)}%` : "—"}
+            trend={loadingStats ? "Yükleniyor…" : rankData ? `${rankData.rank_percentage.toFixed(1)}% puan tamamlandı` : "—"}
             isGuest={isGuest}
           />
           <MomentumStat
             icon={<Users />}
             label="Partner Listesi"
-            value={isGuest ? "—" : children.length.toString()}
+            value={isGuest ? "—" : loadingChildren ? "…" : children.length.toString()}
             trend={
-              children.filter((c) => !c.is_active).length > 0
+              loadingChildren
+                ? "Yükleniyor…"
+                : children.filter((c) => !c.is_active).length > 0
                 ? `${children.filter((c) => !c.is_active).length} onay bekliyor`
-                : "Tümü aktif"
+                : children.length > 0 ? "Tümü aktif" : "Henüz partner yok"
             }
             isGuest={isGuest}
           />
           <MomentumStat
             icon={<Target />}
             label="Eğitim Puanı"
-            value={isGuest ? "—" : rankData ? rankData.earned_points.toLocaleString("tr-TR") : "—"}
-            trend={rankData ? `${rankData.rank_percentage.toFixed(1)}% tamamlandı` : "—"}
+            value={isGuest ? "—" : loadingStats ? "…" : rankData ? rankData.earned_points.toLocaleString("tr-TR") : "—"}
+            trend={loadingStats ? "Yükleniyor…" : rankData ? `Maks: ${rankData.max_points.toLocaleString("tr-TR")} puan` : "—"}
             isGuest={isGuest}
           />
-          <RankStat rankData={rankData} isGuest={isGuest} />
+          <RankStat rankData={rankData} isGuest={isGuest} loading={loadingStats} />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -381,7 +385,13 @@ export default function DashboardPage({ params }: PageProps) {
 
               {announcements.length > 0 ? (
                 announcements.map((ann, i) => (
-                  <AnnouncementCard key={ann.id} ann={ann} locale={locale} index={i} />
+                  <AnnouncementCard
+                    key={ann.id}
+                    ann={ann}
+                    locale={locale}
+                    index={i}
+                    onSelect={setSelectedAnnouncement}
+                  />
                 ))
               ) : (
                 <GlassCard className="p-6 border-foreground/5">
@@ -402,23 +412,41 @@ export default function DashboardPage({ params }: PageProps) {
         childName={selectedChild?.name || ""}
         progress={childProgress}
       />
+
+      {/* Task 1: Announcement detail modal */}
+      {selectedAnnouncement && (
+        <AnnouncementDetailModal
+          ann={selectedAnnouncement}
+          locale={locale}
+          onClose={() => setSelectedAnnouncement(null)}
+        />
+      )}
     </div>
   );
 }
 
 // ─── Announcement Card ────────────────────────────────────────────────────────
 /** isNew is pre-computed in useEffect so Date.now() isn't called during render */
-function AnnouncementCard({ ann, locale, index }: { ann: Announcement; locale: string; index: number }) {
+function AnnouncementCard({
+  ann, locale, index, onSelect,
+}: {
+  ann: Announcement;
+  locale: string;
+  index: number;
+  onSelect: (ann: Announcement) => void;
+}) {
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: index * 0.05 }}
     >
-      <div
-        className={`relative overflow-hidden rounded-2xl border transition-all group ${
+      <button
+        type="button"
+        onClick={() => onSelect(ann)}
+        className={`w-full text-left relative overflow-hidden rounded-2xl border transition-all group cursor-pointer ${
           ann.pinned
-            ? "border-primary/30 bg-primary/5 shadow-sm shadow-primary/10"
+            ? "border-primary/30 bg-primary/5 shadow-sm shadow-primary/10 hover:shadow-md hover:shadow-primary/15"
             : "border-foreground/10 bg-foreground/[0.02] hover:border-primary/20 hover:bg-primary/[0.02]"
         }`}
       >
@@ -458,14 +486,107 @@ function AnnouncementCard({ ann, locale, index }: { ann: Announcement; locale: s
           {ann.body && (
             <p className="text-xs text-foreground/50 mt-1.5 leading-relaxed line-clamp-2">{ann.body}</p>
           )}
+
+          {ann.body && (
+            <p className="text-[10px] text-primary/60 mt-2 font-bold uppercase tracking-widest flex items-center gap-1 group-hover:text-primary transition-colors">
+              Devamını Oku →
+            </p>
+          )}
         </div>
-      </div>
+      </button>
     </motion.div>
   );
 }
 
+// ─── Announcement Detail Modal ────────────────────────────────────────────────
+function AnnouncementDetailModal({
+  ann,
+  locale,
+  onClose,
+}: {
+  ann: Announcement;
+  locale: string;
+  onClose: () => void;
+}) {
+  return (
+    <AnimatePresence>
+      <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+        {/* Backdrop */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+          className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        />
+
+        {/* Modal */}
+        <motion.div
+          initial={{ scale: 0.95, opacity: 0, y: 20 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.95, opacity: 0, y: 20 }}
+          className="relative w-full max-w-lg bg-background rounded-[2rem] shadow-2xl overflow-hidden border border-foreground/10"
+        >
+          {/* Header */}
+          <div className={`p-6 ${ann.pinned ? "bg-primary/5 border-b border-primary/20" : "border-b border-foreground/10"}`}>
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  {ann.pinned && (
+                    <span className="text-[9px] font-black text-primary bg-primary/10 px-2 py-0.5 rounded-full uppercase tracking-widest border border-primary/20">
+                      📌 Sabitlendi
+                    </span>
+                  )}
+                  {ann.isNew && !ann.pinned && (
+                    <span className="text-[9px] font-black text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full uppercase tracking-widest border border-emerald-500/20">
+                      ✨ Yeni
+                    </span>
+                  )}
+                </div>
+                <h2 className="text-xl font-black text-foreground leading-tight">{ann.title}</h2>
+                <time className="text-[10px] text-foreground/40 font-medium">
+                  {new Date(ann.created_at).toLocaleDateString(locale, {
+                    day: "2-digit",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </time>
+              </div>
+              <button
+                onClick={onClose}
+                className="p-2 rounded-full hover:bg-foreground/10 text-foreground/40 hover:text-foreground transition-colors shrink-0"
+              >
+                <X size={20} />
+              </button>
+            </div>
+          </div>
+
+          {/* Body */}
+          <div className="p-6">
+            {ann.body ? (
+              <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap">{ann.body}</p>
+            ) : (
+              <p className="text-sm text-foreground/40 italic">Bu duyurunun detaylı içeriği bulunmuyor.</p>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="px-6 pb-6 flex justify-end">
+            <button
+              onClick={onClose}
+              className="px-6 py-2.5 rounded-xl bg-foreground/5 hover:bg-foreground/10 text-foreground/60 hover:text-foreground text-sm font-bold transition-all"
+            >
+              Kapat
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    </AnimatePresence>
+  );
+}
+
 // ─── Rank Stat Card ───────────────────────────────────────────────────────────
-function RankStat({ rankData, isGuest }: { rankData: RankData | null; isGuest: boolean }) {
+function RankStat({ rankData, isGuest, loading = false }: { rankData: RankData | null; isGuest: boolean; loading?: boolean }) {
   return (
     <GlassCard className="p-6 border-foreground/5 hover:border-primary/20 transition-all group overflow-hidden relative">
       <div className={`flex items-center justify-between mb-4 ${isGuest ? "blur-[2px]" : ""}`}>
@@ -478,6 +599,8 @@ function RankStat({ rankData, isGuest }: { rankData: RankData | null; isGuest: b
         <p className="text-[10px] font-black text-foreground/30 uppercase tracking-[0.2em] mb-1">Rütbe</p>
         {isGuest ? (
           <p className="text-2xl font-black text-foreground">—</p>
+        ) : loading ? (
+          <p className="text-xl font-black text-foreground/20">…</p>
         ) : rankData ? (
           <p className="text-xl font-black text-foreground">{rankData.rank_label}</p>
         ) : (

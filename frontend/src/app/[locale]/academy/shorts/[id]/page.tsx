@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { ChevronRight, ExternalLink, CheckCircle, BookmarkPlus, Lock, ChevronLeft, ChevronRight as ChevronRightIcon } from "lucide-react";
+import { ChevronRight, ExternalLink, CheckCircle, BookmarkPlus, BookmarkCheck, Lock, ChevronLeft, ChevronRight as ChevronRightIcon, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { motion } from "framer-motion";
 
@@ -10,6 +10,7 @@ import YouTubePlayer from "@/components/academy/YouTubePlayer";
 import apiClient from "@/lib/api-client";
 import { Navbar } from "@/components/ui/Navbar";
 import { Button } from "@/components/ui/Button";
+import { useUserRole } from "@/context/UserRoleContext";
 
 interface ContentDetail {
   id: string;
@@ -35,9 +36,14 @@ interface PageProps {
 export default function ShortsPlayerPage({ params }: PageProps) {
   const { id } = React.use(params);
   const t = useTranslations("academy");
+  const { role } = useUserRole();
+  const isGuest = role === "GUEST";
   const [content, setContent] = useState<ContentDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [isCompleted, setIsCompleted] = useState(false);
+  // Task 6: Favorites state
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
 
   useEffect(() => {
     apiClient.get(`/academy/contents/${id}`)
@@ -47,10 +53,35 @@ export default function ShortsPlayerPage({ params }: PageProps) {
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [id]);
 
-  const handleAddFavorite = async () => {
-    console.log("Add to favorites:", id);
+    // Task 6: Fetch user's favorites to check if this content is favorited
+    if (!isGuest) {
+      apiClient.get("/favorites")
+        .then((res: { data: { content_id: string }[] }) => {
+          const favoriteIds = res.data.map((f) => f.content_id);
+          setIsFavorited(favoriteIds.includes(id));
+        })
+        .catch(() => {}); // silently fail — not critical
+    }
+  }, [id, isGuest]);
+
+  // Task 6: Toggle favorite (add or remove)
+  const handleToggleFavorite = async () => {
+    if (isGuest || favoriteLoading) return;
+    setFavoriteLoading(true);
+    try {
+      if (isFavorited) {
+        await apiClient.delete(`/favorites/${id}`);
+        setIsFavorited(false);
+      } else {
+        await apiClient.post("/favorites", { content_id: id });
+        setIsFavorited(true);
+      }
+    } catch (err) {
+      console.error("Favorite toggle failed:", err);
+    } finally {
+      setFavoriteLoading(false);
+    }
   };
 
   if (loading) return <ShortsPlayerSkeleton />;
@@ -197,16 +228,27 @@ export default function ShortsPlayerPage({ params }: PageProps) {
             </div>
           )}
 
-          {/* Favorite Button */}
-          {!content.is_locked && (
+          {/* Task 6: Favorite Button — only for authenticated (non-guest) users */}
+          {!content.is_locked && !isGuest && (
             <button
-              onClick={handleAddFavorite}
-              className="flex items-center justify-center gap-3 w-full py-4 px-6
-                         border border-foreground/10 text-foreground/40 rounded-2xl font-black text-xs uppercase tracking-widest
-                         hover:border-primary/30 hover:text-primary transition-all"
+              onClick={handleToggleFavorite}
+              disabled={favoriteLoading}
+              className={`flex items-center justify-center gap-3 w-full py-4 px-6
+                         rounded-2xl font-black text-xs uppercase tracking-widest transition-all
+                         disabled:opacity-60 disabled:cursor-not-allowed ${
+                isFavorited
+                  ? "border border-primary/40 text-primary bg-primary/5 hover:bg-primary/10"
+                  : "border border-foreground/10 text-foreground/40 hover:border-primary/30 hover:text-primary"
+              }`}
             >
-              <BookmarkPlus size={16} />
-              {t("add_favorite")}
+              {favoriteLoading ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : isFavorited ? (
+                <BookmarkCheck size={16} />
+              ) : (
+                <BookmarkPlus size={16} />
+              )}
+              {isFavorited ? "Favorilerimde" : t("add_favorite")}
             </button>
           )}
         </div>

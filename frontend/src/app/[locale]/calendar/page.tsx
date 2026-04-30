@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Calendar as CalendarIcon, Clock, Link as LinkIcon, Plus, Trash2,
+  Calendar as CalendarIcon, Clock, Link as LinkIcon, Trash2,
   ChevronLeft, ChevronRight, Video, Shield, X, MapPin, Phone,
   CalendarPlus, CheckCircle, Loader2, AlertCircle, Lock,
 } from "lucide-react";
@@ -38,7 +38,6 @@ export default function CalendarPage() {
   const { role } = useUserRole();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isAdding, setIsAdding] = useState(false);
   /** Day of month selected for filtering, or null for all */
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
 
@@ -97,6 +96,8 @@ export default function CalendarPage() {
       <Navbar />
 
       <main className="max-w-[1600px] mx-auto pt-32 px-6 pb-20">
+        {/* Task 4: "Yeni Etkinlik Ekle" button removed from the partner-facing calendar.
+            Events are managed exclusively via the Admin Panel → Etkinlikler page. */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
           <div>
             <div className="flex items-center gap-3 text-primary mb-4">
@@ -107,15 +108,6 @@ export default function CalendarPage() {
               Akademi <span className="text-primary italic">Canlı Takvim</span>
             </h1>
           </div>
-
-          {role === "ADMIN" && (
-            <Button
-              onClick={() => setIsAdding(true)}
-              className="gap-2 rounded-2xl px-8 shadow-lg shadow-primary/20"
-            >
-              <Plus className="w-5 h-5" /> Yeni Etkinlik Ekle
-            </Button>
-          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -233,14 +225,6 @@ export default function CalendarPage() {
         </div>
       </main>
 
-      <AddEventModal
-        isOpen={isAdding}
-        onClose={() => setIsAdding(false)}
-        onCreated={() => {
-          setIsAdding(false);
-          fetchEvents();
-        }}
-      />
     </div>
   );
 }

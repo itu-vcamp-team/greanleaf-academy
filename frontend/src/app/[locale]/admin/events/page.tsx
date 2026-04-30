@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/Input";
 import {
   Plus, Trash2, Pencil, Calendar, Loader2,
   Globe, Lock, Video, Users, Briefcase, MapPin,
-  CheckCircle, Send, CalendarCheck, X, UserCheck, UserX,
+  CheckCircle, Send, CalendarCheck, X, UserCheck, UserX, Bell, BellRing,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import apiClient from "@/lib/api-client";
@@ -79,6 +79,10 @@ export default function AdminEventsPage() {
   const [rsvps, setRsvps] = useState<RsvpItem[]>([]);
   const [loadingRsvp, setLoadingRsvp] = useState(false);
 
+  // Task 5: Notification confirmation dialog after edit
+  const [notifyDialog, setNotifyDialog] = useState<{ eventId: string; title: string } | null>(null);
+  const [notifying, setNotifying] = useState(false);
+
   useEffect(() => {
     fetchEvents();
   }, []);
@@ -146,6 +150,9 @@ export default function AdminEventsPage() {
       if (form.location) formData.append("location", form.location);
       if (form.contact_info) formData.append("contact_info", form.contact_info);
 
+      const savedEditingId = editingId;
+      const savedTitle = form.title;
+
       if (editingId) {
         await apiClient.patch(`/events/${editingId}`, formData, {
           headers: { "Content-Type": "multipart/form-data" },
@@ -158,6 +165,11 @@ export default function AdminEventsPage() {
 
       setShowForm(false);
       fetchEvents();
+
+      // Task 5: After a successful EDIT, prompt admin to notify users
+      if (savedEditingId) {
+        setNotifyDialog({ eventId: savedEditingId, title: savedTitle });
+      }
     } catch (err) {
       const detail = (err as { response?: { data?: { detail?: string } } })
         ?.response?.data?.detail;
@@ -167,8 +179,31 @@ export default function AdminEventsPage() {
     }
   };
 
+  // Task 5: Send update notifications to RSVPed users and/or all partners
+  const handleNotify = async (notifyRsvped: boolean, notifyPartners: boolean) => {
+    if (!notifyDialog) return;
+    setNotifying(true);
+    try {
+      const notifyData = new FormData();
+      notifyData.append("notify_rsvped", String(notifyRsvped));
+      notifyData.append("notify_all_partners", String(notifyPartners));
+      await apiClient.patch(`/events/${notifyDialog.eventId}`, notifyData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+    } catch {
+      // notification errors are non-critical, silently proceed
+    } finally {
+      setNotifying(false);
+      setNotifyDialog(null);
+    }
+  };
+
   const handleDelete = async (id: string) => {
-    if (!confirm("Bu etkinliği silmek istediğinize emin misiniz? Tüm takvim davetleri de silinecek.")) return;
+    if (!confirm(
+      "Bu etkinliği silmek istediğinize emin misiniz?\n\n" +
+      "• Tüm takvim RSVP'leri silinecek.\n" +
+      "• Takvime ekleyen kullanıcılara ve tüm aktif partnerlere otomatik iptal bildirimi gönderilecek."
+    )) return;
     setDeletingId(id);
     try {
       await apiClient.delete(`/events/${id}`);
@@ -252,7 +287,8 @@ export default function AdminEventsPage() {
                                 <Lock size={9} /> Sadece Partnerler
                             </span>
                           )}
-                          {event.is_published !== false && (
+                          {/* Task 5 fix: use strict equality to avoid showing "Yayında" for null is_published */}
+                          {event.is_published === true && (
                             <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
                               <CheckCircle size={9} /> Yayında
                             </span>
@@ -274,7 +310,8 @@ export default function AdminEventsPage() {
                         Takvim İstekleri
                       </Button>
 
-                      {event.is_published === false && (
+                      {/* Task 5 fix: show Publish button when is_published is false OR null */}
+                      {event.is_published !== true && (
                         <Button
                           variant="outline"
                           size="sm"
@@ -542,6 +579,96 @@ export default function AdminEventsPage() {
                     ))}
                   </div>
                 )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Task 5: Notify Users Dialog (shown after edit) ── */}
+      <AnimatePresence>
+        {notifyDialog && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+              className="bg-surface rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-border"
+            >
+              <div className="p-8">
+                {/* Icon + Title */}
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-12 h-12 bg-orange-100 rounded-2xl flex items-center justify-center">
+                    <BellRing size={20} className="text-orange-500" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-foreground/40">Bildirim Gönder</p>
+                    <h3 className="text-lg font-black text-foreground">Etkinlik güncellendi</h3>
+                  </div>
+                </div>
+
+                <p className="text-sm text-foreground/60 mb-6 leading-relaxed">
+                  <strong className="text-foreground">&ldquo;{notifyDialog.title}&rdquo;</strong> etkinliği kaydedildi.
+                  Kullanıcıları bu güncelleme hakkında bilgilendirmek ister misiniz?
+                </p>
+
+                <div className="space-y-3">
+                  {/* Option 1: Notify RSVPed users */}
+                  <button
+                    onClick={() => handleNotify(true, false)}
+                    disabled={notifying}
+                    className="w-full flex items-center gap-3 p-4 rounded-2xl border border-blue-200 bg-blue-50/50 hover:bg-blue-50 transition-colors text-left disabled:opacity-60"
+                  >
+                    <Bell size={18} className="text-blue-500 shrink-0" />
+                    <div>
+                      <p className="text-sm font-bold text-foreground">Takvime ekleyenleri bilgilendir</p>
+                      <p className="text-[11px] text-foreground/50">Yalnızca RSVP yapan kullanıcılara mail gönderilir</p>
+                    </div>
+                  </button>
+
+                  {/* Option 2: Notify all partners */}
+                  <button
+                    onClick={() => handleNotify(false, true)}
+                    disabled={notifying}
+                    className="w-full flex items-center gap-3 p-4 rounded-2xl border border-orange-200 bg-orange-50/50 hover:bg-orange-50 transition-colors text-left disabled:opacity-60"
+                  >
+                    <BellRing size={18} className="text-orange-500 shrink-0" />
+                    <div>
+                      <p className="text-sm font-bold text-foreground">Tüm partnerleri bilgilendir</p>
+                      <p className="text-[11px] text-foreground/50">Aktif tüm partner hesaplarına mail gönderilir</p>
+                    </div>
+                  </button>
+
+                  {/* Option 3: Notify both */}
+                  <button
+                    onClick={() => handleNotify(true, true)}
+                    disabled={notifying}
+                    className="w-full flex items-center gap-3 p-4 rounded-2xl border border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors text-left disabled:opacity-60"
+                  >
+                    {notifying ? (
+                      <Loader2 size={18} className="text-primary animate-spin shrink-0" />
+                    ) : (
+                      <CheckCircle size={18} className="text-primary shrink-0" />
+                    )}
+                    <div>
+                      <p className="text-sm font-bold text-foreground">Her ikisini de bilgilendir</p>
+                      <p className="text-[11px] text-foreground/50">Takvime ekleyenler + tüm partnerler (tekrarsız)</p>
+                    </div>
+                  </button>
+                </div>
+
+                {/* Skip */}
+                <button
+                  onClick={() => setNotifyDialog(null)}
+                  className="w-full mt-4 py-3 text-sm font-bold text-foreground/40 hover:text-foreground/60 transition-colors"
+                >
+                  Bildirim gönderme, geç →
+                </button>
               </div>
             </motion.div>
           </motion.div>

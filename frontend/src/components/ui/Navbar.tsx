@@ -9,7 +9,7 @@ import { useAuthStore } from "@/store/auth.store";
 import { useThemeStore } from "@/store/theme.store";
 import {
   Sun, Moon, Calendar, User, LogOut, Menu, X,
-  Mail, Phone, Globe, Link2, MessageSquare, Play, ShieldCheck, ChevronDown,
+  Mail, Phone, Globe, Link2, MessageSquare, Play, ShieldCheck, ChevronDown, LayoutDashboard,
 } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 import { useState, useEffect, useRef } from "react";
@@ -190,8 +190,14 @@ export function Navbar() {
     router.push("/");
   };
 
+  // For guests: show both Home (/) and Dashboard (/dashboard) separately.
+  // For partners/admins: home link already points to /dashboard, no duplicate needed.
   const navLinks = [
     { href: isGuest ? "/" : "/dashboard", label: t("home"), icon: <User className="w-4 h-4" /> },
+    // Task 3: Dashboard link shown only for guests (partners' home IS dashboard)
+    ...(isGuest
+      ? [{ href: "/dashboard", label: "Dashboard", icon: <LayoutDashboard className="w-4 h-4" /> }]
+      : []),
     { href: "/calendar", label: t("calendar"), icon: <Calendar className="w-4 h-4" /> },
     { href: "/academy", label: t("academy"), icon: null },
   ];

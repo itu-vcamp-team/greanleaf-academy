@@ -25,7 +25,8 @@ class EventRepository(AsyncBaseRepository[Event]):
         stmt = (
             select(Event)
             .where(
-                Event.is_published == True,
+                # Task 5 fix: use .is_(True) to explicitly exclude NULL is_published values
+                Event.is_published.is_(True),
                 Event.start_time >= now,
             )
             .order_by(Event.start_time.asc())
@@ -44,12 +45,16 @@ class EventRepository(AsyncBaseRepository[Event]):
         month: int,
         user_role: UserRole = None,  # kept for API compat; visibility no longer filtered here
     ) -> List[Event]:
-        """Fetches UPCOMING events for a specific month (for calendar grid).
+        """Fetches events for a specific month (for calendar grid).
 
-        Past events are excluded so the calendar never shows stale entries.
-        ALL visibility levels are included regardless of role — meeting links
-        are stripped for guests via GuestEventResponse in the route handler,
-        and the UI uses the `visibility` field to show a lock indicator.
+        Task 5 fix:
+        - Uses is_published.is_(True) to correctly exclude NULL values
+          (events with NULL is_published appeared "published" in admin UI but
+           were invisible in the calendar — this fixes that divergence).
+        - For the current month: only shows events whose start_time is still in
+          the future relative to `now`. For future months: all events in range.
+        - ALL visibility levels are included; meeting links are stripped for guests
+          via GuestEventResponse in the route handler.
         """
         import calendar as cal_module
         _, last_day = cal_module.monthrange(year, month)
@@ -65,7 +70,8 @@ class EventRepository(AsyncBaseRepository[Event]):
         stmt = (
             select(Event)
             .where(
-                Event.is_published == True,
+                # Task 5 fix: is_published.is_(True) — NULL is treated as unpublished
+                Event.is_published.is_(True),
                 Event.start_time >= effective_start,
                 Event.start_time <= month_end,
             )

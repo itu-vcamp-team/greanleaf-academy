@@ -229,6 +229,7 @@ async def create_event(
 @router.patch("/{event_id}")
 async def update_event(
     event_id: uuid.UUID,
+    background_tasks: BackgroundTasks,
     title: Optional[str] = Form(None),
     description: Optional[str] = Form(None),
     category: Optional[EventCategory] = Form(None),
@@ -239,13 +240,22 @@ async def update_event(
     contact_info: Optional[str] = Form(None),
     visibility: Optional[EventVisibility] = Form(None),
     cover_image: Optional[UploadFile] = File(None),
+    # Task 5: Notification options
+    notify_rsvped: bool = Form(default=False),
+    notify_all_partners: bool = Form(default=False),
     db: AsyncSession = Depends(get_db_session),
     admin_user: User = Depends(get_current_admin),
 ):
-    """Admin updates an existing event."""
+    """Admin updates an existing event. Optionally notifies RSVPed users and/or all partners."""
     repo = EventRepository(db)
-    service = EventService(repo)
 
+    # Capture old event data BEFORE update (needed for notification email)
+    old_event = await repo.get_by_id(event_id)
+    if not old_event:
+        raise HTTPException(status_code=404, detail="Etkinlik bulunamadı.")
+    old_start_time = old_event.start_time
+
+    service = EventService(repo)
     update_data = {k: v for k, v in {
         "title": title,
         "description": description,
@@ -259,9 +269,59 @@ async def update_event(
     }.items() if v is not None}
 
     try:
-        return await service.update_event(event_id, update_data, cover_image)
+        updated_event = await service.update_event(event_id, update_data, cover_image)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+    # Task 5: Send update notifications in the background
+    notified_rsvped = 0
+    notified_partners = 0
+
+    if updated_event.is_published:
+        rsvp_repo = EventCalendarRsvpRepository(db)
+        new_start = updated_event.start_time
+
+        if notify_rsvped:
+            rsvp_emails = await rsvp_repo.get_rsvp_emails_by_event(event_id)
+            if rsvp_emails:
+                notified_rsvped = len(rsvp_emails)
+                background_tasks.add_task(
+                    MailingService.send_event_update_email,
+                    recipient_emails=rsvp_emails,
+                    event_title=updated_event.title,
+                    event_description=updated_event.description,
+                    old_start_time=old_start_time,
+                    new_start_time=new_start,
+                    meeting_link=updated_event.meeting_link,
+                    location=updated_event.location,
+                )
+
+        if notify_all_partners:
+            partner_emails = await repo.get_partner_emails_for_announcement()
+            # Exclude emails already notified via rsvp to avoid duplicates
+            if notify_rsvped:
+                rsvp_set = set(await rsvp_repo.get_rsvp_emails_by_event(event_id))
+                partner_emails = [e for e in partner_emails if e not in rsvp_set]
+            if partner_emails:
+                notified_partners = len(partner_emails)
+                background_tasks.add_task(
+                    MailingService.send_event_update_email,
+                    recipient_emails=partner_emails,
+                    event_title=updated_event.title,
+                    event_description=updated_event.description,
+                    old_start_time=old_start_time,
+                    new_start_time=new_start,
+                    meeting_link=updated_event.meeting_link,
+                    location=updated_event.location,
+                )
+
+    return {
+        "id": str(updated_event.id),
+        "title": updated_event.title,
+        "start_time": updated_event.start_time,
+        "notified_rsvped": notified_rsvped,
+        "notified_partners": notified_partners,
+    }
 
 
 @router.post("/{event_id}/publish")
@@ -307,7 +367,9 @@ async def delete_event(
 ):
     """
     Admin deletes event (cascades to calendar RSVPs).
-    All users who RSVPed receive a cancellation email in the background.
+    Task 5: Both RSVP'd users AND all active partners receive a cancellation email.
+    Emails are deduplicated so nobody gets two messages.
+    Batched in groups of 50 to handle 10K+ users without blocking.
     """
     repo = EventRepository(db)
 
@@ -318,9 +380,19 @@ async def delete_event(
 
     # Collect RSVP emails BEFORE deletion (CASCADE will remove them from DB)
     rsvp_repo = EventCalendarRsvpRepository(db)
-    recipient_emails = await rsvp_repo.get_rsvp_emails_by_event(event_id)
+    rsvp_emails: list[str] = await rsvp_repo.get_rsvp_emails_by_event(event_id)
 
-    # Generate a CANCELLED iCal so recipients' calendar apps remove the event
+    # Also collect all active partner emails for broadcast
+    partner_emails: list[str] = await repo.get_partner_emails_for_announcement()
+
+    # Deduplicate: partition so no one gets two messages
+    rsvp_set = set(rsvp_emails)
+    partner_only_emails = [e for e in partner_emails if e not in rsvp_set]
+
+    # All email targets (rsvp gets ics attachment; partners get cancellation notice)
+    all_recipient_emails = list(rsvp_set) + partner_only_emails
+
+    # Generate a CANCELLED iCal so calendar apps remove the event
     cancellation_ics = generate_cancellation_ics(
         title=event.title,
         start_time=event.start_time,
@@ -332,11 +404,11 @@ async def delete_event(
     if not deleted:
         raise HTTPException(status_code=404, detail="Etkinlik bulunamadı")
 
-    # Non-blocking: send cancellation notices to everyone who had RSVPed
-    if recipient_emails:
+    # Non-blocking: send cancellation notices to all recipients
+    if all_recipient_emails:
         background_tasks.add_task(
             MailingService.send_event_cancellation_email,
-            recipient_emails=recipient_emails,
+            recipient_emails=all_recipient_emails,
             event_title=event.title,
             start_time=event.start_time,
             ics_content=cancellation_ics,
@@ -344,7 +416,9 @@ async def delete_event(
 
     return {
         "message": "Etkinlik silindi",
-        "notified_count": len(recipient_emails),
+        "notified_rsvped": len(rsvp_emails),
+        "notified_partners": len(partner_only_emails),
+        "notified_total": len(all_recipient_emails),
     }
 
 

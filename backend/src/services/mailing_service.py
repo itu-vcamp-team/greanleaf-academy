@@ -306,6 +306,79 @@ class MailingService:
         return success
 
     @staticmethod
+    async def send_event_update_email(
+        recipient_emails: list[str],
+        event_title: str,
+        event_description: str | None,
+        old_start_time: datetime,
+        new_start_time: datetime,
+        meeting_link: str | None,
+        location: str | None,
+    ) -> bool:
+        """
+        RSVP yapmış ve/veya tüm partnerlere etkinlik güncellemesi bildirimini toplu gönderir.
+        """
+        old_date_str = old_start_time.strftime("%d.%m.%Y %H:%M")
+        new_date_str = new_start_time.strftime("%d.%m.%Y %H:%M")
+
+        html = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;
+                    color: #333; border: 1px solid #f0a030; border-radius: 12px; overflow: hidden;">
+          <div style="background: #f0a030; color: white; padding: 30px; text-align: center;">
+            <h1 style="margin: 0; font-size: 22px;">🌿 Greenleaf Akademi</h1>
+            <p style="margin: 8px 0 0; opacity: 0.9; font-size: 14px;">Etkinlik Güncellendi</p>
+          </div>
+          <div style="padding: 28px;">
+            <h2 style="color: #d08000; margin-top: 0;">📅 Etkinlik Tarihi Değişti</h2>
+            <p style="font-size: 16px; line-height: 1.6; color: #555;">
+              Takviminize eklediğiniz <strong style="color: #333;">{event_title}</strong> etkinliğinin
+              bilgileri <strong>güncellendi</strong>.
+            </p>
+            <div style="background: #fff8ec; border: 1px solid #f6d08a; border-radius: 8px;
+                        padding: 16px; margin: 20px 0;">
+              <p style="margin: 4px 0; font-size: 14px; color: #888; text-decoration: line-through;">
+                <strong>Eski Tarih:</strong> {old_date_str}
+              </p>
+              <p style="margin: 8px 0 4px; font-size: 15px; color: #333; font-weight: bold;">
+                <strong>Yeni Tarih:</strong> {new_date_str}
+              </p>
+              {f'<p style="margin: 4px 0; font-size: 14px; color: #666;"><strong>📍 Konum:</strong> {location}</p>' if location else ''}
+              {f'<p style="margin: 4px 0; font-size: 14px; color: #666;"><strong>🔗 Toplantı:</strong> <a href="{meeting_link}" style="color: #4AA435;">Bağlantıya Git</a></p>' if meeting_link else ''}
+            </div>
+            <p style="font-size: 13px; color: #888;">
+              Lütfen takviminizi buna göre güncelleyiniz.
+              Daha fazla bilgi için platformu ziyaret edebilirsiniz.
+            </p>
+            <div style="text-align: center; margin-top: 28px;">
+              <a href="{settings.FRONTEND_URL}/calendar"
+                 style="background: #4AA435; color: white; padding: 14px 32px;
+                        text-decoration: none; border-radius: 8px; font-weight: bold;
+                        font-size: 14px; display: inline-block;">
+                Takvimi Görüntüle
+              </a>
+            </div>
+          </div>
+          <div style="background: #f9f9f9; padding: 15px; text-align: center;
+                      font-size: 12px; color: #999;">
+            © 2026 Greenleaf Akademi. Tüm hakları saklıdır.
+          </div>
+        </div>
+        """
+
+        BATCH_SIZE = 50
+        success = True
+        for i in range(0, len(recipient_emails), BATCH_SIZE):
+            batch = recipient_emails[i : i + BATCH_SIZE]
+            res = await MailingService._send_email(
+                batch,
+                f"📅 Etkinlik Güncellendi: {event_title}",
+                html,
+            )
+            if not res:
+                success = False
+        return success
+
+    @staticmethod
     async def send_event_cancellation_email(
         recipient_emails: list[str],
         event_title: str,
