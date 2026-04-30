@@ -68,17 +68,22 @@ class ContentResponse(BaseModel):
 
 
 class GuestContentResponse(BaseModel):
-    """Stripped response for guest users (no video/resources)."""
+    """
+    Response for unauthenticated / GUEST users.
+    - is_public=True  → is_locked=False, video_url is populated (they can watch)
+    - is_public=False → is_locked=True,  video_url=None (listed but locked)
+    """
     id: uuid.UUID
     type: ContentType
     locale: str
     title: str
     description: Optional[str] = None
     thumbnail_url: Optional[str] = None
+    video_url: Optional[str] = None          # present only when is_public=True
     order: str
     is_new: bool
     is_public: bool = True
-    is_locked: bool = True
+    is_locked: bool = False                  # set dynamically in the route
     next_id: Optional[uuid.UUID] = None
     prev_id: Optional[uuid.UUID] = None
 

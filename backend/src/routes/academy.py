@@ -22,6 +22,22 @@ from src.exceptions import PrerequisiteNotMetError, NotFoundError
 router = APIRouter(prefix="/academy", tags=["Academy"])
 
 
+def _build_guest_response(content) -> GuestContentResponse:
+    """
+    Build a GuestContentResponse from a content DB object.
+    - is_public=True  → unlocked, video_url included (guest can watch)
+    - is_public=False → locked,   video_url hidden
+    """
+    resp = GuestContentResponse.model_validate(content)
+    if content.is_public:
+        resp.is_locked = False
+        # video_url is already present via model_validate (from_attributes=True)
+    else:
+        resp.is_locked = True
+        resp.video_url = None
+    return resp
+
+
 @router.get("/contents", response_model=list[ContentResponse | GuestContentResponse])
 async def list_contents(
     type: ContentType,
@@ -31,16 +47,16 @@ async def list_contents(
 ):
     """
     Lists academy contents based on user role and prerequisite logic.
-    - GUEST: Returns metadata but hides video URLs and resources.
+    - GUEST: Returns ALL content. Public items are playable; private items are listed but locked.
     - PARTNER: Returns full content with 'is_locked' and 'progress' data.
     - locale: Optional language filter (e.g. "tr-TR", "en-US"). If not provided, returns all locales.
     """
     repo = AcademyRepository(db)
 
     if current_user.role == UserRole.GUEST:
-        # Guests only see public content, sorted public-first
-        contents = await repo.get_contents_by_type(type, locale, public_only=True)
-        return [GuestContentResponse.model_validate(c) for c in contents]
+        # All content is visible; is_public drives lock status
+        contents = await repo.get_contents_by_type(type, locale, public_only=False)
+        return [_build_guest_response(c) for c in contents]
 
     # Partner+ Logic
     data_items = await repo.get_with_progress(current_user.id, type, locale)
@@ -105,7 +121,7 @@ async def search_contents(
     results = await repo.search_contents(q, locale, type)
 
     if current_user.role == UserRole.GUEST:
-        return [GuestContentResponse.model_validate(r) for r in results]
+        return [_build_guest_response(r) for r in results]
 
     responses = []
     for r in results:
@@ -137,7 +153,7 @@ async def get_content(
     prev_id = result["prev_id"]
 
     if current_user.role == UserRole.GUEST:
-        resp = GuestContentResponse.model_validate(content)
+        resp = _build_guest_response(content)
         resp.next_id = next_id
         resp.prev_id = prev_id
         return resp
