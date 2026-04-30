@@ -6,7 +6,7 @@ from src.datalayer.model.db import ContentType, ContentStatus
 
 class ContentBase(BaseModel):
     type: ContentType
-    locale: str = "tr"
+    locale: str = "tr-TR"
     title: str
     description: Optional[str] = None
     video_url: str
@@ -15,6 +15,7 @@ class ContentBase(BaseModel):
     order: str = "000000"
     prerequisite_id: Optional[uuid.UUID] = None
     status: ContentStatus = ContentStatus.PUBLISHED
+    is_public: bool = True
 
 
 class ContentCreate(ContentBase):
@@ -33,6 +34,7 @@ class ContentUpdate(BaseModel):
     prerequisite_id: Optional[uuid.UUID] = None
     status: Optional[ContentStatus] = None
     is_new: Optional[bool] = None
+    is_public: Optional[bool] = None
 
 
 class UserProgressSchema(BaseModel):
@@ -47,6 +49,7 @@ class ContentResponse(BaseModel):
     """Base response for partners, includes locks and progress."""
     id: uuid.UUID
     type: ContentType
+    locale: str
     title: str
     description: Optional[str] = None
     thumbnail_url: Optional[str] = None
@@ -55,6 +58,7 @@ class ContentResponse(BaseModel):
     resource_link_label: Optional[str] = None
     order: str
     is_new: bool
+    is_public: bool = True
     is_locked: bool = False
     progress: Optional[UserProgressSchema] = None
     next_id: Optional[uuid.UUID] = None
@@ -67,11 +71,13 @@ class GuestContentResponse(BaseModel):
     """Stripped response for guest users (no video/resources)."""
     id: uuid.UUID
     type: ContentType
+    locale: str
     title: str
     description: Optional[str] = None
     thumbnail_url: Optional[str] = None
     order: str
     is_new: bool
+    is_public: bool = True
     is_locked: bool = True
     next_id: Optional[uuid.UUID] = None
     prev_id: Optional[uuid.UUID] = None

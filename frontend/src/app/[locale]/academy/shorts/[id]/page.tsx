@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { ChevronRight, ExternalLink, CheckCircle, BookmarkPlus, Lock } from "lucide-react";
+import { ChevronRight, ExternalLink, CheckCircle, BookmarkPlus, Lock, ChevronLeft, ChevronRight as ChevronRightIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { motion } from "framer-motion";
 
@@ -21,6 +21,7 @@ interface ContentDetail {
   is_locked: boolean;
   progress: {
     status: string;
+    completion_percentage: number;
     last_position_seconds: number | null;
   } | null;
   next_id: string | null;
@@ -60,30 +61,86 @@ export default function ShortsPlayerPage({ params }: PageProps) {
       <Navbar />
 
       <main className="max-w-xl mx-auto pt-24 px-4 pb-12">
-        {/* Breadcrumb */}
+        {/* Breadcrumb — Task 6: all segments are now clickable */}
         <nav className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-foreground/40 mb-6">
           <Link href="/academy" className="hover:text-primary transition-colors">Akademi</Link>
           <ChevronRight size={10} />
-          <span className="text-foreground/40">Shorts</span>
+          {/* Task 6 fix: "Shorts" is now a clickable link */}
+          <Link href="/academy" className="hover:text-primary transition-colors">Shorts</Link>
           <ChevronRight size={10} />
           <span className="text-foreground line-clamp-1">{content.title}</span>
         </nav>
 
-        {/* Video Player - 9:16 vertical style */}
-        <div className="relative mx-auto shadow-2xl rounded-[2.5rem] overflow-hidden border-8 border-foreground/10 bg-black"
-             style={{ maxWidth: "340px", aspectRatio: "9/16" }}>
-          {content.is_locked ? (
-            <LockedVideoOverlay />
-          ) : (
-            <YouTubePlayer
-              videoUrl={content.video_url}
-              contentId={content.id}
-              initialPosition={content.progress?.last_position_seconds ?? 0}
-              onProgressUpdate={(percentage) => {
-                if (percentage >= 85) setIsCompleted(true);
-              }}
-            />
-          )}
+        {/* Task 4 & 5: Phone mock + side nav buttons wrapper */}
+        {/* On ≥ sm screens, prev/next float on the sides of the mock.
+            On xs screens, they collapse below the mock.               */}
+        <div className="relative flex items-center justify-center">
+          {/* Prev button — left side (hidden on xs, shown from sm) */}
+          <Link
+            href={content.prev_id ? `/academy/shorts/${content.prev_id}` : "#"}
+            className={`hidden sm:flex absolute left-0 -translate-x-[110%] items-center justify-center
+                        w-12 h-12 rounded-2xl border-2 transition-all
+                        ${content.prev_id
+                          ? "border-foreground/20 text-foreground/60 hover:border-primary hover:text-primary hover:shadow-lg hover:shadow-primary/10"
+                          : "border-foreground/5 text-foreground/20 pointer-events-none"}`}
+            aria-label="Önceki video"
+          >
+            <ChevronLeft size={20} />
+          </Link>
+
+          {/* Video Player — Task 4: vertical={true} fixes 9:16 rendering */}
+          <div
+            className="relative mx-auto shadow-2xl rounded-[2.5rem] overflow-hidden border-8 border-foreground/10 bg-black"
+            style={{ maxWidth: "340px", width: "100%", aspectRatio: "9/16" }}
+          >
+            {content.is_locked ? (
+              <LockedVideoOverlay />
+            ) : (
+              <YouTubePlayer
+                videoUrl={content.video_url}
+                contentId={content.id}
+                initialPosition={content.progress?.last_position_seconds ?? 0}
+                vertical={true}
+                onProgressUpdate={(percentage) => {
+                  if (percentage >= 85) setIsCompleted(true);
+                }}
+              />
+            )}
+          </div>
+
+          {/* Next button — right side (hidden on xs, shown from sm) */}
+          <Link
+            href={content.next_id ? `/academy/shorts/${content.next_id}` : "#"}
+            className={`hidden sm:flex absolute right-0 translate-x-[110%] items-center justify-center
+                        w-12 h-12 rounded-2xl border-2 transition-all
+                        ${content.next_id
+                          ? "border-primary/30 text-primary hover:border-primary hover:shadow-lg hover:shadow-primary/20 bg-primary/5"
+                          : "border-foreground/5 text-foreground/20 pointer-events-none"}`}
+            aria-label="Sonraki video"
+          >
+            <ChevronRightIcon size={20} />
+          </Link>
+        </div>
+
+        {/* Mobile fallback nav — only visible on xs (below sm) */}
+        <div className="flex sm:hidden gap-4 mt-5">
+          <Link href={content.prev_id ? `/academy/shorts/${content.prev_id}` : "#"} className="flex-1">
+            <Button
+              variant="outline"
+              className="w-full rounded-2xl gap-2 text-xs font-black"
+              disabled={!content.prev_id}
+            >
+              <ChevronLeft size={14} /> Önceki
+            </Button>
+          </Link>
+          <Link href={content.next_id ? `/academy/shorts/${content.next_id}` : "#"} className="flex-1">
+            <Button
+              className="w-full rounded-2xl gap-2 text-xs font-black shadow-lg shadow-primary/20"
+              disabled={!content.next_id}
+            >
+              Sonraki <ChevronRightIcon size={14} />
+            </Button>
+          </Link>
         </div>
 
         {/* Information Section */}
@@ -152,27 +209,6 @@ export default function ShortsPlayerPage({ params }: PageProps) {
               {t("add_favorite")}
             </button>
           )}
-
-          {/* Navigation Area */}
-          <div className="grid grid-cols-2 gap-4 mt-6 border-t border-foreground/10 pt-6">
-            <Link href={content.prev_id ? `/academy/shorts/${content.prev_id}` : "#"}>
-              <Button
-                variant="outline"
-                className="w-full rounded-2xl gap-2 text-xs font-black"
-                disabled={!content.prev_id}
-              >
-                ← Önceki
-              </Button>
-            </Link>
-            <Link href={content.next_id ? `/academy/shorts/${content.next_id}` : "#"}>
-              <Button
-                className="w-full rounded-2xl gap-2 text-xs font-black shadow-lg shadow-primary/20"
-                disabled={!content.next_id}
-              >
-                Sonraki →
-              </Button>
-            </Link>
-          </div>
         </div>
       </main>
     </div>
@@ -198,8 +234,8 @@ function ShortsPlayerSkeleton() {
 function LockedVideoOverlay() {
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-950/90 backdrop-blur-sm gap-4">
-      <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center border border-primary/20">
-        <Lock className="w-7 h-7 text-primary" />
+      <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center border border-primary/20">
+        <Lock className="w-6 h-6 text-primary" />
       </div>
       <p className="text-white text-xs font-black uppercase tracking-widest text-center px-6">
         Partner üyelere özel
@@ -210,13 +246,13 @@ function LockedVideoOverlay() {
 
 function LockedContent({ t }: { t: ReturnType<typeof useTranslations> }) {
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
+    <div className="min-h-screen bg-background text-foreground">
       <Navbar />
-      <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+      <div className="min-h-[80vh] flex flex-col items-center justify-center p-8 text-center">
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="max-w-md"
+          className="max-w-md bg-surface p-12 rounded-[3rem] border border-foreground/10 shadow-2xl"
         >
           <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mb-6 mx-auto border border-primary/20 shadow-lg shadow-primary/10">
             <Lock className="w-8 h-8 text-primary" />
@@ -225,13 +261,11 @@ function LockedContent({ t }: { t: ReturnType<typeof useTranslations> }) {
           <p className="text-foreground/70 text-sm mb-8 leading-relaxed font-medium">
             {t("locked_hint")}
           </p>
-          <div className="flex flex-col gap-3">
-            <Link href="/academy">
-              <Button size="lg" className="rounded-2xl w-full">
-                {t("back_to_list")}
-              </Button>
-            </Link>
-          </div>
+          <Link href="/academy">
+            <Button size="lg" className="rounded-2xl w-full px-12">
+              {t("back_to_list")}
+            </Button>
+          </Link>
         </motion.div>
       </div>
     </div>

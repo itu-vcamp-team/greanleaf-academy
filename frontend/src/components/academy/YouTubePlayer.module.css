@@ -23,3 +23,44 @@
 :global(.plyr__controls) {
   z-index: 20 !important;
 }
+
+/* ── Task 3: Green fullscreen / expand button ────────────────────────────── */
+:global(.plyr__control[data-plyr="fullscreen"]) {
+  color: #22c55e !important; /* green-500 */
+}
+:global(.plyr__control[data-plyr="fullscreen"]:hover),
+:global(.plyr__control[data-plyr="fullscreen"]:focus) {
+  background: #22c55e26 !important;
+  color: #16a34a !important; /* green-600 */
+}
+:global(.plyr__control[data-plyr="fullscreen"] svg) {
+  fill: currentColor !important;
+}
+
+/* ── Task 4: Vertical / portrait mode (YouTube Shorts phone mock) ─────────── */
+/* Applied when the player wrapper has data-mode="vertical" */
+:global([data-plyr-mode="vertical"] .plyr) {
+  height: 100% !important;
+}
+:global([data-plyr-mode="vertical"] .plyr__video-embed) {
+  padding-bottom: 0 !important;
+  height: 100% !important;
+}
+:global([data-plyr-mode="vertical"] .plyr__video-embed iframe) {
+  /* YouTube Shorts are vertical; position the iframe to fill its parent */
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: 177.78% !important; /* 16/9 ratio fills the 9/16 height: 100%*(16/9)/(9/16) */
+  height: 100% !important;
+  pointer-events: none !important;
+}
+:global([data-plyr-mode="vertical"] .plyr__controls) {
+  /* keep controls at the bottom of the 9:16 container */
+  position: absolute !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 20 !important;
+}

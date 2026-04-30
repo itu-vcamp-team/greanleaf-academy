@@ -1,9 +1,15 @@
 "use client";
 
 import React, { useEffect, useRef } from "react";
-import Plyr from "plyr";
 import "plyr/dist/plyr.css";
+// Import CSS module for global Plyr overrides (green fullscreen btn, vertical mode)
+import plyrStyles from "./YouTubePlayer.module.css"; // eslint-disable-line @typescript-eslint/no-unused-vars
 import apiClient from "@/lib/api-client";
+
+// Plyr doesn't ship a proper TS default-export declaration; use require to keep
+// TypeScript happy while still getting the actual Plyr constructor at runtime.
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
+const Plyr: any = require("plyr");
 
 interface YouTubePlayerProps {
   videoUrl: string;
@@ -11,6 +17,8 @@ interface YouTubePlayerProps {
   initialPosition?: number;
   onStateChange?: (state: number) => void;
   onProgressUpdate?: (percentage: number) => void;
+  /** vertical=true: fills a 9:16 phone-mock container (Shorts player) */
+  vertical?: boolean;
 }
 
 const SYNC_INTERVAL_MS = 5000;
@@ -20,9 +28,11 @@ export default function YouTubePlayer({
   contentId,
   initialPosition = 0,
   onProgressUpdate,
+  vertical = false,
 }: YouTubePlayerProps) {
   const videoRef = useRef<HTMLDivElement>(null);
-  const playerRef = useRef<Plyr | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const playerRef = useRef<any>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const getYouTubeId = (url: string): string | null => {
@@ -38,7 +48,8 @@ export default function YouTubePlayer({
 
   const videoId = getYouTubeId(videoUrl);
 
-  const syncProgress = async (player: Plyr, forceComplete = false) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const syncProgress = async (player: any, forceComplete = false) => {
     if (!player) return;
     
     const currentTime = player.currentTime;
@@ -61,7 +72,8 @@ export default function YouTubePlayer({
     }
   };
 
-  const startPolling = (player: Plyr) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const startPolling = (player: any) => {
     if (intervalRef.current) return;
     intervalRef.current = setInterval(() => {
       syncProgress(player);
@@ -78,7 +90,6 @@ export default function YouTubePlayer({
   useEffect(() => {
     if (!videoId || !videoRef.current) return;
 
-    // Initialize Native Plyr
     const player = new Plyr(videoRef.current, {
       autoplay: false,
       controls: [
@@ -97,7 +108,6 @@ export default function YouTubePlayer({
 
     playerRef.current = player;
 
-    // Event Listeners
     player.on("ready", () => {
       if (initialPosition > 0) {
         player.currentTime = initialPosition;
@@ -111,7 +121,6 @@ export default function YouTubePlayer({
       syncProgress(player, true);
     });
 
-    // Cleanup
     return () => {
       stopPolling();
       if (playerRef.current) {
@@ -129,7 +138,10 @@ export default function YouTubePlayer({
   }
 
   return (
-    <div className="relative w-full h-full bg-black overflow-hidden select-none">
+    <div
+      className="relative w-full h-full bg-black overflow-hidden select-none"
+      data-plyr-mode={vertical ? "vertical" : "horizontal"}
+    >
       {/* Target for Plyr */}
       <div
         ref={videoRef}

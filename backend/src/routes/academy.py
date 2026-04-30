@@ -38,7 +38,8 @@ async def list_contents(
     repo = AcademyRepository(db)
 
     if current_user.role == UserRole.GUEST:
-        contents = await repo.get_contents_by_type(type, locale)
+        # Guests only see public content, sorted public-first
+        contents = await repo.get_contents_by_type(type, locale, public_only=True)
         return [GuestContentResponse.model_validate(c) for c in contents]
 
     # Partner+ Logic

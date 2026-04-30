@@ -1,6 +1,6 @@
 import uuid
 from typing import List, Optional
-from sqlalchemy import select, or_, update
+from sqlalchemy import select, or_, update, case
 from src.datalayer.model.db.academy_content import AcademyContent, ContentType, ContentStatus
 from src.datalayer.model.db.user_progress import UserProgress
 from src.datalayer.repository._base_repository import AsyncBaseRepository
@@ -17,21 +17,32 @@ class AcademyRepository(AsyncBaseRepository[AcademyContent]):
         self,
         content_type: ContentType,
         locale: Optional[str] = None,
-        include_draft: bool = False
+        include_draft: bool = False,
+        public_only: bool = False
     ) -> List[AcademyContent]:
         """
         Fetch contents by type and optionally filter by locale.
         If locale is None, returns all locales.
+        public_only=True filters to is_public=True (used for guest views).
+        Results are sorted: public items first, then by order ASC.
         """
         stmt = select(AcademyContent).where(
             AcademyContent.type == content_type
         )
         if locale:
             stmt = stmt.where(AcademyContent.locale == locale)
-        stmt = stmt.order_by(AcademyContent.order.asc())
 
         if not include_draft:
             stmt = stmt.where(AcademyContent.status == ContentStatus.PUBLISHED)
+
+        if public_only:
+            stmt = stmt.where(AcademyContent.is_public == True)
+
+        # public items first, then by lexorank order
+        stmt = stmt.order_by(
+            case((AcademyContent.is_public == True, 0), else_=1).asc(),
+            AcademyContent.order.asc()
+        )
 
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
@@ -54,7 +65,10 @@ class AcademyRepository(AsyncBaseRepository[AcademyContent]):
                 AcademyContent.title.ilike(search_pattern),
                 AcademyContent.description.ilike(search_pattern)
             )
-        ).order_by(AcademyContent.order.asc()).limit(20)
+        ).order_by(
+            case((AcademyContent.is_public == True, 0), else_=1).asc(),
+            AcademyContent.order.asc()
+        ).limit(20)
         if locale:
             stmt = stmt.where(AcademyContent.locale == locale)
 
@@ -72,8 +86,9 @@ class AcademyRepository(AsyncBaseRepository[AcademyContent]):
     ) -> List[dict]:
         """
         Complex fetch: matches content with user progress and calculates 'is_locked'.
+        Public items are sorted first within the result.
         """
-        # 1. Fetch all contents for this type/locale
+        # 1. Fetch all published contents for this type/locale (public first)
         contents = await self.get_contents_by_type(content_type, locale)
         if not contents:
             return []
@@ -145,7 +160,10 @@ class AcademyRepository(AsyncBaseRepository[AcademyContent]):
             AcademyContent.type == content.type,
             AcademyContent.locale == content.locale,
             AcademyContent.status == ContentStatus.PUBLISHED
-        ).order_by(AcademyContent.order.asc())
+        ).order_by(
+            case((AcademyContent.is_public == True, 0), else_=1).asc(),
+            AcademyContent.order.asc()
+        )
         
         result = await self.session.execute(stmt)
         all_contents = result.scalars().all()

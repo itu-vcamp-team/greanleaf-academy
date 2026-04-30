@@ -2,7 +2,10 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { ChevronRight, ExternalLink, CheckCircle, BookmarkPlus, Lock, GraduationCap } from "lucide-react";
+import {
+  ChevronRight, ExternalLink, CheckCircle, BookmarkPlus, Lock,
+  GraduationCap, ChevronLeft, ChevronRight as ChevronRightIcon,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { motion } from "framer-motion";
 
@@ -21,6 +24,7 @@ interface ContentDetail {
   is_locked: boolean;
   progress: {
     status: string;
+    completion_percentage: number;
     last_position_seconds: number | null;
   } | null;
   next_id: string | null;
@@ -37,12 +41,17 @@ export default function MasterclassPlayerPage({ params }: PageProps) {
   const [content, setContent] = useState<ContentDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [isCompleted, setIsCompleted] = useState(false);
+  // Task 7: real progress percentage (starts from what the API returns, then updates live)
+  const [progressPct, setProgressPct] = useState(0);
 
   useEffect(() => {
     apiClient.get(`/academy/contents/${id}`)
       .then((res) => {
-        setContent(res.data);
-        setIsCompleted(res.data.progress?.status === "completed");
+        const data = res.data as ContentDetail;
+        setContent(data);
+        setIsCompleted(data.progress?.status === "completed");
+        // Task 7: seed progress from server — starts at 0 if no prior play
+        setProgressPct(data.progress?.completion_percentage ?? 0);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -55,6 +64,9 @@ export default function MasterclassPlayerPage({ params }: PageProps) {
   if (loading) return <MasterclassPlayerSkeleton />;
   if (!content) return <LockedContent t={t} />;
 
+  // Compute displayed progress width
+  const displayedPct = isCompleted ? 100 : progressPct;
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Navbar />
@@ -64,10 +76,11 @@ export default function MasterclassPlayerPage({ params }: PageProps) {
           
           {/* Header & Breadcrumb */}
           <div className="space-y-4">
+            {/* Task 6: "Masterclass" segment is now a clickable link */}
             <nav className="flex items-center gap-1 text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">
               <Link href="/academy" className="hover:text-primary transition-colors">Akademi</Link>
               <ChevronRight size={10} />
-              <span className="text-foreground/40">Masterclass</span>
+              <Link href="/academy" className="hover:text-primary transition-colors">Masterclass</Link>
               <ChevronRight size={10} />
               <span className="text-foreground line-clamp-1">{content.title}</span>
             </nav>
@@ -75,21 +88,92 @@ export default function MasterclassPlayerPage({ params }: PageProps) {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-            {/* Player Side (Left) */}
-            <div className="lg:col-span-2 space-y-6">
-              <div className="relative w-full aspect-video rounded-3xl overflow-hidden glass border-foreground/5 shadow-2xl bg-black">
-                {content.is_locked ? (
-                  <LockedVideoOverlay />
-                ) : (
-                  <YouTubePlayer
-                    videoUrl={content.video_url}
-                    contentId={content.id}
-                    initialPosition={content.progress?.last_position_seconds ?? 0}
-                    onProgressUpdate={(percentage) => {
-                      if (percentage >= 85) setIsCompleted(true);
-                    }}
-                  />
-                )}
+            {/* Player Side (Left / full-width on mobile) */}
+            <div className="lg:col-span-2 space-y-4">
+
+              {/* Task 5: Video with side-nav arrows on desktop, hidden on mobile */}
+              <div className="relative flex items-center">
+                {/* Prev arrow — left of video, only on lg+ */}
+                <Link
+                  href={content.prev_id ? `/academy/masterclass/${content.prev_id}` : "#"}
+                  className={`hidden lg:flex absolute -left-16 items-center justify-center
+                              w-12 h-12 rounded-2xl border-2 transition-all
+                              ${content.prev_id
+                                ? "border-foreground/20 text-foreground/60 hover:border-primary hover:text-primary hover:shadow-lg hover:shadow-primary/10"
+                                : "border-foreground/5 text-foreground/20 pointer-events-none"}`}
+                  aria-label="Önceki video"
+                >
+                  <ChevronLeft size={20} />
+                </Link>
+
+                {/* Video player */}
+                <div className="relative w-full aspect-video rounded-3xl overflow-hidden glass border-foreground/5 shadow-2xl bg-black flex-1">
+                  {content.is_locked ? (
+                    <LockedVideoOverlay />
+                  ) : (
+                    <YouTubePlayer
+                      videoUrl={content.video_url}
+                      contentId={content.id}
+                      initialPosition={content.progress?.last_position_seconds ?? 0}
+                      onProgressUpdate={(percentage) => {
+                        // Task 7: live update progress bar
+                        setProgressPct(percentage);
+                        if (percentage >= 85) setIsCompleted(true);
+                      }}
+                    />
+                  )}
+                </div>
+
+                {/* Next arrow — right of video, only on lg+ */}
+                <Link
+                  href={content.next_id ? `/academy/masterclass/${content.next_id}` : "#"}
+                  className={`hidden lg:flex absolute -right-16 items-center justify-center
+                              w-12 h-12 rounded-2xl border-2 transition-all
+                              ${content.next_id
+                                ? "border-primary/30 text-primary hover:border-primary hover:shadow-lg hover:shadow-primary/20 bg-primary/5"
+                                : "border-foreground/5 text-foreground/20 pointer-events-none"}`}
+                  aria-label="Sonraki video"
+                >
+                  <ChevronRightIcon size={20} />
+                </Link>
+              </div>
+
+              {/* Task 5: Mobile-only nav row — visible on < lg, placed right after video */}
+              <div className="flex lg:hidden gap-3">
+                <Link href={content.prev_id ? `/academy/masterclass/${content.prev_id}` : "#"} className="flex-1">
+                  <Button
+                    variant="outline"
+                    className="w-full rounded-2xl text-[10px] font-black h-11 gap-1"
+                    disabled={!content.prev_id}
+                  >
+                    <ChevronLeft size={14} /> ÖNCEKİ
+                  </Button>
+                </Link>
+
+                {/* Task 7: compact progress bar inline on mobile */}
+                <div className="flex-1 flex items-center px-3 bg-foreground/5 rounded-2xl border border-foreground/10">
+                  <div className="w-full">
+                    <div className="flex justify-between text-[9px] text-foreground/40 mb-1">
+                      <span className="font-bold uppercase">{isCompleted ? "Tamamlandı" : "İzleniyor"}</span>
+                      <span className="font-black">%{Math.round(displayedPct)}</span>
+                    </div>
+                    <div className="h-1.5 bg-foreground/10 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-700 ${isCompleted ? "bg-green-500" : "bg-primary"}`}
+                        style={{ width: `${displayedPct}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <Link href={content.next_id ? `/academy/masterclass/${content.next_id}` : "#"} className="flex-1">
+                  <Button
+                    className="w-full rounded-2xl text-[10px] font-black h-11 gap-1 shadow-lg shadow-primary/20"
+                    disabled={!content.next_id}
+                  >
+                    SONRAKİ <ChevronRightIcon size={14} />
+                  </Button>
+                </Link>
               </div>
 
               {/* Description Card */}
@@ -103,10 +187,11 @@ export default function MasterclassPlayerPage({ params }: PageProps) {
               </div>
             </div>
 
-            {/* Actions Side (Right) */}
+            {/* Actions Side (Right panel — desktop) */}
             <div className="space-y-6">
               <div className="glass p-8 rounded-3xl border-foreground/5 space-y-6 shadow-xl shadow-black/5">
                 
+                {/* Task 7: Progress section with real percentage */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between px-2">
                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">Durum</span>
@@ -116,12 +201,19 @@ export default function MasterclassPlayerPage({ params }: PageProps) {
                       <span className="text-[10px] font-black uppercase text-blue-500 bg-blue-500/10 px-3 py-1 rounded-full border border-blue-500/20">İzleniyor</span>
                     )}
                   </div>
-                  
-                  <div className="h-2 bg-foreground/10 rounded-full overflow-hidden">
-                    <div 
-                      className={`h-full transition-all duration-1000 ${isCompleted ? 'bg-green-500' : 'bg-primary'}`}
-                      style={{ width: isCompleted ? '100%' : '30%' }} 
-                    />
+
+                  {/* Real progress bar — starts at 0 (or saved percentage), updates live */}
+                  <div>
+                    <div className="flex justify-between text-[10px] text-foreground/40 mb-1.5">
+                      <span className="font-bold uppercase tracking-wide">İlerleme</span>
+                      <span className="font-black">%{Math.round(displayedPct)}</span>
+                    </div>
+                    <div className="h-2 bg-foreground/10 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full transition-all duration-700 rounded-full ${isCompleted ? "bg-green-500" : "bg-primary"}`}
+                        style={{ width: `${displayedPct}%` }}
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -170,10 +262,11 @@ export default function MasterclassPlayerPage({ params }: PageProps) {
                     </>
                   )}
 
-                  <div className="grid grid-cols-2 gap-3 pt-4 border-t border-foreground/10">
+                  {/* Task 5: Desktop prev/next stay in right panel (lg+ only) */}
+                  <div className="hidden lg:grid grid-cols-2 gap-3 pt-4 border-t border-foreground/10">
                     <Link href={content.prev_id ? `/academy/masterclass/${content.prev_id}` : "#"}>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         className="w-full rounded-2xl text-[10px] font-black h-12"
                         disabled={!content.prev_id}
                       >
@@ -181,7 +274,7 @@ export default function MasterclassPlayerPage({ params }: PageProps) {
                       </Button>
                     </Link>
                     <Link href={content.next_id ? `/academy/masterclass/${content.next_id}` : "#"}>
-                      <Button 
+                      <Button
                         className="w-full rounded-2xl text-[10px] font-black h-12 shadow-lg shadow-primary/20"
                         disabled={!content.next_id}
                       >
@@ -242,7 +335,7 @@ function LockedContent({ t }: { t: ReturnType<typeof useTranslations> }) {
     <div className="min-h-screen bg-background text-foreground">
       <Navbar />
       <div className="min-h-[80vh] flex flex-col items-center justify-center p-8 text-center">
-        <motion.div 
+        <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           className="max-w-md bg-surface p-12 rounded-[3rem] border border-foreground/10 shadow-2xl"

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import {
   Plus, Trash2, Pencil, Zap, ShieldCheck,
-  Loader2, CheckCircle2, XCircle, ExternalLink,
+  Loader2, ExternalLink, Globe, Lock, Unlock,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import apiClient from "@/lib/api-client";
@@ -26,8 +26,18 @@ interface AcademyContent {
   order: string;
   status: ContentStatus;
   is_new: boolean;
+  is_public: boolean;
   thumbnail_url: string | null;
 }
+
+// Default built-in locales — admin can add more via the custom field
+const DEFAULT_LOCALES = [
+  { value: "tr-TR", label: "🇹🇷 Türkçe (tr-TR)" },
+  { value: "en-US", label: "🇬🇧 English (en-US)" },
+  { value: "de-DE", label: "🇩🇪 Deutsch (de-DE)" },
+  { value: "fr-FR", label: "🇫🇷 Français (fr-FR)" },
+  { value: "ar-SA", label: "🇸🇦 العربية (ar-SA)" },
+];
 
 const emptyForm = {
   type: "SHORT" as ContentType,
@@ -40,6 +50,7 @@ const emptyForm = {
   order: "000000",
   status: "PUBLISHED" as ContentStatus,
   is_new: false,
+  is_public: true,
   prerequisite_id: "",
 };
 
@@ -52,6 +63,15 @@ export default function AdminAcademyContentPage() {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [customLocale, setCustomLocale] = useState("");
+  const [showCustomLocale, setShowCustomLocale] = useState(false);
+  const [extraLocales, setExtraLocales] = useState<string[]>([]);
+
+  // All available locale options (defaults + any custom ones added)
+  const allLocales = [
+    ...DEFAULT_LOCALES,
+    ...extraLocales.map((v) => ({ value: v, label: `🌐 ${v}` })),
+  ];
 
   useEffect(() => {
     fetchContents();
@@ -72,11 +92,17 @@ export default function AdminAcademyContentPage() {
   const openCreate = () => {
     setEditingId(null);
     setForm({ ...emptyForm, type: activeTab });
+    setShowCustomLocale(false);
+    setCustomLocale("");
     setShowForm(true);
   };
 
   const openEdit = (item: AcademyContent) => {
     setEditingId(item.id);
+    const knownLocale = DEFAULT_LOCALES.some((l) => l.value === item.locale);
+    if (!knownLocale && item.locale && !extraLocales.includes(item.locale)) {
+      setExtraLocales((prev) => [...prev, item.locale]);
+    }
     setForm({
       type: item.type,
       locale: item.locale ?? "tr-TR",
@@ -88,9 +114,23 @@ export default function AdminAcademyContentPage() {
       order: item.order,
       status: item.status,
       is_new: item.is_new,
+      is_public: item.is_public,
       prerequisite_id: "",
     });
+    setShowCustomLocale(false);
+    setCustomLocale("");
     setShowForm(true);
+  };
+
+  const handleAddCustomLocale = () => {
+    const trimmed = customLocale.trim();
+    if (!trimmed) return;
+    if (!extraLocales.includes(trimmed)) {
+      setExtraLocales((prev) => [...prev, trimmed]);
+    }
+    setForm({ ...form, locale: trimmed });
+    setShowCustomLocale(false);
+    setCustomLocale("");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -140,9 +180,7 @@ export default function AdminAcademyContentPage() {
     
     if (targetIndex < 0 || targetIndex >= newContents.length) return;
     
-    // Swap
     [newContents[index], newContents[targetIndex]] = [newContents[targetIndex], newContents[index]];
-    
     setContents(newContents);
     
     try {
@@ -220,14 +258,28 @@ export default function AdminAcademyContentPage() {
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <p className="font-black text-foreground text-sm line-clamp-2">{item.title}</p>
+                      {/* Locale badge */}
+                      <span className="inline-flex items-center gap-1 mt-1 text-[10px] font-bold px-2 py-0.5 rounded-lg bg-foreground/5 text-foreground/50">
+                        <Globe size={9} /> {item.locale}
+                      </span>
                     </div>
-                    <span className={`flex-shrink-0 text-[10px] font-black px-2 py-1 rounded-lg ${
-                      item.status === "PUBLISHED"
-                        ? "bg-emerald-100 text-emerald-700"
-                        : "bg-surface text-foreground/50"
-                    }`}>
-                      {item.status === "PUBLISHED" ? "Yayında" : "Taslak"}
-                    </span>
+                    <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                      <span className={`text-[10px] font-black px-2 py-1 rounded-lg ${
+                        item.status === "PUBLISHED"
+                          ? "bg-emerald-100 text-emerald-700"
+                          : "bg-surface text-foreground/50"
+                      }`}>
+                        {item.status === "PUBLISHED" ? "Yayında" : "Taslak"}
+                      </span>
+                      {/* Public/Private badge */}
+                      <span className={`text-[10px] font-black px-2 py-1 rounded-lg flex items-center gap-1 ${
+                        item.is_public
+                          ? "bg-blue-100 text-blue-700"
+                          : "bg-orange-100 text-orange-700"
+                      }`}>
+                        {item.is_public ? <><Unlock size={9} /> Herkese Açık</> : <><Lock size={9} /> Özel</>}
+                      </span>
+                    </div>
                   </div>
                   {item.video_url && (
                     <a
@@ -311,6 +363,7 @@ export default function AdminAcademyContentPage() {
                 </h2>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
+                  {/* Row 1: Type + Status */}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-bold text-foreground/50 mb-2">Tür</label>
@@ -336,6 +389,72 @@ export default function AdminAcademyContentPage() {
                     </div>
                   </div>
 
+                  {/* Row 2: Language Selector */}
+                  <div>
+                    <label className="block text-xs font-bold text-foreground/50 mb-2">
+                      <Globe size={11} className="inline mr-1" />Dil
+                    </label>
+                    <div className="flex gap-2">
+                      <select
+                        value={form.locale}
+                        onChange={(e) => {
+                          if (e.target.value === "__custom__") {
+                            setShowCustomLocale(true);
+                          } else {
+                            setForm({ ...form, locale: e.target.value });
+                            setShowCustomLocale(false);
+                          }
+                        }}
+                        className="flex-1 px-4 py-2.5 border border-border rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 bg-surface text-foreground"
+                      >
+                        {allLocales.map((l) => (
+                          <option key={l.value} value={l.value}>{l.label}</option>
+                        ))}
+                        <option value="__custom__">+ Dil Ekle…</option>
+                      </select>
+                    </div>
+
+                    {/* Custom locale input */}
+                    <AnimatePresence>
+                      {showCustomLocale && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="mt-2 flex gap-2"
+                        >
+                          <Input
+                            value={customLocale}
+                            onChange={(e) => setCustomLocale(e.target.value)}
+                            placeholder="ör. pt-BR, ja-JP, ru-RU"
+                            className="flex-1"
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") { e.preventDefault(); handleAddCustomLocale(); }
+                            }}
+                          />
+                          <Button
+                            type="button"
+                            size="sm"
+                            className="rounded-xl px-4 shrink-0"
+                            onClick={handleAddCustomLocale}
+                          >
+                            Ekle
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="rounded-xl px-3 shrink-0"
+                            onClick={() => { setShowCustomLocale(false); setCustomLocale(""); }}
+                          >
+                            İptal
+                          </Button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  {/* Title */}
                   <div>
                     <label className="block text-xs font-bold text-foreground/50 mb-2">Başlık *</label>
                     <Input
@@ -346,6 +465,7 @@ export default function AdminAcademyContentPage() {
                     />
                   </div>
 
+                  {/* Description */}
                   <div>
                     <label className="block text-xs font-bold text-foreground/50 mb-2">Açıklama</label>
                     <textarea
@@ -357,6 +477,7 @@ export default function AdminAcademyContentPage() {
                     />
                   </div>
 
+                  {/* YouTube URL */}
                   <div>
                     <label className="block text-xs font-bold text-foreground/50 mb-2">YouTube URL *</label>
                     <Input
@@ -367,6 +488,7 @@ export default function AdminAcademyContentPage() {
                     />
                   </div>
 
+                  {/* Resource Link + Label */}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-bold text-foreground/50 mb-2">Kaynak Linki</label>
@@ -386,7 +508,8 @@ export default function AdminAcademyContentPage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 gap-4">
+                  {/* Checkboxes: is_new + is_public */}
+                  <div className="space-y-2 pt-2">
                     <div className="flex items-center gap-3">
                       <input
                         type="checkbox"
@@ -399,8 +522,31 @@ export default function AdminAcademyContentPage() {
                         Yeni içerik etiketi
                       </label>
                     </div>
+
+                    {/* is_public toggle */}
+                    <div className="flex items-center gap-3 p-3 rounded-xl border border-border bg-foreground/[0.02]">
+                      <input
+                        type="checkbox"
+                        id="is_public"
+                        checked={form.is_public}
+                        onChange={(e) => setForm({ ...form, is_public: e.target.checked })}
+                        className="w-4 h-4 accent-primary"
+                      />
+                      <div>
+                        <label htmlFor="is_public" className="text-sm font-bold text-foreground/70 cursor-pointer flex items-center gap-1">
+                          {form.is_public ? <Unlock size={13} className="text-blue-500" /> : <Lock size={13} className="text-orange-500" />}
+                          {form.is_public ? "Herkese Açık (Public)" : "Sadece Partnerlere Özel (Private)"}
+                        </label>
+                        <p className="text-[10px] text-foreground/40 mt-0.5">
+                          {form.is_public
+                            ? "Guestler anasayfada ve akademi listesinde görebilir"
+                            : "Sadece giriş yapmış partnerler görebilir; anasayfada gösterilmez"}
+                        </p>
+                      </div>
+                    </div>
                   </div>
 
+                  {/* Action Buttons */}
                   <div className="flex gap-3 pt-4">
                     <Button
                       type="button"
